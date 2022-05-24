@@ -1,0 +1,11 @@
+{
+    "name": "@masknet/static-module-record",
+    "version": "0.0.0",
+    "type": "module",
+    "exports": {
+        "default": "./dist/index.js"
+    },
+    "dependencies": {},
+    "devDependencies": {},
+    "peerDependencies": {}
+}
