@@ -2,9 +2,11 @@ lockfileVersion: 5.4
 
 specifiers:
   '@changesets/cli': ^2.22.0
+  typescript: 4.7.1-rc
 
 devDependencies:
   '@changesets/cli': 2.22.0
+  typescript: 4.7.1-rc
 
 packages:
 
@@ -1239,6 +1241,12 @@ packages:
   /type-fest/0.8.1:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
+    dev: true
+
+  /typescript/4.7.1-rc:
+    resolution: {integrity: sha512-EQd2NVelDe6ZVc2sO1CSpuSs+RHzY8c2n/kTNQAHw4um/eAXY+ZY4IKoUpNK0wO6C5hN+XcUXR7yqT8VbwwNIQ==}
+    engines: {node: '>=4.2.0'}
+    hasBin: true
     dev: true
 
   /universalify/0.1.2:
