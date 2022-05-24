@@ -1,0 +1,10 @@
+{
+  "packageManager": "pnpm@7.1.5",
+  "name": "@masknet/aot-secure-ecmascript",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "devDependencies": {
+    "@changesets/cli": "^2.22.0"
+  }
+}
