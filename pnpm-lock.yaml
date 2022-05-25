@@ -1,12 +1,28 @@
 lockfileVersion: 5.4
 
-specifiers:
-  '@changesets/cli': ^2.22.0
-  typescript: 4.7.1-rc
+onlyBuiltDependencies: []
 
-devDependencies:
-  '@changesets/cli': 2.22.0
-  typescript: 4.7.1-rc
+importers:
+
+  .:
+    specifiers:
+      '@changesets/cli': ^2.22.0
+      typescript: 4.7.1-rc
+    devDependencies:
+      '@changesets/cli': 2.22.0
+      typescript: 4.7.1-rc
+
+  packages/compartment:
+    specifiers: {}
+
+  packages/membrane:
+    specifiers: {}
+
+  packages/static-module-record:
+    specifiers: {}
+
+  packages/web-endowments:
+    specifiers: {}
 
 packages:
 
