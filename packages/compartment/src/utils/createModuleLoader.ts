@@ -1,6 +1,7 @@
 import { getInternalSlots } from '../compartment.js'
-import { StaticModuleRecord, type SystemJS } from '../StaticModuleRecord.js'
+import { StaticModuleRecord } from '../StaticModuleRecord.js'
 import { opaqueProxy } from './opaqueProxy.js'
+import type { SystemJS } from './system.js'
 
 /**
  * This kind of Static Module Record is used for source compiled by the compiler.
@@ -9,7 +10,7 @@ export type StaticModuleRecordPrecompiled = (this: {
     opaqueProxy: object
     globalLexicals: object
     globalThis: object
-}) => (this: { register(imports: string[], register: SystemJS.RegisterFunction): void }) => void
+}) => (this: { register(imports: string[], register: SystemJS.DeclareFunction): void }) => void
 
 export function createModuleLoader() {
     const modules = new Map<string, StaticModuleRecord>()
@@ -20,7 +21,7 @@ export function createModuleLoader() {
             new StaticModuleRecord((compartment) => {
                 const { globalLexicals, globalThis } = getInternalSlots(compartment)
                 let imports: string[]
-                let register: SystemJS.RegisterFunction
+                let register: SystemJS.DeclareFunction
                 executor
                     .call({
                         opaqueProxy,
@@ -28,9 +29,9 @@ export function createModuleLoader() {
                         globalThis,
                     })
                     .call({
-                        register(imports, register) {
-                            imports = imports
-                            register = register
+                        register(a, b) {
+                            imports = a
+                            register = b
                         },
                     })
 

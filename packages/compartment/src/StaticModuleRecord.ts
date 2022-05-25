@@ -64,10 +64,11 @@ export class StaticModuleRecord {
      * If you choose to use this to emulate "host" module in a compartment, it's your duty to correctly specify a SystemJS module.
      * For simper use case, you can use `ofNamespace` or `ofNamespacePerCompartment`.
      */
-    constructor(init: (currentCompartment: Compartment) => [imports: string[], module: SystemJS.DeclareFunction]) {
+    constructor(init: (currentCompartment: Compartment) => SystemJS.RegisterArray) {
         this.#init = init
     }
-    #init: (currentCompartment: Compartment) => [imports: string[], module: SystemJS.DeclareFunction]
+    #init: (currentCompartment: Compartment) => SystemJS.RegisterArray
+    /** @internal */
     get init() {
         return this.#init
     }

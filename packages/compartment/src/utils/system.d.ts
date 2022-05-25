@@ -1,6 +1,6 @@
 /** Please read <https://github.com/systemjs/systemjs/blob/main/docs/system-register.md> */
-
 export namespace SystemJS {
+    export type RegisterArray = readonly [imports: readonly string[], module: SystemJS.DeclareFunction]
     export type Module = Record<string, unknown>
     export type DeclareFunction = (_export: ExportFunction, _context: Context) => DeclareResult
     export interface DeclareResult {
@@ -18,13 +18,13 @@ export namespace SystemJS {
     }
 }
 export class SystemJS {
-    import(id: string, parentURL: string): Promise<unknown>
+    import(id: string, parentURL: string | undefined): Promise<object>
     createContext(parentID: string): object
     register(deps: readonly string[], declare: SystemJS.DeclareFunction): void
-    getRegister(): readonly [readonly string[], SystemJS.DeclareFunction]
-    prepareImport(doProcessScripts): Promise<void>
+    getRegister(): SystemJS.RegisterArray
+    prepareImport(doProcessScripts: unknown): Promise<void>
     createScript(url: string): never
-    instantiate(url, firstParentUrl): Promise<readonly [readonly string[], SystemJS.DeclareFunction]>
+    instantiate(url: string, parentUrl: string | undefined): Promise<SystemJS.RegisterArray>
     shouldFetch(): boolean
     fetch?: typeof globalThis.fetch
     resolve(id, parentURL): string
