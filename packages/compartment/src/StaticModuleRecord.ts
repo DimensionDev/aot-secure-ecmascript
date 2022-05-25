@@ -1,4 +1,5 @@
 import type { Compartment } from './compartment.js'
+import type { SystemJS } from './utils/system.js'
 
 export class StaticModuleRecord {
     /**
@@ -63,33 +64,13 @@ export class StaticModuleRecord {
      * If you choose to use this to emulate "host" module in a compartment, it's your duty to correctly specify a SystemJS module.
      * For simper use case, you can use `ofNamespace` or `ofNamespacePerCompartment`.
      */
-    constructor(init: (currentCompartment: Compartment) => [imports: string[], module: SystemJS.RegisterFunction]) {
+    constructor(init: (currentCompartment: Compartment) => [imports: string[], module: SystemJS.DeclareFunction]) {
         this.#init = init
     }
-    #init: (currentCompartment: Compartment) => [imports: string[], module: SystemJS.RegisterFunction]
+    #init: (currentCompartment: Compartment) => [imports: string[], module: SystemJS.DeclareFunction]
     get init() {
         return this.#init
     }
 }
 Object.freeze(StaticModuleRecord)
 Object.freeze(StaticModuleRecord.prototype)
-
-/** Please read <https://github.com/systemjs/systemjs/blob/main/docs/system-register.md> */
-
-export namespace SystemJS {
-    export type Module = Record<string, unknown>
-    export type RegisterFunction = (_export: ExportFunction, _context: Context) => RegisterResult
-    export interface RegisterResult {
-        setters: SetterFunction[]
-        execute(): void | Promise<void>
-    }
-    export type SetterFunction = (module: Module) => void
-    export type ExportFunction = {
-        <T>(name: string, value: T): T
-        <T extends Module>(object: T): T
-    }
-    export interface Context {
-        meta: object
-        import(id: string): Promise<Module>
-    }
-}

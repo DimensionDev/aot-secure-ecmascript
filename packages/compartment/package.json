@@ -5,6 +5,9 @@
   "exports": {
     "default": "./dist/index.js"
   },
+  "scripts": {
+    "install-system.js": "node --experimental-fetch ./addSystemJS.mjs"
+  },
   "dependencies": {},
   "devDependencies": {},
   "peerDependencies": {}
