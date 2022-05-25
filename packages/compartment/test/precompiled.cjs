@@ -19,7 +19,7 @@ registerPrecompiledModule('/index.js', function () {
                             execute: async function () {
                                 await Promise.resolve()
                                 _export('a', (a = x))
-                                console.log(x, x())
+                                console.log(x, x(), hello, globalThis.hello)
                             },
                         }
                     })

@@ -5,7 +5,14 @@ const require = createRequire(import.meta.url)
 
 const { modules, registerPrecompiledModules } = createModuleLoader()
 globalThis.registerPrecompiledModule = registerPrecompiledModules
-modules.set('builtin', StaticModuleRecord.of({ x() { return 'hi~' } }))
+modules.set(
+    'builtin',
+    StaticModuleRecord.of({
+        x() {
+            return 'hi~'
+        },
+    }),
+)
 // load module
 require('./precompiled.cjs')
 const compartment = new Compartment(
@@ -16,6 +23,7 @@ const compartment = new Compartment(
         async importHook(module) {
             return modules.get(module)
         },
+        globalLexicals: { hello: 1 },
     },
 )
 // should print "hi~"
