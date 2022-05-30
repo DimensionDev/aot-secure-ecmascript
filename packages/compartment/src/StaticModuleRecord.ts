@@ -1,77 +1,52 @@
-import type { Compartment } from './compartment.js'
-import type { SystemJS } from './utils/system.js'
+import type { SystemJS } from './index.js'
+import type { Binding, ThirdPartyStaticModuleRecord, StaticModuleRecordInstance, StaticModuleRecordPrecompiled, StaticModuleRecordPrecompiledInitialize } from './types.js'
+import { normalizeBindings } from './utils/normalize.js'
 
-export class StaticModuleRecord {
-    /**
-     * StaticModuleRecord of a module that can be shared across all Compartments.
-     * @example
-     * ```js
-     * const constants = StaticModuleRecord.of({
-     *     value: 1,
-     *     abs: Math.abs,
-     * })
-     * ```
-     */
-    static of(moduleNamespace: SystemJS.Module): StaticModuleRecord {
-        return new StaticModuleRecord(() => {
-            return [
-                [],
-                function (exports) {
-                    exports(moduleNamespace)
-                    return { setters: [], execute: () => {} }
-                },
-            ]
-        })
-    }
-
-    /**
-     * A StaticModuleRecord of a module that initialized in each Compartments and export only (no live binding supported).
-     * @example
-     * ```js
-     * StaticModuleRecord.ofPerCompartment((currentCompartment) => {
-     *      return {
-     *          abs: currentCompartment.globalThis.Math.abs,
-     *      }
-     * })
-     * ```
-     */
-    static ofPerCompartment(
-        init: (currentCompartment: Compartment) => Promise<SystemJS.Module> | SystemJS.Module,
-    ): StaticModuleRecord {
-        return new StaticModuleRecord((currentCompartment) => {
-            const namespace = init(currentCompartment)
-            return [
-                [],
-                function (exports) {
-                    if (namespace instanceof Promise) {
-                        return {
-                            setters: [],
-                            async execute() {
-                                exports(await namespace)
-                            },
-                        }
-                    }
-                    exports(namespace)
-                    return { setters: [], execute: () => {} }
-                },
-            ]
-        })
-    }
-
-    /**
-     * A StaticModuleRecord of a [SystemJS format](https://github.com/systemjs/systemjs/blob/main/docs/system-register.md) module.
-     *
-     * If you choose to use this to emulate "host" module in a compartment, it's your duty to correctly specify a SystemJS module.
-     * For simper use case, you can use `ofNamespace` or `ofNamespacePerCompartment`.
-     */
-    constructor(init: (currentCompartment: Compartment) => SystemJS.RegisterArray) {
-        this.#init = init
-    }
-    #init: (currentCompartment: Compartment) => SystemJS.RegisterArray
-    /** @internal */
-    get init() {
-        return this.#init
-    }
+/** @internal */
+export const StaticModuleRecordPrecompiledSymbol = Symbol()
+/** @internal */
+export let internalSlot_StaticModuleRecord_get: (mod: StaticModuleRecord) => {
+    needImportMeta: boolean
+    bindings: readonly Binding[]
+    initialize: ThirdPartyStaticModuleRecord['initialize']
+    initializeInternal: undefined | StaticModuleRecordPrecompiledInitialize
 }
-Object.freeze(StaticModuleRecord)
-Object.freeze(StaticModuleRecord.prototype)
+/** @internal */
+export let brandCheck_StaticModuleRecord: (mod: unknown) => mod is StaticModuleRecord
+
+export class StaticModuleRecord implements StaticModuleRecordInstance {
+    get bindings() {
+        return this.#bindings
+    }
+    constructor(source: string | { source: string } | ThirdPartyStaticModuleRecord)
+    /** @internal */
+    constructor(source: string | { source: string } | ThirdPartyStaticModuleRecord | StaticModuleRecordPrecompiled)
+    constructor(source: string | { source: string } | StaticModuleRecordPrecompiled) {
+        if (typeof source === 'string' || 'source' in source) {
+            throw new TypeError('Cannot create StaticModuleRecord from source code due to CSP limitations.')
+        }
+
+        const { initialize, needsImportMeta, bindings } = source
+        const internal = source[StaticModuleRecordPrecompiledSymbol]
+        if (typeof initialize !== 'function') {
+            throw new TypeError('A ThirdPartyStaticModuleRecord must have an initialize function.')
+        }
+        this.#needImportMeta = Boolean(needsImportMeta)
+        this.#bindings = normalizeBindings(bindings)
+        this.#initialize = initialize
+        if (internal) this.#initializeInternal = internal
+    }
+    static {
+        internalSlot_StaticModuleRecord_get = (mod: StaticModuleRecord) => ({
+            bindings: mod.#bindings,
+            initialize: mod.#initialize,
+            needImportMeta: mod.#needImportMeta,
+            initializeInternal: mod.#initializeInternal,
+        })
+        brandCheck_StaticModuleRecord = (mod: any): mod is StaticModuleRecord => #needImportMeta in mod
+    }
+    #needImportMeta = false
+    #bindings: readonly Binding[] = []
+    #initialize!: ThirdPartyStaticModuleRecord['initialize']
+    #initializeInternal: StaticModuleRecordPrecompiledInitialize | undefined
+}

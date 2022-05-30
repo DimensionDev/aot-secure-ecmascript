@@ -1,6 +1,9 @@
+import type { Compartment } from "./compartment.js"
+
 export function makeGlobalThis(
     prototype = Object.prototype,
-    endowments: Record<PropertyKey, unknown> | undefined | null,
+    compartment: typeof Compartment,
+    endowments: object | undefined | null,
 ): typeof globalThis {
     const global = Object.create(null)
 
@@ -17,6 +20,10 @@ export function makeGlobalThis(
             return previous
         }, Object.create(null)),
     )
+
+    Object.defineProperty(global, 'Compartment', {
+        value: compartment,
+    })
 
     if (endowments) Object.assign(global, endowments)
 

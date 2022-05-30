@@ -27,5 +27,5 @@ export class SystemJS {
     instantiate(url: string, parentUrl: string | undefined): Promise<SystemJS.RegisterArray>
     shouldFetch(): boolean
     fetch?: typeof globalThis.fetch
-    resolve(id, parentURL): string
+    resolve(id: string, parentURL: string): string
 }
