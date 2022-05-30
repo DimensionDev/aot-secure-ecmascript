@@ -1,4 +1,4 @@
-import type { Compartment } from "./compartment.js"
+import type { Compartment } from './compartment.js'
 
 export function makeGlobalThis(
     prototype = Object.prototype,

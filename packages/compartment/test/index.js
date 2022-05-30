@@ -1,6 +1,5 @@
-import { Compartment, createModuleCache, simpleResolveHook } from '../dist/index.js'
+import { Compartment, createModuleCache, createWebImportMeta, simpleResolveHook } from '../dist/index.js'
 import { createRequire } from 'module'
-
 
 const { modules, registerPrecompiledModules, defineByNamespace } = createModuleCache()
 globalThis.registerPrecompiledModule = registerPrecompiledModules
@@ -18,6 +17,7 @@ defineByNamespace('test', {
 }
 const compartment = new Compartment({
     resolveHook: simpleResolveHook,
+    importMetaHook: createWebImportMeta,
     globals: { console },
     moduleMapHook(fullSpec) {
         return modules.get(fullSpec)

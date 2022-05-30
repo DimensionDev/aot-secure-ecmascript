@@ -1,5 +1,11 @@
 import type { SystemJS } from './index.js'
-import type { Binding, ThirdPartyStaticModuleRecord, StaticModuleRecordInstance, StaticModuleRecordPrecompiled, StaticModuleRecordPrecompiledInitialize } from './types.js'
+import type {
+    Binding,
+    ThirdPartyStaticModuleRecord,
+    StaticModuleRecordInstance,
+    StaticModuleRecordPrecompiled,
+    StaticModuleRecordPrecompiledInitialize,
+} from './types.js'
 import { normalizeBindings } from './utils/normalize.js'
 
 /** @internal */

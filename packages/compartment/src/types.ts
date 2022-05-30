@@ -13,7 +13,7 @@ export type Binding = ImportBinding | ExportBinding
  */
 export interface ImportBinding {
     import: string
-    as?: string
+    as?: string | undefined
     from: string
 }
 /**
@@ -25,8 +25,8 @@ export interface ImportBinding {
  */
 export interface ExportBinding {
     export: string
-    as?: string
-    from?: string
+    as?: string | undefined
+    from?: string | undefined
 }
 export interface ThirdPartyStaticModuleRecord {
     bindings?: Array<Binding>

@@ -22,7 +22,10 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
     if (!desc) return undefined
     if (isModuleDescriptor_Source(desc)) {
         const { source, importMeta } = desc
-        const copy: ModuleDescriptor_Source = { source: `${source}`, importMeta: normalizeImportMeta(importMeta) }
+        const copy: ModuleDescriptor_Source = {
+            source: normalizeString(source),
+            importMeta: normalizeImportMeta(importMeta),
+        }
         return copy
     } else if (isModuleDescriptor_StaticModuleRecord(desc)) {
         const { record, importMeta } = desc
@@ -31,6 +34,10 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
             normalizedRecord = record
         } else if (brandCheck_StaticModuleRecord(record)) {
             normalizedRecord = record
+        } else if (typeof record !== 'object' || record === null) {
+            throw new TypeError(
+                'ModuleDescriptor must be either a string, StaticModuleRecord or ThirdPartyStaticModuleRecord',
+            )
         } else {
             const { initialize, needsImportMeta, bindings } = record
             const _: ThirdPartyStaticModuleRecord = (normalizedRecord = {
@@ -40,14 +47,14 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
             })
 
             if (typeof initialize !== 'function')
-                throw new TypeError('Compartment: ThirdPartyStaticModuleRecord.initialize must be a function')
+                throw new TypeError('ThirdPartyStaticModuleRecord.initialize must be a function')
         }
         const copy: ModuleDescriptor_StaticModuleRecord = { record, importMeta: normalizeImportMeta(importMeta) }
         return copy
     } else if (isModuleDescriptor_FullSpecReference(desc)) {
         const { instance, compartment } = desc
         if (compartment && !brandCheck_Compartment(compartment)) {
-            throw new TypeError('Compartment: moduleDescriptor.compartment is not a Compartment')
+            throw new TypeError('moduleDescriptor.compartment is not a Compartment')
         }
         const copy: ModuleDescriptor = { instance: `${instance}`, compartment }
         return copy
@@ -55,7 +62,7 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
         const copy: ModuleDescriptor_ModuleInstance = { namespace: Object.assign({ __proto__: null }, desc.namespace) }
         return copy
     } else {
-        throw new TypeError('Compartment: moduleDescriptor is not a valid descriptor.')
+        throw new TypeError('moduleDescriptor is not a valid descriptor.')
     }
 }
 
@@ -80,13 +87,34 @@ export function normalizeBindings(binding: Binding[] | undefined): Binding[] {
         const { as, from } = item
 
         if (typeof i !== 'undefined') {
-            result.push(Object.freeze({ import: `${i}`, as: `${as}`, from: `${from}` }))
+            if (from === undefined || from === null)
+                throw new TypeError('An ImportBinding must have a "from" property.')
+            result.push(
+                Object.freeze({
+                    import: normalizeString(i),
+                    as: normalizeStringOrUndefined(as),
+                    from: normalizeString(from),
+                }),
+            )
         } else if (typeof e !== 'undefined') {
-            result.push(Object.freeze({ export: `${e}`, as: `${as}`, from: `${from}` }))
+            result.push(
+                Object.freeze({
+                    export: normalizeString(e),
+                    as: normalizeStringOrUndefined(as),
+                    from: normalizeStringOrUndefined(from),
+                }),
+            )
         } else {
             throw new TypeError('A ModuleBinding must have either "import" or "export".')
         }
     }
     Object.freeze(result)
     return result
+}
+
+function normalizeString(x: any) {
+    return `${x}`
+}
+function normalizeStringOrUndefined(x: any) {
+    return x === undefined ? undefined : `${x}`
 }

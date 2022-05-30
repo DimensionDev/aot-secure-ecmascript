@@ -6,6 +6,7 @@ import {
 } from './StaticModuleRecord.js'
 import {
     PROMISE_STATE,
+    type Binding,
     type CompartmentInstance,
     type CompartmentOptions,
     type ModuleCache,
@@ -15,6 +16,8 @@ import {
 import { normalizeModuleDescriptor } from './utils/normalize.js'
 import { internalError, opaqueProxy } from './utils/opaqueProxy.js'
 import {
+    isExportBinding,
+    isImportBinding,
     isModuleDescriptor_FullSpecReference,
     isModuleDescriptor_ModuleInstance,
     isModuleDescriptor_Source,
@@ -102,9 +105,9 @@ export class Compartment implements CompartmentInstance {
     }
     #createImportMeta(parentID: string): object {
         const mod = this.#moduleCache.get(parentID)
-        if (!mod) throw new Error(`Compartment: internal error`)
+        if (!mod) internalError()
         const [status, item] = mod
-        if (status === PROMISE_STATE.Pending) throw new Error(`Compartment: internal error`)
+        if (status === PROMISE_STATE.Pending) internalError()
         if (status === PROMISE_STATE.Err) throw item
 
         const importMeta = Object.create(null)
@@ -145,26 +148,19 @@ export class Compartment implements CompartmentInstance {
         if (!desc && this.#opts.moduleMapHook) desc = normalizeModuleDescriptor(this.#opts.moduleMapHook(fullSpec))
         if (!desc && this.#opts.loadHook) desc = normalizeModuleDescriptor(await this.#opts.loadHook(fullSpec))
 
-        if (!desc) throw new TypeError(`Compartment: Cannot resolve module "${fullSpec}"`)
+        if (!desc) throw new TypeError(`Cannot resolve module "${fullSpec}"`)
 
         if (isModuleDescriptor_Source(desc)) {
-            throw new TypeError(`Compartment: Cannot compile source file for module "${fullSpec}"`)
+            throw new TypeError(`Cannot compile source file for module "${fullSpec}"`)
         } else if (isModuleDescriptor_FullSpecReference(desc)) {
-            if (desc.compartment) {
-                // TODO:
-                internalError()
-            } else {
-                // TODO:
-                internalError()
-            }
+            // TODO:
+            internalError()
         } else if (isModuleDescriptor_ModuleInstance(desc)) {
             return { type: 'instance', moduleInstance: desc.namespace as any }
         } else if (isModuleDescriptor_StaticModuleRecord(desc)) {
             if (typeof desc.record === 'string') {
                 if (!this.#incubatorCompartment) {
-                    throw new TypeError(
-                        `Compartment: Cannot load the StaticModuleRecord "${fullSpec}" from the top compartment.`,
-                    )
+                    throw new TypeError(`Cannot load the StaticModuleRecord "${fullSpec}" from the top compartment.`)
                 }
                 return this.#incubatorCompartment.#loadModuleDescriptor(desc.record)
             } else if (brandCheck_StaticModuleRecord(desc.record)) {
@@ -179,7 +175,7 @@ export class Compartment implements CompartmentInstance {
     }
     async #instantiate(url: string, parentUrl: string | undefined): Promise<SystemJS.RegisterArray> {
         const fullSpec = typeof parentUrl === 'string' ? this.#opts.resolveHook(url, parentUrl) : url
-        if (typeof fullSpec !== 'string') throw new TypeError(`Compartment: resolveHook must return a string.`)
+        if (typeof fullSpec !== 'string') throw new TypeError(`resolveHook must return a string.`)
 
         const module = await this.#loadModuleDescriptor(fullSpec)
         if (module.type === 'instance') {
@@ -192,7 +188,7 @@ export class Compartment implements CompartmentInstance {
                 },
             ]
         } else if (module.type === 'record') {
-            const { initialize, initializeInternal } = internalSlot_StaticModuleRecord_get(module.module)
+            const { initialize, initializeInternal, bindings } = internalSlot_StaticModuleRecord_get(module.module)
             if (initializeInternal) {
                 let x, y
                 initializeInternal
@@ -208,27 +204,99 @@ export class Compartment implements CompartmentInstance {
                 if (!x || !y) internalError()
                 return [x, y]
             } else {
-                internalError() // TODO
-                // const imports = Array.from(
-                //     new Set(module.module.bindings.map((x) => x.from).filter((x) => typeof x === 'string') as string[]),
-                // )
-                // return [
-                //     imports,
-                //     (_export: SystemJS.ExportFunction, _context: SystemJS.Context) => {
-                //         const envObject = { __proto__: { __proto__: opaqueProxy } }
-                //         return {
-                //             async execute() {
-                //                 await initialize(envObject, _context.meta, _context.import)
-                //             },
-                //             setters: [],
-                //         }
-                //     },
-                // ]
+                const { imports, moduleEnvironmentProxy, setters, init } = makeModuleEnvironmentProxy(
+                    bindings,
+                    this.#globalThis,
+                )
+                return [
+                    imports,
+                    (_export, _context) => {
+                        init(_export)
+                        return {
+                            execute: () => initialize(moduleEnvironmentProxy, _context.meta, _context.import),
+                            setters,
+                        }
+                    },
+                ]
             }
         } else {
             let _: never = module
             internalError()
         }
+    }
+}
+
+const NAMESPACE_IMPORT = '*'
+function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: object) {
+    const imports: string[] = []
+    const setters: SystemJS.SetterFunction[] = []
+    let exportF: SystemJS.ExportFunction
+
+    const importBindings = new Map<string, unknown>()
+    const exportBindings = new Map<string, unknown>()
+    const exportBindingMaps = new Map<string, string>()
+    const modules = new Map<string, Binding[]>()
+    bindings
+        .filter((b) => typeof b.from === 'string')
+        .forEach((b) => (modules.has(b.from!) ? modules.get(b.from!)!.push(b) : modules.set(b.from!, [b])))
+    bindings
+        .filter(isExportBinding)
+        .filter((b) => typeof b.from === 'undefined')
+        .forEach((b) => exportBindingMaps.set(b.export, b.as || b.export))
+
+    for (const [module, bindings] of modules) {
+        imports.push(module)
+        setters.push((newModule) => {
+            for (const binding of bindings) {
+                if (isImportBinding(binding)) {
+                    if (binding.import === NAMESPACE_IMPORT) {
+                        if (!binding.as) throw new TypeError('Compartment: Cannot import * without an alias name.')
+                        importBindings.set(binding.as, newModule)
+                    } else {
+                        importBindings.set(binding.as || binding.import, newModule[binding.import])
+                    }
+                } else {
+                    if (binding.export === NAMESPACE_IMPORT) {
+                        if (binding.as) exportF(binding.as, newModule)
+                        else {
+                            const newModuleExcludeDefault = Object.assign({}, newModule)
+                            delete (newModuleExcludeDefault as any).default
+                            exportF(newModuleExcludeDefault)
+                        }
+                    } else {
+                        exportF!(binding.as || binding.export, newModule[binding.export])
+                    }
+                }
+            }
+        })
+    }
+
+    return {
+        imports,
+        moduleEnvironmentProxy: new Proxy(Object.freeze(Object.create(null)), {
+            get(_, key) {
+                if (key === Symbol.unscopables) return []
+                if (typeof key !== 'string') internalError()
+                if (importBindings.has(key)) return importBindings.get(key)
+                if (exportBindingMaps.has(key)) return exportBindings.get(key)
+                return Reflect.get(globalThis, key)
+            },
+            set(_, key, value) {
+                if (typeof key !== 'string') internalError()
+                if (importBindings.has(key)) return false
+                if (exportBindingMaps.has(key)) {
+                    exportF(exportBindingMaps.get(key)!, value)
+                    return true
+                }
+                return Reflect.set(globalThis, key, value)
+            },
+            has(_, key) {
+                if (typeof key !== 'string') internalError()
+                return importBindings.has(key) || exportBindingMaps.has(key) || Reflect.has(globalThis, key)
+            },
+        }),
+        setters,
+        init: (_: SystemJS.ExportFunction) => (exportF = _),
     }
 }
 
