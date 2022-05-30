@@ -1,4 +1,10 @@
-import { Compartment, createModuleCache, createWebImportMeta, simpleResolveHook } from '../dist/index.js'
+import {
+    Compartment,
+    createModuleCache,
+    createWebImportMeta,
+    simpleResolveHook,
+    StaticModuleRecord,
+} from '../dist/index.js'
 import { createRequire } from 'module'
 
 const { modules, registerPrecompiledModules, defineByNamespace } = createModuleCache()
@@ -8,6 +14,23 @@ defineByNamespace('test', {
     x() {
         return 'hi~'
     },
+})
+
+modules.set('test-2', {
+    record: new StaticModuleRecord({
+        initialize(env) {
+            /** @type {Compartment} */
+            const c = new env.Compartment({
+                resolveHook: simpleResolveHook,
+                globals: { console },
+                moduleMap: {
+                    '/index.js': { record: '/index.js' },
+                    'test': { record: 'test' },
+                },
+            })
+            c.import('/index.js')
+        },
+    }),
 })
 
 // load module
@@ -24,5 +47,5 @@ const compartment = new Compartment({
     },
 })
 // should print "hi~"
-const mod = await compartment.import('/index.js')
-console.log(mod)
+await compartment.import('/index.js')
+await compartment.import('test-2')

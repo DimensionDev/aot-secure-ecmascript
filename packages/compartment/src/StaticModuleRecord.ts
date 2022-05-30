@@ -1,4 +1,3 @@
-import type { SystemJS } from './index.js'
 import type {
     Binding,
     ThirdPartyStaticModuleRecord,
@@ -10,6 +9,7 @@ import { normalizeBindings } from './utils/normalize.js'
 
 /** @internal */
 export const StaticModuleRecordPrecompiledSymbol = Symbol()
+
 /** @internal */
 export let internalSlot_StaticModuleRecord_get: (mod: StaticModuleRecord) => {
     needImportMeta: boolean
@@ -17,6 +17,7 @@ export let internalSlot_StaticModuleRecord_get: (mod: StaticModuleRecord) => {
     initialize: ThirdPartyStaticModuleRecord['initialize']
     initializeInternal: undefined | StaticModuleRecordPrecompiledInitialize
 }
+
 /** @internal */
 export let brandCheck_StaticModuleRecord: (mod: unknown) => mod is StaticModuleRecord
 
@@ -53,6 +54,6 @@ export class StaticModuleRecord implements StaticModuleRecordInstance {
     }
     #needImportMeta = false
     #bindings: readonly Binding[] = []
-    #initialize!: ThirdPartyStaticModuleRecord['initialize']
+    #initialize: ThirdPartyStaticModuleRecord['initialize']
     #initializeInternal: StaticModuleRecordPrecompiledInitialize | undefined
 }

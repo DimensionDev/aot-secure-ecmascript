@@ -283,7 +283,7 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
             },
             set(_, key, value) {
                 if (typeof key !== 'string') internalError()
-                if (importBindings.has(key)) return false
+                if (importBindings.has(key)) throw new TypeError(`Import binding ${key} is readonly.`)
                 if (exportBindingMaps.has(key)) {
                     exportF(exportBindingMaps.get(key)!, value)
                     return true

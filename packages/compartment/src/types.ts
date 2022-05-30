@@ -87,15 +87,18 @@ export interface CompartmentInstance {
     loadNow?(fullSpec: string): void
 }
 // Internal implementation
+
 /** @internal */
 export type ModuleCache =
     | [PROMISE_STATE.Ok, ModuleCacheItem]
     | [PROMISE_STATE.Pending, Promise<ModuleCacheItem>]
     | [PROMISE_STATE.Err, unknown]
+
 /** @internal */
 export type ModuleCacheItem =
     | { type: 'instance'; moduleInstance: SystemJS.Module }
     | { type: 'record'; module: StaticModuleRecord; extraImportMeta: object | null | undefined }
+
 /** @internal */
 export const enum PROMISE_STATE {
     Ok = 0,
@@ -111,7 +114,11 @@ export type StaticModuleRecordPrecompiledInitialize = (this: {
     opaqueProxy: object
     globalThis: object
 }) => (this: { register(imports: string[], register: SystemJS.DeclareFunction): void }) => void
+
+/** @internal */
 export interface StaticModuleRecordPrecompiled extends ThirdPartyStaticModuleRecord {
-    /** @internal Used in this project only. */
-    [StaticModuleRecordPrecompiledSymbol]: StaticModuleRecordPrecompiledInitialize
+    [StaticModuleRecordPrecompiledSymbol]: (this: {
+        opaqueProxy: object
+        globalThis: object
+    }) => (this: { register(imports: string[], register: SystemJS.DeclareFunction): void }) => void
 }
