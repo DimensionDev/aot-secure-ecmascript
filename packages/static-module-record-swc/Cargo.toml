@@ -1,0 +1,19 @@
+[package]
+name = "swc-transformer-static-module-record"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+serde = "1"
+swc_plugin = "*"
+swc_common = "0.18.7"
+swc_ecma_transforms_testing = "0.88.0"
+swc_ecma_parser = "0.104.2"
+testing = "0.20.1"
+swc_ecma_transforms = "0.156.0"
+
+[build]
+target = "wasm32-unknown-unknown"

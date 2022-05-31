@@ -6,6 +6,10 @@
     "default": "./dist/index.js"
   },
   "dependencies": {},
-  "devDependencies": {},
-  "peerDependencies": {}
+  "devDependencies": {
+    "@swc/core": "^1.2.194"
+  },
+  "peerDependencies": {
+    "@swc/core": "^1.2"
+  }
 }

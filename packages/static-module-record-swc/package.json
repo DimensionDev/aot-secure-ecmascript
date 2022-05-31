@@ -1,0 +1,14 @@
+{
+    "name": "@masknet/static-module-record-swc",
+    "version": "0.1.0",
+    "description": "",
+    "author": "",
+    "license": "MIT",
+    "keywords": ["swc-plugin"],
+    "main": "target/wasm32-unknown-unknown/release/swc-transformer.wasm",
+    "scripts": {
+        "prepublishOnly": "cargo build --release --target wasm32-unknown-unknown",
+        "test": "cargo test"
+    },
+    "files": []
+}
