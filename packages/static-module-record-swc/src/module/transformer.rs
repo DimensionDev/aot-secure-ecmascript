@@ -8,12 +8,45 @@ use super::StaticModuleRecordTransformer;
 impl StaticModuleRecordTransformer {
     pub fn transform_module(&mut self, module: Module) -> Vec<Stmt> {
         let module = Module {
-            body: (&module.body)
+            body: module
+                .body
                 .into_iter()
-                .flat_map(|item| match item {
-                    ModuleItem::ModuleDecl(_) => vec![],
-                    ModuleItem::Stmt(_) => vec![],
+                .filter_map(|item| -> Option<Stmt> {
+                    match item {
+                        ModuleItem::ModuleDecl(node) => match node {
+                            ModuleDecl::Import(_) => None,
+                            ModuleDecl::ExportDecl(_) => todo!(),
+                            ModuleDecl::ExportNamed(_) => todo!(),
+                            ModuleDecl::ExportDefaultDecl(_) => todo!(),
+                            // export default expr => env.default = expr
+                            ModuleDecl::ExportDefaultExpr(node) => Some(Stmt::Expr(ExprStmt {
+                                span: DUMMY_SP,
+                                expr: Box::new(
+                                    AssignExpr {
+                                        left: PatOrExpr::Expr(Box::new(
+                                            MemberExpr {
+                                                obj: Box::new(module_environment_record().into()),
+                                                prop: ident_default().into(),
+                                                span: DUMMY_SP,
+                                            }
+                                            .into(),
+                                        )),
+                                        op: op!("="),
+                                        right: node.expr,
+                                        span: DUMMY_SP,
+                                    }
+                                    .into(),
+                                ),
+                            })),
+                            ModuleDecl::ExportAll(_) => None,
+                            ModuleDecl::TsImportEquals(_) => unimplemented!(),
+                            ModuleDecl::TsExportAssignment(_) => unimplemented!(),
+                            ModuleDecl::TsNamespaceExport(_) => unimplemented!(),
+                        },
+                        ModuleItem::Stmt(node) => node.fold_children_with(self).into(),
+                    }
                 })
+                .map(|f| f.into())
                 .collect(),
             shebang: None,
             span: DUMMY_SP,

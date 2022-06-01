@@ -1,11 +1,12 @@
 // @ts-nocheck
 export default (StaticModuleRecord)=>new StaticModuleRecord({
-        bindings: [],
-        needsImportMeta: true,
+        bindings: [
+            {
+                export: "default"
+            }
+        ],
+        needsImportMeta: false,
         initialize: function(module_environment_record, import_meta, dynamic_import) {
-            import_meta;
-            import_meta();
-            import_meta['url'];
-            alert(import_meta.url);
+            module_environment_record.default = 'foo';
         }
     });

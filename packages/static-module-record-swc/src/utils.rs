@@ -14,8 +14,12 @@ pub fn dynamic_import() -> Ident {
     private_ident!("dynamic_import")
 }
 
+pub fn ident_default() -> Ident {
+    Ident::new("default".into(), DUMMY_SP)
+}
+
 pub fn static_module_record() -> Ident {
-    Ident { span: DUMMY_SP, sym: "StaticModuleRecord".into(), optional: false }
+    Ident::new("StaticModuleRecord".into(), DUMMY_SP)
 }
 
 pub fn key_value(key: JsWord, expr: Expr) -> PropOrSpread {
