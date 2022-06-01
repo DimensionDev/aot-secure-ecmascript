@@ -1,7 +1,6 @@
+use crate::utils::*;
 use swc_common::DUMMY_SP;
 use swc_plugin::ast::*;
-
-use crate::utils::{self, key_value};
 
 #[derive(Clone)]
 pub enum Binding {
@@ -62,8 +61,8 @@ impl ModuleBinding {
                 .into(),
                 ModuleExportName::Str(f) => f.clone().into(),
             },
-            ModuleBinding::Namespace => utils::str_lit("*".into()),
-            ModuleBinding::Default => utils::str_lit("default".into()),
+            ModuleBinding::Namespace => str_lit("*".into()),
+            ModuleBinding::Default => str_lit("default".into()),
         }
     }
 }
@@ -75,10 +74,7 @@ impl ImportBinding {
         ];
         // TODO: omit "as" when it is the same as "import"
         if let Some(alias) = &self.alias {
-            result.push(key_value(
-                "as".into(),
-                utils::str_lit(alias.to_id().0).into(),
-            ));
+            result.push(key_value("as".into(), str_lit(alias.to_id().0).into()));
         }
         ObjectLit {
             span: DUMMY_SP,
@@ -114,7 +110,7 @@ impl ExportBinding {
             result.push(key_value(
                 "as".into(),
                 match alias {
-                    ModuleExportName::Ident(alias) => utils::str_lit(alias.to_id().0).into(),
+                    ModuleExportName::Ident(alias) => str_lit(alias.to_id().0).into(),
                     ModuleExportName::Str(str) => str.clone().into(),
                 },
             ));

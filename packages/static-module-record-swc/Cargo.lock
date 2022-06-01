@@ -1184,6 +1184,7 @@ name = "swc-transformer-static-module-record"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
  "swc_common",
  "swc_ecma_parser",
  "swc_ecma_transforms",
