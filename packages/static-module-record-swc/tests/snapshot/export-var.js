@@ -25,6 +25,9 @@ export default new StaticModuleRecord({
         {
             export: "a",
             as: "z"
+        },
+        {
+            export: "T"
         }
     ],
     needsImportMeta: false,
@@ -49,5 +52,8 @@ export default new StaticModuleRecord({
         ];
         lexical_scope.d = d;
         lexical_scope.x = x;
+        class T {
+        }
+        lexical_scope.T = T;
     }
 });

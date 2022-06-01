@@ -17,53 +17,9 @@ impl StaticModuleRecordTransformer {
                             // we have environment record!
                             ModuleDecl::Import(_) => vec![],
                             ModuleDecl::ExportDecl(decl) => match decl.decl {
-                                Decl::Class(class) => {
-                                    let class = class.fold_children_with(self);
-                                    vec![Stmt::Expr(ExprStmt {
-                                        span: DUMMY_SP,
-                                        expr: Box::new(assign_env_rec(
-                                            class.ident.clone().into(),
-                                            Box::new(
-                                                ClassExpr {
-                                                    ident: Some(class.ident),
-                                                    class: class.class,
-                                                }
-                                                .into(),
-                                            ),
-                                        )),
-                                    })]
-                                }
-                                Decl::Fn(f) => {
-                                    let f = f.fold_children_with(self);
-                                    vec![Stmt::Expr(ExprStmt {
-                                        span: DUMMY_SP,
-                                        expr: Box::new(assign_env_rec(
-                                            f.ident.clone().into(),
-                                            Box::new(
-                                                FnExpr {
-                                                    ident: Some(f.ident),
-                                                    function: f.function,
-                                                }
-                                                .into(),
-                                            ),
-                                        )),
-                                    })]
-                                }
-                                Decl::Var(decl) => {
-                                    let decl = decl.fold_children_with(self);
-                                    let mut assign_exprs = vec![];
-                                    for item in &decl.decls {
-                                        self.live_export_pat(&item.name, &mut assign_exprs);
-                                    }
-                                    let mut result = vec![Stmt::Decl(decl.into())];
-                                    for expr in assign_exprs {
-                                        result.push(Stmt::Expr(ExprStmt {
-                                            span: DUMMY_SP,
-                                            expr: Box::new(expr),
-                                        }))
-                                    }
-                                    result
-                                }
+                                Decl::Class(class) => self.fold_top_level_decl(class.into()),
+                                Decl::Fn(f) => self.fold_top_level_decl(f.into()),
+                                Decl::Var(decl) => self.fold_top_level_decl(decl.into()),
                                 Decl::TsInterface(_) => unimplemented!(),
                                 Decl::TsTypeAlias(_) => unimplemented!(),
                                 Decl::TsEnum(_) => unimplemented!(),
@@ -74,20 +30,46 @@ impl StaticModuleRecordTransformer {
                             // we totally omit this, because it will be handled in the definition site (the referenced value may be in the TDZ).
                             ModuleDecl::ExportNamed(_) => vec![],
                             ModuleDecl::ExportDefaultDecl(decl) => match decl.decl {
-                                DefaultDecl::Class(class) => vec![Stmt::Expr(ExprStmt {
-                                    span: DUMMY_SP,
-                                    expr: Box::new(assign_env_rec(
-                                        ident_default().into(),
-                                        Box::new(class.fold_children_with(self).into()),
-                                    )),
-                                })],
-                                DefaultDecl::Fn(f) => vec![Stmt::Expr(ExprStmt {
-                                    span: DUMMY_SP,
-                                    expr: Box::new(assign_env_rec(
-                                        ident_default().into(),
-                                        Box::new(f.fold_children_with(self).into()),
-                                    )),
-                                })],
+                                DefaultDecl::Class(class) => {
+                                    if let Some(name) = &class.ident {
+                                        self.fold_top_level_decl(
+                                            ClassDecl {
+                                                class: class.class,
+                                                declare: false,
+                                                ident: name.clone(),
+                                            }
+                                            .into(),
+                                        )
+                                    } else {
+                                        vec![Stmt::Expr(ExprStmt {
+                                            span: DUMMY_SP,
+                                            expr: Box::new(assign_env_rec(
+                                                ident_default().into(),
+                                                Box::new(class.fold_children_with(self).into()),
+                                            )),
+                                        })]
+                                    }
+                                }
+                                DefaultDecl::Fn(f) => {
+                                    if let Some(name) = &f.ident {
+                                        self.fold_top_level_decl(
+                                            FnDecl {
+                                                declare: false,
+                                                ident: name.clone(),
+                                                function: f.function,
+                                            }
+                                            .into(),
+                                        )
+                                    } else {
+                                        vec![Stmt::Expr(ExprStmt {
+                                            span: DUMMY_SP,
+                                            expr: Box::new(assign_env_rec(
+                                                ident_default().into(),
+                                                Box::new(f.fold_children_with(self).into()),
+                                            )),
+                                        })]
+                                    }
+                                }
                                 DefaultDecl::TsInterfaceDecl(_) => unimplemented!(),
                             },
                             // export default expr => env.default = expr
@@ -104,7 +86,13 @@ impl StaticModuleRecordTransformer {
                             ModuleDecl::TsExportAssignment(_) => unimplemented!(),
                             ModuleDecl::TsNamespaceExport(_) => unimplemented!(),
                         },
-                        ModuleItem::Stmt(node) => vec![node.fold_children_with(self).into()],
+                        ModuleItem::Stmt(node) => match node {
+                            Stmt::For(_) => todo!(),
+                            Stmt::ForIn(_) => todo!(),
+                            Stmt::ForOf(_) => todo!(),
+                            Stmt::Decl(decl) => self.fold_top_level_decl(decl),
+                            _ => vec![node.fold_children_with(self)],
+                        },
                     }
                 })
                 .map(|f| f.into())
@@ -162,6 +150,30 @@ impl StaticModuleRecordTransformer {
                 )),
             }
         }
+    }
+    fn fold_top_level_decl(&mut self, decl: Decl) -> Vec<Stmt> {
+        let mut assign_exprs = vec![];
+        match &decl {
+            Decl::Class(class) => self.trace_live_export(&class.ident, &mut assign_exprs),
+            Decl::Fn(f) => self.trace_live_export(&f.ident, &mut assign_exprs),
+            Decl::Var(decl) => {
+                for item in &decl.decls {
+                    self.live_export_pat(&item.name, &mut assign_exprs);
+                }
+            }
+            Decl::TsInterface(_) => unimplemented!(),
+            Decl::TsTypeAlias(_) => unimplemented!(),
+            Decl::TsEnum(_) => unimplemented!(),
+            Decl::TsModule(_) => unimplemented!(),
+        };
+        std::iter::once(decl.fold_children_with(self).into())
+            .chain(assign_exprs.into_iter().map(|x| {
+                Stmt::Expr(ExprStmt {
+                    span: DUMMY_SP,
+                    expr: Box::new(x),
+                })
+            }))
+            .collect()
     }
 }
 

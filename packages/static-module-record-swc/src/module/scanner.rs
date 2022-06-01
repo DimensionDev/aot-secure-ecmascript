@@ -186,8 +186,8 @@ pub fn scan_pat(pat: &Pat) -> Vec<Binding> {
             .flat_map(|x| x.into_iter())
             .collect(),
         Pat::Assign(assign) => scan_pat(&assign.left),
-        Pat::Invalid(_) => vec![],
-        Pat::Expr(_) => vec![],
+        Pat::Invalid(_) => unreachable![],
+        Pat::Expr(_) => todo![],
     }
 }
 
