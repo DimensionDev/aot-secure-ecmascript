@@ -3,7 +3,7 @@ use swc_plugin::ast::*;
 
 use crate::utils::*;
 
-use super::StaticModuleRecordTransformer;
+use super::{codegen::assign_env_rec, StaticModuleRecordTransformer};
 
 impl StaticModuleRecordTransformer {
     pub fn transform_module(&mut self, module: Module) -> Vec<Stmt> {
@@ -17,26 +17,27 @@ impl StaticModuleRecordTransformer {
                             ModuleDecl::Import(_) => None,
                             ModuleDecl::ExportDecl(_) => todo!(),
                             ModuleDecl::ExportNamed(_) => todo!(),
-                            ModuleDecl::ExportDefaultDecl(_) => todo!(),
+                            ModuleDecl::ExportDefaultDecl(decl) => match decl.decl {
+                                DefaultDecl::Class(class) => Some(Stmt::Expr(ExprStmt {
+                                    span: DUMMY_SP,
+                                    expr: Box::new(assign_env_rec(
+                                        ident_default().into(),
+                                        Box::new(class.into()),
+                                    )),
+                                })),
+                                DefaultDecl::Fn(f) => Some(Stmt::Expr(ExprStmt {
+                                    span: DUMMY_SP,
+                                    expr: Box::new(assign_env_rec(
+                                        ident_default().into(),
+                                        Box::new(f.into()),
+                                    )),
+                                })),
+                                DefaultDecl::TsInterfaceDecl(_) => unimplemented!(),
+                            },
                             // export default expr => env.default = expr
                             ModuleDecl::ExportDefaultExpr(node) => Some(Stmt::Expr(ExprStmt {
                                 span: DUMMY_SP,
-                                expr: Box::new(
-                                    AssignExpr {
-                                        left: PatOrExpr::Expr(Box::new(
-                                            MemberExpr {
-                                                obj: Box::new(module_environment_record().into()),
-                                                prop: ident_default().into(),
-                                                span: DUMMY_SP,
-                                            }
-                                            .into(),
-                                        )),
-                                        op: op!("="),
-                                        right: node.expr,
-                                        span: DUMMY_SP,
-                                    }
-                                    .into(),
-                                ),
+                                expr: Box::new(assign_env_rec(ident_default().into(), node.expr)),
                             })),
                             ModuleDecl::ExportAll(_) => None,
                             ModuleDecl::TsImportEquals(_) => unimplemented!(),

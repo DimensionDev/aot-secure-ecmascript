@@ -94,3 +94,20 @@ fn export_default_expr(new_expr: Expr) -> Vec<ModuleItem> {
     .into();
     vec![export_default_expr.into()]
 }
+
+pub fn assign_env_rec(assign_to: MemberProp, expr: Box<Expr>) -> Expr {
+    AssignExpr {
+        left: PatOrExpr::Expr(Box::new(
+            MemberExpr {
+                obj: Box::new(module_environment_record().into()),
+                prop: assign_to,
+                span: DUMMY_SP,
+            }
+            .into(),
+        )),
+        op: op!("="),
+        right: expr,
+        span: DUMMY_SP,
+    }
+    .into()
+}
