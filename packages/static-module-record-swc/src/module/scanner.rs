@@ -32,7 +32,7 @@ pub fn scan_module_item(decl: &ModuleDecl) -> Vec<Binding> {
                     }
                     ImportSpecifier::Default(spec) => result.push(
                         ImportBinding {
-                            import: ModuleBinding::Default,
+                            import: ModuleBinding::default_export(),
                             alias: Some(spec.local.clone()),
                             from: import.src.clone(),
                         }
@@ -82,7 +82,7 @@ pub fn scan_module_item(decl: &ModuleDecl) -> Vec<Binding> {
                     ExportSpecifier::Default(spec) => {
                         result.push(
                             ExportBinding {
-                                export: ModuleBinding::Default,
+                                export: ModuleBinding::default_export(),
                                 alias: Some(spec.exported.clone().into()),
                                 from: export.src.clone(),
                             }
@@ -121,7 +121,7 @@ pub fn scan_module_item(decl: &ModuleDecl) -> Vec<Binding> {
                 result.push(
                     ExportBinding {
                         from: None,
-                        export: ModuleBinding::Default,
+                        export: ModuleBinding::default_export(),
                         alias: None,
                     }
                     .into(),
@@ -132,7 +132,7 @@ pub fn scan_module_item(decl: &ModuleDecl) -> Vec<Binding> {
             result.push(
                 ExportBinding {
                     from: None,
-                    export: ModuleBinding::Default,
+                    export: ModuleBinding::default_export(),
                     alias: None,
                 }
                 .into(),
@@ -198,6 +198,7 @@ impl StaticModuleRecordTransformer {
             .filter_map(|x| x.as_module_decl())
             .flat_map(scan_module_item)
             .collect();
+        self.local_modifiable_bindings = local_modifiable_bindings(&self.bindings);
         self.uses_top_level_await = contains_top_level_await(n);
     }
 }

@@ -4,7 +4,7 @@ use swc_common::comments::SingleThreadedComments;
 use swc_ecma_parser::Syntax;
 use swc_ecma_transforms_testing::{test, Tester};
 
-use crate::module::config::{Config, Template};
+use crate::module::config::Config;
 use crate::StaticModuleRecordTransformer;
 
 #[testing::fixture("tests/fixture/**/*.js")]
@@ -15,7 +15,7 @@ fn test(input: PathBuf) {
 
     Tester::run(|tester| {
         let actual = tester.apply_transform(
-            StaticModuleRecordTransformer::new(config.unwrap_or(default_config())),
+            StaticModuleRecordTransformer::new(config.unwrap_or_default()),
             "input.js",
             Syntax::Es(Default::default()),
             file.as_str(),
@@ -34,12 +34,6 @@ fn parse_config(file: &String) -> Option<Config> {
         Some(config)
     } else {
         None
-    }
-}
-fn default_config() -> Config {
-    Config {
-        global_static_module_constructor: false,
-        template: Template::ExportDefault,
     }
 }
 

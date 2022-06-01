@@ -7,11 +7,11 @@ pub fn import_meta() -> Ident {
 }
 
 pub fn module_environment_record() -> Ident {
-    private_ident!("module_environment_record")
+    private_ident!("lexical_scope")
 }
 
 pub fn dynamic_import() -> Ident {
-    private_ident!("dynamic_import")
+    private_ident!("import_")
 }
 
 pub fn ident_default() -> Ident {

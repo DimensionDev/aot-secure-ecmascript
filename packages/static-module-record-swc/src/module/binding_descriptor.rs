@@ -26,8 +26,6 @@ pub struct ExportBinding {
 pub enum ModuleBinding {
     ModuleExportName(ModuleExportName),
     Namespace,
-    // sugar for ModuleExportName(Ident("default"))
-    Default,
 }
 
 impl Into<ModuleBinding> for Ident {
@@ -62,8 +60,10 @@ impl ModuleBinding {
                 ModuleExportName::Str(f) => f.clone().into(),
             },
             ModuleBinding::Namespace => str_lit("*".into()),
-            ModuleBinding::Default => str_lit("default".into()),
         }
+    }
+    pub fn default_export() -> ModuleBinding {
+        ModuleBinding::ModuleExportName(ModuleExportName::Ident(ident_default().into()))
     }
 }
 impl ImportBinding {
@@ -144,18 +144,32 @@ impl Binding {
     }
 }
 
-pub fn _local_modifiable_bindings(
-    bindings: &Vec<Binding>,
-) -> Vec<(&ModuleBinding, &Option<ModuleExportName>)> {
+pub struct LocalModifiableBinding {
+    pub local_ident: Ident,
+    pub export: ModuleExportName,
+}
+pub fn local_modifiable_bindings(bindings: &Vec<Binding>) -> Vec<LocalModifiableBinding> {
     bindings
         .into_iter()
-        .filter_map(|binding: &Binding| match binding {
-            Binding::Import(_) => None,
-            Binding::Export(export) => {
-                if export.from.is_some() {
-                    None
-                } else {
-                    Some((&export.export, &export.alias))
+        .filter_map(|binding: &Binding| -> Option<LocalModifiableBinding> {
+            match binding {
+                Binding::Import(_) => None,
+                Binding::Export(export) => {
+                    if export.from.is_some() {
+                        None
+                    } else {
+                        match &export.export {
+                            ModuleBinding::ModuleExportName(name) => match name {
+                                ModuleExportName::Ident(id) => Some(LocalModifiableBinding {
+                                    local_ident: id.clone(),
+                                    export: export.alias.clone().unwrap_or(id.clone().into()),
+                                }),
+                                // export { "x" } from 'other'
+                                ModuleExportName::Str(_) => None,
+                            },
+                            ModuleBinding::Namespace => None,
+                        }
+                    }
                 }
             }
         })

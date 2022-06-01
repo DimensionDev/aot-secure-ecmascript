@@ -16,7 +16,8 @@ pub struct StaticModuleRecordTransformer {
     uses_import_meta: bool,
     uses_top_level_await: bool,
     bindings: Vec<Binding>,
-    config: Config,
+    local_modifiable_bindings: Vec<LocalModifiableBinding>,
+    pub config: Config,
 }
 
 impl StaticModuleRecordTransformer {
@@ -25,6 +26,7 @@ impl StaticModuleRecordTransformer {
             uses_import_meta: false,
             uses_top_level_await: false,
             bindings: Vec::new(),
+            local_modifiable_bindings: Vec::new(),
             config,
         }
     }

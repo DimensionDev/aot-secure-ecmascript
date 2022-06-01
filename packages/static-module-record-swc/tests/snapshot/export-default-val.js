@@ -1,12 +1,12 @@
 // @ts-nocheck
-export default (StaticModuleRecord)=>new StaticModuleRecord({
-        bindings: [
-            {
-                export: "default"
-            }
-        ],
-        needsImportMeta: false,
-        initialize: function(module_environment_record, import_meta, dynamic_import) {
-            module_environment_record.default = 'foo';
+export default new StaticModuleRecord({
+    bindings: [
+        {
+            export: "default"
         }
-    });
+    ],
+    needsImportMeta: false,
+    initialize: function(lexical_scope, import_meta, import_) {
+        lexical_scope.default = 'foo';
+    }
+});

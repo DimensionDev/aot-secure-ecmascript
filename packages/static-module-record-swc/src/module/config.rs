@@ -19,7 +19,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             template: Template::ExportDefault,
-            global_static_module_constructor: false,
+            global_static_module_constructor: true,
         }
     }
 }
