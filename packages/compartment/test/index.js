@@ -5,39 +5,14 @@ import {
     simpleResolveHook,
     StaticModuleRecord,
 } from '../dist/index.js'
-import { createRequire } from 'module'
+import mod1 from '../../static-module-record-swc/tests/snapshot/import-and-export.js'
+import mod2 from '../../static-module-record-swc/tests/snapshot/import-and-export-live.js'
 
-const { modules, registerPrecompiledModules, defineByNamespace } = createModuleCache()
-globalThis.registerPrecompiledModule = registerPrecompiledModules
+const { modules } = createModuleCache()
 
-defineByNamespace('test', {
-    x() {
-        return 'hi~'
-    },
-})
+modules.set('/index.js', { record: mod1(StaticModuleRecord) })
+modules.set('live-test', { record: mod2(StaticModuleRecord) })
 
-modules.set('test-2', {
-    record: new StaticModuleRecord({
-        initialize(env) {
-            /** @type {Compartment} */
-            const c = new env.Compartment({
-                resolveHook: simpleResolveHook,
-                globals: { console },
-                moduleMap: {
-                    '/index.js': { record: '/index.js' },
-                    'test': { record: 'test' },
-                },
-            })
-            c.import('/index.js')
-        },
-    }),
-})
-
-// load module
-{
-    const require = createRequire(import.meta.url)
-    require('./precompiled.cjs')
-}
 const compartment = new Compartment({
     resolveHook: simpleResolveHook,
     importMetaHook: createWebImportMeta,
@@ -46,6 +21,4 @@ const compartment = new Compartment({
         return modules.get(fullSpec)
     },
 })
-// should print "hi~"
 await compartment.import('/index.js')
-await compartment.import('test-2')

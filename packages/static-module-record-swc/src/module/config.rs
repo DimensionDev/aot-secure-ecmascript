@@ -6,7 +6,7 @@ pub struct Config {
     /// The template of code generation
     pub template: Template,
 
-    #[serde(rename = "noGlobalStaticModuleRecord")]
+    #[serde(rename = "globalStaticModuleRecord")]
     /// When there is no global StaticModuleRecord constructor available,
     /// switch on this option, and it will generate code like this so you can provide your local implementation.
     /// ```js

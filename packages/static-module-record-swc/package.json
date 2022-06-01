@@ -2,6 +2,7 @@
     "name": "@masknet/static-module-record-swc",
     "version": "0.1.0",
     "description": "",
+    "type": "module",
     "author": "",
     "license": "MIT",
     "keywords": ["swc-plugin"],

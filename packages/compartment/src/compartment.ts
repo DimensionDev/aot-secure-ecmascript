@@ -228,75 +228,97 @@ export class Compartment implements CompartmentInstance {
 
 const NAMESPACE_IMPORT = '*'
 function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: object) {
-    const imports: string[] = []
-    const setters: SystemJS.SetterFunction[] = []
-    let exportF: SystemJS.ExportFunction
+    const systemImports: string[] = []
+    const systemSetters: SystemJS.SetterFunction[] = []
+    let systemExport: SystemJS.ExportFunction
 
-    const importBindings = new Map<string, unknown>()
-    const exportBindings = new Map<string, unknown>()
-    const exportBindingMaps = new Map<string, string>()
+    // categorize bindings by module name, so our work will be easier later.
     const modules = new Map<string, Binding[]>()
     bindings
         .filter((b) => typeof b.from === 'string')
         .forEach((b) => (modules.has(b.from!) ? modules.get(b.from!)!.push(b) : modules.set(b.from!, [b])))
-    bindings
-        .filter(isExportBinding)
-        .filter((b) => typeof b.from === 'undefined')
-        .forEach((b) => exportBindingMaps.set(b.export, b.as || b.export))
+
+    // Scope order: Export > Imports > GlobalThis
+    // TODO: in normalizeBinding, do not allow duplicated local bindings.
+
+    // here we initialize the initial import(TDZ)/export bindings for importExportLexical
+    const importExportLexical = Object.create(
+        globalThis,
+        Object.fromEntries(
+            bindings
+                .map((binding): [string, PropertyDescriptor] => {
+                    if (isImportBinding(binding)) {
+                        // TDZ for import bindings.
+                        if (binding.import === NAMESPACE_IMPORT)
+                            return [binding.as!, { configurable: true, get: internalError }]
+                        else return [binding.as ?? binding.import, { configurable: true, get: internalError }]
+                    } else {
+                        if (typeof binding.from === 'string') return undefined!
+                        // export live binding here.
+                        let value: any
+                        const exportName = binding.as ?? binding.export
+                        return [
+                            exportName,
+                            {
+                                get: () => value,
+                                set: (v) => {
+                                    value = v
+                                    systemExport(exportName, v)
+                                },
+                            },
+                        ]
+                    }
+                })
+                .filter(Boolean),
+        ),
+    )
 
     for (const [module, bindings] of modules) {
-        imports.push(module)
-        setters.push((newModule) => {
+        systemImports.push(module)
+        systemSetters.push((module) => {
             for (const binding of bindings) {
                 if (isImportBinding(binding)) {
+                    // update live binding
                     if (binding.import === NAMESPACE_IMPORT) {
-                        if (!binding.as) throw new TypeError('Compartment: Cannot import * without an alias name.')
-                        importBindings.set(binding.as, newModule)
-                    } else {
-                        importBindings.set(binding.as || binding.import, newModule[binding.import])
+                        Object.defineProperty(importExportLexical, binding.as!, { configurable: true, value: module })
+                    } else if (Reflect.getOwnPropertyDescriptor(module, binding.import)) {
+                        Object.defineProperty(importExportLexical, binding.as ?? binding.import, {
+                            configurable: true,
+                            value: module[binding.import],
+                        })
                     }
-                } else {
-                    if (binding.export === NAMESPACE_IMPORT) {
-                        if (binding.as) exportF(binding.as, newModule)
-                        else {
-                            const newModuleExcludeDefault = Object.assign({}, newModule)
-                            delete (newModuleExcludeDefault as any).default
-                            exportF(newModuleExcludeDefault)
-                        }
-                    } else {
-                        exportF!(binding.as || binding.export, newModule[binding.export])
+                } else if (typeof binding.from === 'string') {
+                    // export * from 'mod'
+                    if (binding.export === NAMESPACE_IMPORT) systemExport(module)
+                    // export { a as b } from 'mod' (export = a, as = b)
+                    else if (Reflect.getOwnPropertyDescriptor(module, binding.export)) {
+                        systemExport(binding.as ?? binding.export, module[binding.export])
                     }
                 }
             }
         })
     }
 
+    // Only [[Get]] and [[Set]] is allowed.
+    const moduleEnvironmentProxy = new Proxy(importExportLexical, {
+        getOwnPropertyDescriptor: internalError,
+        defineProperty: internalError,
+        deleteProperty: internalError,
+        getPrototypeOf: internalError,
+        has: internalError,
+        isExtensible: internalError,
+        ownKeys: internalError,
+        preventExtensions: internalError,
+        setPrototypeOf: internalError,
+        apply: internalError,
+        construct: internalError,
+    })
+
     return {
-        imports,
-        moduleEnvironmentProxy: new Proxy(Object.freeze(Object.create(null)), {
-            get(_, key) {
-                if (key === Symbol.unscopables) return []
-                if (typeof key !== 'string') internalError()
-                if (importBindings.has(key)) return importBindings.get(key)
-                if (exportBindingMaps.has(key)) return exportBindings.get(key)
-                return Reflect.get(globalThis, key)
-            },
-            set(_, key, value) {
-                if (typeof key !== 'string') internalError()
-                if (importBindings.has(key)) throw new TypeError(`Import binding ${key} is readonly.`)
-                if (exportBindingMaps.has(key)) {
-                    exportF(exportBindingMaps.get(key)!, value)
-                    return true
-                }
-                return Reflect.set(globalThis, key, value)
-            },
-            has(_, key) {
-                if (typeof key !== 'string') internalError()
-                return importBindings.has(key) || exportBindingMaps.has(key) || Reflect.has(globalThis, key)
-            },
-        }),
-        setters,
-        init: (_: SystemJS.ExportFunction) => (exportF = _),
+        imports: systemImports,
+        moduleEnvironmentProxy,
+        setters: systemSetters,
+        init: (_: SystemJS.ExportFunction) => (systemExport = _),
     }
 }
 
