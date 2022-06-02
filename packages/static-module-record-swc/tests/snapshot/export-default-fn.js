@@ -10,8 +10,8 @@ export default new StaticModuleRecord({
         }
     ],
     needsImportMeta: false,
-    initialize: function(lexical_scope, import_meta, import_) {
+    initialize: function(__0, import_meta, import_) {
         function _ref() {}
-        lexical_scope._ref = lexical_scope.default = _ref;
+        __0._ref = __0.default = _ref;
     }
 });

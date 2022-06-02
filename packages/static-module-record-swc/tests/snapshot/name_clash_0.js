@@ -1,12 +1,10 @@
 // @ts-nocheck
 export default new StaticModuleRecord({
-    bindings: [
-        {
-            export: "default"
-        }
-    ],
+    bindings: [],
     needsImportMeta: false,
     initialize: function(_, import_meta, import_) {
-        _.default = function() {};
+        _._;
+        _.import_meta;
+        _.import_;
     }
 });

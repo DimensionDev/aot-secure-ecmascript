@@ -9,16 +9,16 @@ export default new StaticModuleRecord({
         }
     ],
     needsImportMeta: false,
-    initialize: function(lexical_scope, import_meta, import_) {
+    initialize: function(_, import_meta, import_) {
         var x, y;
-        lexical_scope.x = x;
-        lexical_scope.y = y;
+        _.x = x;
+        _.y = y;
         for (var x of [
             1,
             2
         ]){
-            lexical_scope.x = x;
-            lexical_scope.console.log(x);
+            _.x = x;
+            _.console.log(x);
         }
         {
             for ([x, y] of [
@@ -31,25 +31,25 @@ export default new StaticModuleRecord({
                     3
                 ], 
             ]){
-                lexical_scope.x = x;
-                lexical_scope.y = y;
-                lexical_scope.console.log(x);
+                _.x = x;
+                _.y = y;
+                _.console.log(x);
             }
         }
         for(x in {
             x: 1
         }){
-            lexical_scope.x = x;
+            _.x = x;
         }
         for([
             x = 0,
-            lexical_scope.x = x
+            _.x = x
         ][0]; x < [
             1,
             2,
             3
-        ].length; x++, lexical_scope.x = x){
-            lexical_scope.console.log(x);
+        ].length; x++, _.x = x){
+            _.console.log(x);
         }
     }
 });

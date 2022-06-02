@@ -31,28 +31,28 @@ export default new StaticModuleRecord({
         }
     ],
     needsImportMeta: false,
-    initialize: function(lexical_scope, import_meta, import_) {
+    initialize: function(_, import_meta, import_) {
         const a = 1;
-        lexical_scope.z = lexical_scope.a = a;
+        _.z = _.a = a;
         const [b, c] = [
             1,
             2
         ];
-        lexical_scope.b = b;
-        lexical_scope.c = c;
-        const { alert , ...rest } = lexical_scope.globalThis;
-        lexical_scope.alert = alert;
-        lexical_scope.rest = rest;
+        _.b = b;
+        _.c = c;
+        const { alert , ...rest } = _.globalThis;
+        _.alert = alert;
+        _.rest = rest;
         const [d, ...[{ x =1  }]] = [
             1,
             {
                 x: 1
             }
         ];
-        lexical_scope.d = d;
-        lexical_scope.x = x;
+        _.d = d;
+        _.x = x;
         class T {
         }
-        lexical_scope.T = T;
+        _.T = T;
     }
 });

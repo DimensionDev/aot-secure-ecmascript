@@ -16,17 +16,17 @@ export default (StaticModuleRecord)=>new StaticModuleRecord({
             }
         ],
         needsImportMeta: false,
-        initialize: function(lexical_scope, import_meta, import_) {
+        initialize: function(_, import_meta, import_) {
             let x, y;
-            lexical_scope.z = lexical_scope.x = x;
-            lexical_scope.y = y;
+            _.z = _.x = x;
+            _.y = y;
             function setX(value) {
                 [
                     x = value,
-                    lexical_scope.z = lexical_scope.x = x
+                    _.z = _.x = x
                 ][0];
             }
-            lexical_scope.setX = setX;
+            _.setX = setX;
             function setAll() {
                 [
                     [x, y] = [
@@ -34,8 +34,8 @@ export default (StaticModuleRecord)=>new StaticModuleRecord({
                         2,
                         3
                     ],
-                    lexical_scope.z = lexical_scope.x = x,
-                    lexical_scope.y = y
+                    _.z = _.x = x,
+                    _.y = y
                 ][0];
             }
             setAll;

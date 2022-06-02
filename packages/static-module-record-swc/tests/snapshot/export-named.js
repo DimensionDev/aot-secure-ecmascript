@@ -9,11 +9,11 @@ export default new StaticModuleRecord({
         }
     ],
     needsImportMeta: false,
-    initialize: function(lexical_scope, import_meta, import_) {
+    initialize: function(_, import_meta, import_) {
         function named() {}
-        lexical_scope.named = named;
+        _.named = named;
         class T {
         }
-        lexical_scope.T = T;
+        _.T = T;
     }
 });

@@ -13,9 +13,9 @@ export default (StaticModuleRecord)=>new StaticModuleRecord({
             }
         ],
         needsImportMeta: false,
-        initialize: function(lexical_scope, import_meta, import_) {
+        initialize: function(_, import_meta, import_) {
             debugger;
-            lexical_scope.setX(1);
-            lexical_scope.x;
+            _.setX(1);
+            _.x;
         }
     });

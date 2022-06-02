@@ -41,9 +41,9 @@ impl StaticModuleRecordTransformer {
             bindings: Vec::new(),
             local_modifiable_bindings: Vec::new(),
             local_ident: HashSet::new(),
-            module_env_record_ident: Ident::new("lexical_scope".into(), DUMMY_SP),
+            module_env_record_ident: Ident::new("_".into(), DUMMY_SP),
             import_meta_ident: Ident::new("import_meta".into(), DUMMY_SP),
-            dynamic_import_ident: Ident::new("import_".into(), DUMMY_SP),
+            dynamic_import_ident: Ident::new("_import".into(), DUMMY_SP),
             config,
         }
     }

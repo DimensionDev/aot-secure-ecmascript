@@ -256,5 +256,28 @@ impl StaticModuleRecordTransformer {
         self.local_modifiable_bindings = local_modifiable_bindings(&self.bindings);
         self.uses_top_level_await = contains_top_level_await(module);
         self.local_ident = scanner.local_ident;
+
+        self.dynamic_import_ident = resolve_private_ident("import_", &self.local_ident);
+        self.import_meta_ident = resolve_private_ident("import_meta", &self.local_ident);
+        self.module_env_record_ident = resolve_private_ident("_", &self.local_ident);
+    }
+}
+
+pub fn resolve_private_ident(str: &str, local_ident: &HashSet<Id>) -> Ident {
+    // use starts_with not eq because we need to get the un-hygiene name
+    if local_ident.into_iter().all(|id| !id.0.starts_with(str)) {
+        return Ident::new(str.into(), DUMMY_SP);
+    }
+
+    let mut i = 0;
+    loop {
+        let current_search = format!("{}_{}", str, i);
+        for (name, _) in local_ident {
+            if name.starts_with(&current_search) {
+                i += 1;
+                continue;
+            }
+        }
+        return Ident::new(current_search.into(), DUMMY_SP);
     }
 }

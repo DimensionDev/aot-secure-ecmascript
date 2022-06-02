@@ -6,7 +6,7 @@ export default new StaticModuleRecord({
         }
     ],
     needsImportMeta: false,
-    initialize: function(lexical_scope, import_meta, import_) {
-        lexical_scope.default = 'foo';
+    initialize: function(_, import_meta, import_) {
+        _.default = 'foo';
     }
 });

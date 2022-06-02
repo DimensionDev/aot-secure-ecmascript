@@ -2,8 +2,8 @@
 export default new StaticModuleRecord({
     bindings: [],
     needsImportMeta: false,
-    initialize: function(lexical_scope, import_meta, import_) {
-        lexical_scope.Math.random();
+    initialize: function(_, import_meta, import_) {
+        _.Math.random();
         const a = 1;
         a;
         a;
