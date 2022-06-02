@@ -91,11 +91,38 @@ impl StaticModuleRecordTransformer {
                             ModuleDecl::TsNamespaceExport(_) => unimplemented!(),
                         },
                         ModuleItem::Stmt(node) => match node {
-                            // Who will write code like this???? I'm not going to support it for now.
-                            // export let a
-                            // for (a of arr) {}
                             Stmt::For(_) => todo!(),
-                            Stmt::ForIn(_) => todo!(),
+                            Stmt::ForIn(for_in) => {
+                                let mut tracing = vec![];
+                                match &for_in.left {
+                                    // let and const has their own block-level scope.
+                                    VarDeclOrPat::VarDecl(decl) => {
+                                        if decl.kind == VarDeclKind::Var {
+                                            for item in &decl.decls {
+                                                self.trace_live_export_pat(
+                                                    &item.name,
+                                                    &mut tracing,
+                                                );
+                                            }
+                                        }
+                                    }
+                                    VarDeclOrPat::Pat(pat) => {
+                                        self.trace_live_export_pat(&pat, &mut tracing);
+                                    }
+                                };
+                                if tracing.len() == 0 {
+                                    vec![for_in.fold_children_with(self).into()]
+                                } else {
+                                    vec![ForInStmt {
+                                        body: prepend_stmt(for_in.body, exprs_to_stmt(tracing)),
+                                        left: for_in.left.fold_children_with(self),
+                                        right: for_in.right.fold_children_with(self),
+                                        span: for_in.span,
+                                    }
+                                    .into()]
+                                }
+                            },
+                            // same logic as for-in
                             Stmt::ForOf(for_of) => {
                                 let mut tracing = vec![];
                                 match &for_of.left {
