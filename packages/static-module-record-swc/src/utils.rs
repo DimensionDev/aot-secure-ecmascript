@@ -1,4 +1,4 @@
-use swc_common::DUMMY_SP;
+use swc_common::{errors::Level, MultiSpan, Span, DUMMY_SP};
 use swc_plugin::ast::*;
 
 pub fn ident_default() -> Ident {
@@ -34,4 +34,14 @@ pub fn str_lit(value: JsWord) -> Expr {
         raw: None,
     }
     .into()
+}
+
+pub fn emit_error(span: Span, msg: &str) {
+    let mut m_span = MultiSpan::new();
+    m_span.push_span_label(span, "here".into());
+    swc_plugin::errors::HANDLER
+        .inner
+        .get()
+        .unwrap()
+        .emit(&m_span, msg, Level::Error);
 }

@@ -2,9 +2,6 @@ import type { Binding, ThirdPartyStaticModuleRecord, StaticModuleRecordInstance 
 import { normalizeBindings } from './utils/normalize.js'
 
 /** @internal */
-export const StaticModuleRecordPrecompiledSymbol = Symbol()
-
-/** @internal */
 export let internalSlot_StaticModuleRecord_get: (mod: StaticModuleRecord) => {
     needImportMeta: boolean
     bindings: readonly Binding[]

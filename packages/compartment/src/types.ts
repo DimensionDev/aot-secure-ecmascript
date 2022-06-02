@@ -1,7 +1,7 @@
 // https://github.com/tc39/proposal-compartments/blob/775024d93830ee6464363b4b373d9353425a0776/README.md
 import type { Compartment } from './compartment.js'
 import type { SystemJS } from './index.js'
-import type { StaticModuleRecordPrecompiledSymbol, StaticModuleRecord } from './StaticModuleRecord.js'
+import type { StaticModuleRecord } from './StaticModuleRecord.js'
 
 export type Binding = ImportBinding | ExportBinding
 /**

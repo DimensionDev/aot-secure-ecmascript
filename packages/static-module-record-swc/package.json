@@ -6,7 +6,7 @@
     "author": "",
     "license": "MIT",
     "keywords": ["swc-plugin"],
-    "main": "target/wasm32-unknown-unknown/release/swc-transformer.wasm",
+    "main": "target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm",
     "scripts": {
         "prepublishOnly": "cargo build --release --target wasm32-unknown-unknown",
         "test": "cargo test"
