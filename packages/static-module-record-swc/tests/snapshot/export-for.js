@@ -36,5 +36,20 @@ export default new StaticModuleRecord({
                 console.log(x);
             }
         }
+        for(x in {
+            x: 1
+        }){
+            lexical_scope.x = x;
+        }
+        for([
+            x = 0,
+            lexical_scope.x = x
+        ][0]; x < [
+            1,
+            2,
+            3
+        ].length; x++, lexical_scope.x = x){
+            console.log(x);
+        }
     }
 });

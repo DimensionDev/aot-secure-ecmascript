@@ -11,3 +11,10 @@ for (var x of [1, 2]) {
         console.log(x)
     }
 }
+
+for (x in { x: 1 }) {
+}
+
+for (x = 0; x < [1, 2, 3].length; x++) {
+    console.log(x)
+}

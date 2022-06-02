@@ -87,7 +87,36 @@ impl StaticModuleRecordTransformer {
     }
     fn fold_stmt_to_multiple(&mut self, node: Stmt) -> Vec<Stmt> {
         match node {
-            Stmt::For(_) => todo!(),
+            Stmt::For(node) => {
+                let mut tracing = vec![];
+                if let Some(init) = &node.init {
+                    match init {
+                        VarDeclOrExpr::VarDecl(decl) => {
+                            if decl.kind == VarDeclKind::Var {
+                                for item in &decl.decls {
+                                    self.trace_live_export_pat(&item.name, &mut tracing);
+                                }
+                            }
+                        }
+                        VarDeclOrExpr::Expr(_) => (),
+                    }
+                }
+                if tracing.len() == 0 {
+                    vec![node.fold_children_with(self).into()]
+                } else {
+                    vec![ForStmt {
+                        init: node.init.fold_children_with(self),
+                        test: node.test.map(|x| x.fold_children_with(self)),
+                        update: node.update.map(|x| x.fold_children_with(self)),
+                        body: prepend_stmt(
+                            node.body.fold_children_with(self),
+                            exprs_to_stmt(tracing),
+                        ),
+                        span: node.span,
+                    }
+                    .into()]
+                }
+            }
             Stmt::ForIn(node) => {
                 let mut tracing = vec![];
                 match &node.left {
@@ -107,7 +136,10 @@ impl StaticModuleRecordTransformer {
                     vec![node.fold_children_with(self).into()]
                 } else {
                     vec![ForInStmt {
-                        body: prepend_stmt(node.body, exprs_to_stmt(tracing)),
+                        body: prepend_stmt(
+                            node.body.fold_children_with(self),
+                            exprs_to_stmt(tracing),
+                        ),
                         left: node.left.fold_children_with(self),
                         right: node.right.fold_children_with(self),
                         span: node.span,
@@ -135,7 +167,10 @@ impl StaticModuleRecordTransformer {
                     vec![node.fold_children_with(self).into()]
                 } else {
                     vec![ForOfStmt {
-                        body: prepend_stmt(node.body, exprs_to_stmt(tracing)),
+                        body: prepend_stmt(
+                            node.body.fold_children_with(self),
+                            exprs_to_stmt(tracing),
+                        ),
                         left: node.left.fold_children_with(self),
                         right: node.right.fold_children_with(self),
                         await_token: node.await_token,
