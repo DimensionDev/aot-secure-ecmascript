@@ -1,4 +1,4 @@
-use module::{StaticModuleRecordTransformer, config::Config};
+use module::{config::Config, StaticModuleRecordTransformer};
 use script::ErrorTransformer;
 use swc_plugin::{ast::*, plugin_transform, TransformPluginProgramMetadata};
 

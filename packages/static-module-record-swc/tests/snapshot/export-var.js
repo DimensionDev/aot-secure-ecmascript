@@ -33,8 +33,7 @@ export default new StaticModuleRecord({
     needsImportMeta: false,
     initialize: function(lexical_scope, import_meta, import_) {
         const a = 1;
-        lexical_scope.a = a;
-        lexical_scope.z = a;
+        lexical_scope.z = lexical_scope.a = a;
         const [b, c] = [
             1,
             2

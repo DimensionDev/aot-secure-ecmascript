@@ -12,7 +12,6 @@ export default new StaticModuleRecord({
     needsImportMeta: false,
     initialize: function(lexical_scope, import_meta, import_) {
         function _ref() {}
-        lexical_scope.default = _ref;
-        lexical_scope._ref = _ref;
+        lexical_scope._ref = lexical_scope.default = _ref;
     }
 });

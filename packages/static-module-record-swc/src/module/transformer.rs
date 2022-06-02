@@ -151,13 +151,13 @@ impl StaticModuleRecordTransformer {
         }
     }
     fn fold_declaration_to_multiple(&mut self, decl: Decl) -> Vec<Stmt> {
-        let mut assign_exprs = vec![];
+        let mut tracing = vec![];
         match &decl {
-            Decl::Class(class) => self.trace_live_export_ident(&class.ident, &mut assign_exprs),
-            Decl::Fn(f) => self.trace_live_export_ident(&f.ident, &mut assign_exprs),
+            Decl::Class(class) => self.trace_live_export_ident(&class.ident, &mut tracing),
+            Decl::Fn(f) => self.trace_live_export_ident(&f.ident, &mut tracing),
             Decl::Var(decl) => {
                 for item in &decl.decls {
-                    self.trace_live_export_pat(&item.name, &mut assign_exprs);
+                    self.trace_live_export_pat(&item.name, &mut tracing);
                 }
             }
             Decl::TsInterface(_) => unimplemented!(),
@@ -166,58 +166,62 @@ impl StaticModuleRecordTransformer {
             Decl::TsModule(_) => unimplemented!(),
         };
         std::iter::once(decl.fold_children_with(self).into())
-            .chain(assign_exprs.into_iter().map(expr_to_stmt))
+            .chain(tracing.into_iter().map(expr_to_stmt))
             .collect()
     }
-    fn trace_live_export_pat(&self, pat: &Pat, extra: &mut Vec<Expr>) {
+    fn trace_live_export_pat(&self, pat: &Pat, tracing: &mut Vec<Expr>) {
         match pat {
-            Pat::Ident(ident) => self.trace_live_export_ident(&ident.id, extra),
+            Pat::Ident(ident) => self.trace_live_export_ident(&ident.id, tracing),
             Pat::Array(arr) => {
                 for item in &arr.elems {
-                    if let Some(item) = item {
-                        self.trace_live_export_pat(item, extra);
+                    if let Some(pat) = item {
+                        self.trace_live_export_pat(pat, tracing);
                     }
                 }
             }
-            Pat::Rest(rest) => self.trace_live_export_pat(&rest.arg, extra),
+            Pat::Rest(rest) => self.trace_live_export_pat(&rest.arg, tracing),
             Pat::Object(obj) => {
                 for prop in &obj.props {
                     match prop {
                         ObjectPatProp::Assign(assign) => {
-                            self.trace_live_export_ident(&assign.key, extra)
+                            self.trace_live_export_ident(&assign.key, tracing)
                         }
-                        ObjectPatProp::KeyValue(kv) => self.trace_live_export_pat(&kv.value, extra),
-                        ObjectPatProp::Rest(rest) => self.trace_live_export_pat(&rest.arg, extra),
+                        ObjectPatProp::KeyValue(kv) => {
+                            self.trace_live_export_pat(&kv.value, tracing)
+                        }
+                        ObjectPatProp::Rest(rest) => self.trace_live_export_pat(&rest.arg, tracing),
                     }
                 }
             }
-            Pat::Assign(assign) => self.trace_live_export_pat(&assign.left, extra),
+            Pat::Assign(assign) => self.trace_live_export_pat(&assign.left, tracing),
             Pat::Invalid(_) => unreachable!(),
-            // Only for for-in / for-of loops. I need a code example to handle this...
-            Pat::Expr(_) => todo!(),
+            // Only for for-in / for-of loops.
+            // no need to handle this:
+            // for (a.b in expr);
+            // for (a().b of expr);
+            // we only need to trace live export.
+            Pat::Expr(_) => (),
         }
     }
-    fn trace_live_export_ident(&self, local_ident: &Ident, extra: &mut Vec<Expr>) {
-        for modifying_export in (&self.local_modifiable_bindings)
+    fn trace_live_export_ident(&self, local_ident: &Ident, tracing: &mut Vec<Expr>) {
+        let init_expr: Expr = local_ident.clone().into();
+        let assign = (&self.local_modifiable_bindings)
             .into_iter()
             .filter(|x| x.local_ident.to_id() == local_ident.to_id())
-        {
-            match &modifying_export.export {
+            .fold(init_expr, |expr, x| match &x.export {
                 ModuleExportName::Ident(ident) => {
-                    extra.push(assign_env_rec(
-                        MemberProp::Ident(ident.clone().into()),
-                        Box::new(local_ident.clone().into()),
-                    ));
+                    assign_env_rec(MemberProp::Ident(ident.clone().into()), Box::new(expr)).into()
                 }
-                ModuleExportName::Str(str) => extra.push(assign_env_rec(
+                ModuleExportName::Str(str) => assign_env_rec(
                     MemberProp::Computed(ComputedPropName {
                         span: DUMMY_SP,
                         expr: Box::new(str.clone().into()),
                     }),
-                    Box::new(local_ident.clone().into()),
-                )),
-            }
-        }
+                    Box::new(expr),
+                )
+                .into(),
+            });
+        tracing.push(assign);
     }
 }
 
@@ -265,7 +269,7 @@ impl Fold for StaticModuleRecordTransformer {
                 if tracing.len() == 0 {
                     expr.fold_children_with(self).into()
                 } else {
-                    tracing.insert(0, expr.into());
+                    tracing.insert(0, expr.fold_children_with(self).into());
                     let completion_value = ArrayLit {
                         elems: tracing
                             .into_iter()
@@ -328,8 +332,17 @@ impl Fold for StaticModuleRecordTransformer {
     }
     fn fold_module(&mut self, module: Module) -> Module {
         self.scan(&module);
-        let n = module.fold_children_with(self);
-        self.codegen(n.body.into_iter().filter_map(|x| x.stmt()).collect())
+        let module = module.fold_children_with(self);
+        self.codegen(
+            module
+                .body
+                .into_iter()
+                .map(|x| {
+                    x.stmt()
+                        .expect("all imports/exports should be converted into statement.")
+                })
+                .collect(),
+        )
     }
     fn fold_module_items(&mut self, items: Vec<ModuleItem>) -> Vec<ModuleItem> {
         items

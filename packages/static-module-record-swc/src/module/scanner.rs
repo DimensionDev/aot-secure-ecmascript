@@ -187,7 +187,7 @@ pub fn scan_pat(pat: &Pat) -> Vec<Binding> {
             .collect(),
         Pat::Assign(assign) => scan_pat(&assign.left),
         Pat::Invalid(_) => unreachable![],
-        Pat::Expr(_) => todo![],
+        Pat::Expr(_) => vec![],
     }
 }
 

@@ -13,7 +13,6 @@ export default new StaticModuleRecord({
     initialize: function(lexical_scope, import_meta, import_) {
         class T {
         }
-        lexical_scope.default = T;
-        lexical_scope.T = T;
+        lexical_scope.T = lexical_scope.default = T;
     }
 });
