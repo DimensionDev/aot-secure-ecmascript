@@ -95,6 +95,14 @@ fn export_default_expr(new_expr: Expr) -> Vec<ModuleItem> {
     vec![export_default_expr.into()]
 }
 
+pub fn read_env_rec(prop: Ident) -> Expr {
+    MemberExpr {
+        obj: Box::new(module_environment_record().into()),
+        prop: prop.into(),
+        span: DUMMY_SP,
+    }
+    .into()
+}
 pub fn assign_env_rec(assign_to: MemberProp, expr: Box<Expr>) -> Expr {
     AssignExpr {
         left: PatOrExpr::Expr(Box::new(

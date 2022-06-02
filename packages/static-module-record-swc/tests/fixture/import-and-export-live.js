@@ -1,5 +1,11 @@
 /// { "globalStaticModuleRecord": false }
-export let x
+export let x, y
+export { x as z }
+
 export function setX(value) {
-  x = value
+    x = value
+}
+
+function setAll() {
+    [x, y] = [1, 2, 3]
 }

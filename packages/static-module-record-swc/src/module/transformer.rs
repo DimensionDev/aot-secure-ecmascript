@@ -3,7 +3,11 @@ use swc_plugin::ast::*;
 
 use crate::utils::*;
 
-use super::{codegen::assign_env_rec, StaticModuleRecordTransformer};
+use super::{
+    binding_descriptor::{Binding, ModuleBinding},
+    codegen::{assign_env_rec, read_env_rec},
+    StaticModuleRecordTransformer,
+};
 
 impl StaticModuleRecordTransformer {
     pub fn transform_module(&mut self, module: Module) -> Vec<Stmt> {
@@ -103,33 +107,35 @@ impl StaticModuleRecordTransformer {
         let module = module.fold_children_with(self);
         module.body.into_iter().filter_map(|x| x.stmt()).collect()
     }
-    fn live_export_pat(&self, pat: &Pat, extra: &mut Vec<Expr>) {
+    fn trace_live_export_pat(&self, pat: &Pat, extra: &mut Vec<Expr>) {
         match pat {
-            Pat::Ident(ident) => self.trace_live_export(&ident.id, extra),
+            Pat::Ident(ident) => self.trace_live_export_ident(&ident.id, extra),
             Pat::Array(arr) => {
                 for item in &arr.elems {
                     if let Some(item) = item {
-                        self.live_export_pat(item, extra);
+                        self.trace_live_export_pat(item, extra);
                     }
                 }
             }
-            Pat::Rest(rest) => self.live_export_pat(&rest.arg, extra),
+            Pat::Rest(rest) => self.trace_live_export_pat(&rest.arg, extra),
             Pat::Object(obj) => {
                 for prop in &obj.props {
                     match prop {
-                        ObjectPatProp::Assign(assign) => self.trace_live_export(&assign.key, extra),
-                        ObjectPatProp::KeyValue(kv) => self.live_export_pat(&kv.value, extra),
-                        ObjectPatProp::Rest(rest) => self.live_export_pat(&rest.arg, extra),
+                        ObjectPatProp::Assign(assign) => {
+                            self.trace_live_export_ident(&assign.key, extra)
+                        }
+                        ObjectPatProp::KeyValue(kv) => self.trace_live_export_pat(&kv.value, extra),
+                        ObjectPatProp::Rest(rest) => self.trace_live_export_pat(&rest.arg, extra),
                     }
                 }
             }
-            Pat::Assign(assign) => self.live_export_pat(&assign.left, extra),
+            Pat::Assign(assign) => self.trace_live_export_pat(&assign.left, extra),
             Pat::Invalid(_) => unreachable!(),
             // Only for for-in / for-of loops. I need a code example to handle this...
             Pat::Expr(_) => todo!(),
         }
     }
-    fn trace_live_export(&self, local_ident: &Ident, extra: &mut Vec<Expr>) {
+    fn trace_live_export_ident(&self, local_ident: &Ident, extra: &mut Vec<Expr>) {
         for modifying_export in (&self.local_modifiable_bindings)
             .into_iter()
             .filter(|x| x.local_ident.to_id() == local_ident.to_id())
@@ -154,11 +160,11 @@ impl StaticModuleRecordTransformer {
     fn fold_top_level_decl(&mut self, decl: Decl) -> Vec<Stmt> {
         let mut assign_exprs = vec![];
         match &decl {
-            Decl::Class(class) => self.trace_live_export(&class.ident, &mut assign_exprs),
-            Decl::Fn(f) => self.trace_live_export(&f.ident, &mut assign_exprs),
+            Decl::Class(class) => self.trace_live_export_ident(&class.ident, &mut assign_exprs),
+            Decl::Fn(f) => self.trace_live_export_ident(&f.ident, &mut assign_exprs),
             Decl::Var(decl) => {
                 for item in &decl.decls {
-                    self.live_export_pat(&item.name, &mut assign_exprs);
+                    self.trace_live_export_pat(&item.name, &mut assign_exprs);
                 }
             }
             Decl::TsInterface(_) => unimplemented!(),
@@ -188,10 +194,97 @@ impl Fold for StaticModuleRecordTransformer {
     // https://rustdoc.swc.rs/swc_ecma_visit/trait.Fold.html
     fn fold_expr(&mut self, n: Expr) -> Expr {
         match n {
+            Expr::Update(expr) => {
+                if let Some(id) = (&expr.arg).as_ident() {
+                    let mut tracing = vec![];
+                    self.trace_live_export_ident(&id, &mut tracing);
+                    if tracing.len() == 0 {
+                        expr.fold_children_with(self).into()
+                    } else {
+                        tracing.insert(0, expr.into());
+                        SeqExpr {
+                            exprs: tracing.into_iter().map(|x| Box::new(x)).collect(),
+                            span: DUMMY_SP,
+                        }
+                        .into()
+                    }
+                } else {
+                    expr.fold_children_with(self).into()
+                }
+            }
+            // id += ...
+            Expr::Assign(expr) => {
+                let mut tracing = vec![];
+                match &expr.left {
+                    PatOrExpr::Expr(expr) => {
+                        if let Some(id) = expr.as_ident() {
+                            self.trace_live_export_ident(id, &mut tracing);
+                        }
+                    }
+                    PatOrExpr::Pat(pat) => self.trace_live_export_pat(pat, &mut tracing),
+                };
+
+                if tracing.len() == 0 {
+                    expr.fold_children_with(self).into()
+                } else {
+                    tracing.insert(0, expr.into());
+                    let completion_value = ArrayLit {
+                        elems: tracing
+                            .into_iter()
+                            .map(|x| {
+                                Some(ExprOrSpread {
+                                    expr: Box::new(x),
+                                    spread: None,
+                                })
+                            })
+                            .collect(),
+                        span: DUMMY_SP,
+                    };
+                    MemberExpr {
+                        obj: Box::new(completion_value.into()),
+                        prop: MemberProp::Computed(ComputedPropName {
+                            span: DUMMY_SP,
+                            expr: Box::new(
+                                Number {
+                                    raw: None,
+                                    value: 0.0,
+                                    span: DUMMY_SP,
+                                }
+                                .into()
+                            ),
+                        }),
+                        span: DUMMY_SP,
+                    }
+                    .into()
+                }
+            }
+            Expr::Ident(id) => {
+                for binding in &self.bindings {
+                    if let Binding::Import(import) = binding {
+                        if let Some(alias) = &import.alias {
+                            if alias.to_id() == id.to_id() {
+                                return read_env_rec(id);
+                            }
+                        } else if let ModuleBinding::ModuleExportName(ModuleExportName::Ident(
+                            import_ident,
+                        )) = &import.import
+                        {
+                            if import_ident.to_id() == id.to_id() {
+                                return read_env_rec(id);
+                            }
+                        }
+                    }
+                }
+                id.fold_children_with(self).into()
+            }
             Expr::MetaProp(meta) if meta.kind == MetaPropKind::ImportMeta => {
                 self.uses_import_meta = true;
                 import_meta().into()
             }
+            // Explicitly reject those JSX expressions that might involve Ident
+            Expr::JSXMember(_) => unimplemented!(),
+            Expr::JSXElement(_) => unimplemented!(),
+            Expr::Invalid(_) => unreachable!(),
             _ => n.fold_children_with(self),
         }
     }
