@@ -104,7 +104,6 @@ impl StaticModuleRecordTransformer {
             shebang: None,
             span: DUMMY_SP,
         };
-        let module = module.fold_children_with(self);
         module.body.into_iter().filter_map(|x| x.stmt()).collect()
     }
     fn trace_live_export_pat(&self, pat: &Pat, extra: &mut Vec<Expr>) {

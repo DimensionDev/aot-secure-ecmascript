@@ -23,11 +23,7 @@ export default (StaticModuleRecord)=>new StaticModuleRecord({
             lexical_scope.y = y;
             function setX(value) {
                 [
-                    [
-                        x = value,
-                        lexical_scope.x = x,
-                        lexical_scope.z = x
-                    ][0],
+                    x = value,
                     lexical_scope.x = x,
                     lexical_scope.z = x
                 ][0];
@@ -35,16 +31,11 @@ export default (StaticModuleRecord)=>new StaticModuleRecord({
             lexical_scope.setX = setX;
             function setAll() {
                 [
-                    [
-                        [x, y] = [
-                            1,
-                            2,
-                            3
-                        ],
-                        lexical_scope.x = x,
-                        lexical_scope.z = x,
-                        lexical_scope.y = y
-                    ][0],
+                    [x, y] = [
+                        1,
+                        2,
+                        3
+                    ],
                     lexical_scope.x = x,
                     lexical_scope.z = x,
                     lexical_scope.y = y
