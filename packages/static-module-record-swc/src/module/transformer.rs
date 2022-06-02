@@ -91,9 +91,42 @@ impl StaticModuleRecordTransformer {
                             ModuleDecl::TsNamespaceExport(_) => unimplemented!(),
                         },
                         ModuleItem::Stmt(node) => match node {
+                            // Who will write code like this???? I'm not going to support it for now.
+                            // export let a
+                            // for (a of arr) {}
                             Stmt::For(_) => todo!(),
                             Stmt::ForIn(_) => todo!(),
-                            Stmt::ForOf(_) => todo!(),
+                            Stmt::ForOf(for_of) => {
+                                let mut tracing = vec![];
+                                match &for_of.left {
+                                    // let and const has their own block-level scope.
+                                    VarDeclOrPat::VarDecl(decl) => {
+                                        if decl.kind == VarDeclKind::Var {
+                                            for item in &decl.decls {
+                                                self.trace_live_export_pat(
+                                                    &item.name,
+                                                    &mut tracing,
+                                                );
+                                            }
+                                        }
+                                    }
+                                    VarDeclOrPat::Pat(pat) => {
+                                        self.trace_live_export_pat(&pat, &mut tracing);
+                                    }
+                                };
+                                if tracing.len() == 0 {
+                                    vec![for_of.fold_children_with(self).into()]
+                                } else {
+                                    vec![ForOfStmt {
+                                        body: prepend_stmt(for_of.body, exprs_to_stmt(tracing)),
+                                        left: for_of.left.fold_children_with(self),
+                                        right: for_of.right.fold_children_with(self),
+                                        await_token: for_of.await_token,
+                                        span: for_of.span,
+                                    }
+                                    .into()]
+                                }
+                            }
                             Stmt::Decl(decl) => self.fold_top_level_decl(decl),
                             _ => vec![node.fold_children_with(self)],
                         },
@@ -172,12 +205,7 @@ impl StaticModuleRecordTransformer {
             Decl::TsModule(_) => unimplemented!(),
         };
         std::iter::once(decl.fold_children_with(self).into())
-            .chain(assign_exprs.into_iter().map(|x| {
-                Stmt::Expr(ExprStmt {
-                    span: DUMMY_SP,
-                    expr: Box::new(x),
-                })
-            }))
+            .chain(assign_exprs.into_iter().map(expr_to_stmt))
             .collect()
     }
 }
@@ -249,7 +277,7 @@ impl Fold for StaticModuleRecordTransformer {
                                     value: 0.0,
                                     span: DUMMY_SP,
                                 }
-                                .into()
+                                .into(),
                             ),
                         }),
                         span: DUMMY_SP,
@@ -289,5 +317,36 @@ impl Fold for StaticModuleRecordTransformer {
     }
     fn fold_module(&mut self, n: Module) -> Module {
         self.transformer(n)
+    }
+}
+
+fn expr_to_stmt(expr: Expr) -> Stmt {
+    Stmt::Expr(ExprStmt {
+        span: DUMMY_SP,
+        expr: Box::new(expr),
+    })
+}
+fn exprs_to_stmt(expr: Vec<Expr>) -> Vec<Stmt> {
+    expr.into_iter().map(expr_to_stmt).collect()
+}
+fn prepend_stmt(stmt: Box<Stmt>, mut insert_before: Vec<Stmt>) -> Box<Stmt> {
+    if let Some(block) = stmt.as_block() {
+        insert_before.append(&mut block.stmts.clone());
+        Box::new(
+            BlockStmt {
+                span: DUMMY_SP,
+                stmts: insert_before,
+            }
+            .into(),
+        )
+    } else {
+        insert_before.push(*stmt);
+        Box::new(
+            BlockStmt {
+                span: DUMMY_SP,
+                stmts: insert_before,
+            }
+            .into(),
+        )
     }
 }
