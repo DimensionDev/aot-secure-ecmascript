@@ -8,10 +8,16 @@ mod scanner;
 /// Transform bindings into StaticModuleRecord.
 mod transformer;
 
-use swc_plugin::ast::*;
-
 use self::{binding_descriptor::*, config::Config};
 
+/// Convert code into
+/// ```js
+/// export default new StaticModuleRecord({
+///     bindings: ...,
+///     needsImportMeta: ...,
+///     [async?] initialize(env, importMeta, dynamicImport) {}
+/// })
+/// ```
 pub struct StaticModuleRecordTransformer {
     uses_import_meta: bool,
     uses_top_level_await: bool,
@@ -29,21 +35,5 @@ impl StaticModuleRecordTransformer {
             local_modifiable_bindings: Vec::new(),
             config,
         }
-    }
-}
-
-impl StaticModuleRecordTransformer {
-    /// Convert code into
-    /// ```js
-    /// export default new StaticModuleRecord({
-    ///     bindings: ...,
-    ///     needsImportMeta: ...,
-    ///     [async?] initialize(env, importMeta, dynamicImport) {}
-    /// })
-    /// ```
-    fn transformer(&mut self, n: Module) -> Module {
-        self.scan(&n);
-        let stmt = self.transform_module(n);
-        self.codegen(stmt)
     }
 }

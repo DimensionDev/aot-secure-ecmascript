@@ -20,19 +20,21 @@ export default new StaticModuleRecord({
             lexical_scope.x = x;
             console.log(x);
         }
-        for ([x, y] of [
-            [
-                1,
-                2
-            ],
-            [
-                2,
-                3
-            ]
-        ]){
-            lexical_scope.x = x;
-            lexical_scope.y = y;
-            console.log(x);
+        {
+            for ([x, y] of [
+                [
+                    1,
+                    2
+                ],
+                [
+                    2,
+                    3
+                ], 
+            ]){
+                lexical_scope.x = x;
+                lexical_scope.y = y;
+                console.log(x);
+            }
         }
     }
 });
