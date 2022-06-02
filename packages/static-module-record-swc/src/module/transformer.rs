@@ -4,8 +4,7 @@ use swc_plugin::ast::*;
 use crate::utils::*;
 
 use super::{
-    binding_descriptor::{Binding, ModuleBinding},
-    codegen::{assign_env_rec, read_env_rec},
+    codegen::{assign_prop, prop_access},
     StaticModuleRecordTransformer,
 };
 
@@ -46,7 +45,8 @@ impl StaticModuleRecordTransformer {
                                 .into(),
                             )
                         } else {
-                            vec![expr_to_stmt(assign_env_rec(
+                            vec![expr_to_stmt(assign_prop(
+                                self.module_env_record_ident.clone(),
                                 ident_default().into(),
                                 Box::new(node.fold_children_with(self).into()),
                             ))]
@@ -63,7 +63,8 @@ impl StaticModuleRecordTransformer {
                                 .into(),
                             )
                         } else {
-                            vec![expr_to_stmt(assign_env_rec(
+                            vec![expr_to_stmt(assign_prop(
+                                self.module_env_record_ident.clone(),
                                 ident_default().into(),
                                 Box::new(node.fold_children_with(self).into()),
                             ))]
@@ -72,7 +73,8 @@ impl StaticModuleRecordTransformer {
                     DefaultDecl::TsInterfaceDecl(_) => unimplemented!(),
                 },
                 // export default expr => env.default = expr
-                ModuleDecl::ExportDefaultExpr(node) => vec![expr_to_stmt(assign_env_rec(
+                ModuleDecl::ExportDefaultExpr(node) => vec![expr_to_stmt(assign_prop(
+                    self.module_env_record_ident.clone(),
                     ident_default().into(),
                     node.expr.fold_children_with(self),
                 ))],
@@ -244,10 +246,14 @@ impl StaticModuleRecordTransformer {
             .into_iter()
             .filter(|x| x.local_ident.to_id() == local_ident.to_id())
             .fold(init_expr, |expr, x| match &x.export {
-                ModuleExportName::Ident(ident) => {
-                    assign_env_rec(MemberProp::Ident(ident.clone().into()), Box::new(expr)).into()
-                }
-                ModuleExportName::Str(str) => assign_env_rec(
+                ModuleExportName::Ident(ident) => assign_prop(
+                    self.module_env_record_ident.clone(),
+                    MemberProp::Ident(ident.clone().into()),
+                    Box::new(expr),
+                )
+                .into(),
+                ModuleExportName::Str(str) => assign_prop(
+                    self.module_env_record_ident.clone(),
                     MemberProp::Computed(ComputedPropName {
                         span: DUMMY_SP,
                         expr: Box::new(str.clone().into()),
@@ -264,7 +270,7 @@ impl StaticModuleRecordTransformer {
 impl Fold for StaticModuleRecordTransformer {
     fn fold_callee(&mut self, n: Callee) -> Callee {
         if n.is_import() {
-            Callee::Expr(Box::new(dynamic_import().into()))
+            Callee::Expr(Box::new(self.dynamic_import_ident.clone().into()))
         } else {
             n.fold_children_with(self)
         }
@@ -336,27 +342,15 @@ impl Fold for StaticModuleRecordTransformer {
                 }
             }
             Expr::Ident(id) => {
-                for binding in &self.bindings {
-                    if let Binding::Import(import) = binding {
-                        if let Some(alias) = &import.alias {
-                            if alias.to_id() == id.to_id() {
-                                return read_env_rec(id);
-                            }
-                        } else if let ModuleBinding::ModuleExportName(ModuleExportName::Ident(
-                            import_ident,
-                        )) = &import.import
-                        {
-                            if import_ident.to_id() == id.to_id() {
-                                return read_env_rec(id);
-                            }
-                        }
-                    }
+                if self.local_ident.contains(&id.to_id()) {
+                    id.into()
+                } else {
+                    prop_access(self.module_env_record_ident.clone(), id)
                 }
-                id.fold_children_with(self).into()
             }
             Expr::MetaProp(meta) if meta.kind == MetaPropKind::ImportMeta => {
                 self.uses_import_meta = true;
-                import_meta().into()
+                self.import_meta_ident.clone().into()
             }
             // Explicitly reject those JSX expressions that might involve Ident
             Expr::JSXMember(_) => unimplemented!(),
@@ -377,6 +371,7 @@ impl Fold for StaticModuleRecordTransformer {
                         .expect("all imports/exports should be converted into statement.")
                 })
                 .collect(),
+            &self,
         )
     }
     fn fold_module_items(&mut self, items: Vec<ModuleItem>) -> Vec<ModuleItem> {

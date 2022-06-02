@@ -4,8 +4,8 @@ use swc_common::{util::take::Take, DUMMY_SP};
 use swc_plugin::ast::*;
 
 impl StaticModuleRecordTransformer {
-    pub fn codegen(&self, stmt: Vec<Stmt>) -> Module {
-        let new_expr = self.local_constructor_wrapper(self.new_static_module_record(stmt));
+    pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &StaticModuleRecordTransformer) -> Module {
+        let new_expr = self.local_constructor_wrapper(self.new_static_module_record(stmt, transformer));
         Module {
             body: export_default_expr(new_expr),
             ..Module::dummy()
@@ -23,7 +23,7 @@ impl StaticModuleRecordTransformer {
             .into()
         }
     }
-    fn new_static_module_record(&self, stmt: Vec<Stmt>) -> Expr {
+    fn new_static_module_record(&self, stmt: Vec<Stmt>, transformer: &StaticModuleRecordTransformer) -> Expr {
         let init_fn = Function {
             is_async: self.uses_top_level_await,
             body: Some(BlockStmt {
@@ -31,9 +31,9 @@ impl StaticModuleRecordTransformer {
                 stmts: stmt,
             }),
             params: vec![
-                param(module_environment_record()),
-                param(import_meta()),
-                param(dynamic_import()),
+                param(transformer.module_env_record_ident.clone()),
+                param(transformer.import_meta_ident.clone()),
+                param(transformer.dynamic_import_ident.clone()),
             ],
             ..Function::dummy()
         };
@@ -95,19 +95,19 @@ fn export_default_expr(new_expr: Expr) -> Vec<ModuleItem> {
     vec![export_default_expr.into()]
 }
 
-pub fn read_env_rec(prop: Ident) -> Expr {
+pub fn prop_access(obj: Ident, prop: Ident) -> Expr {
     MemberExpr {
-        obj: Box::new(module_environment_record().into()),
+        obj: Box::new(obj.into()),
         prop: prop.into(),
         span: DUMMY_SP,
     }
     .into()
 }
-pub fn assign_env_rec(assign_to: MemberProp, expr: Box<Expr>) -> Expr {
+pub fn assign_prop(obj: Ident, assign_to: MemberProp, expr: Box<Expr>) -> Expr {
     AssignExpr {
         left: PatOrExpr::Expr(Box::new(
             MemberExpr {
-                obj: Box::new(module_environment_record().into()),
+                obj: Box::new(obj.into()),
                 prop: assign_to,
                 span: DUMMY_SP,
             }

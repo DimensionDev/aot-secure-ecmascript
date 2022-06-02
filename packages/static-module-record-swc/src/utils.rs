@@ -1,18 +1,5 @@
 use swc_common::DUMMY_SP;
 use swc_plugin::ast::*;
-use swc_plugin::utils::private_ident;
-
-pub fn import_meta() -> Ident {
-    private_ident!("import_meta")
-}
-
-pub fn module_environment_record() -> Ident {
-    private_ident!("lexical_scope")
-}
-
-pub fn dynamic_import() -> Ident {
-    private_ident!("import_")
-}
 
 pub fn ident_default() -> Ident {
     Ident::new("default".into(), DUMMY_SP)

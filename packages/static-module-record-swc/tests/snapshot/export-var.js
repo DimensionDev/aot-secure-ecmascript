@@ -40,7 +40,7 @@ export default new StaticModuleRecord({
         ];
         lexical_scope.b = b;
         lexical_scope.c = c;
-        const { alert , ...rest } = globalThis;
+        const { alert , ...rest } = lexical_scope.globalThis;
         lexical_scope.alert = alert;
         lexical_scope.rest = rest;
         const [d, ...[{ x =1  }]] = [

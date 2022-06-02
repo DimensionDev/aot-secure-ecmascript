@@ -8,6 +8,9 @@ mod scanner;
 /// Transform bindings into StaticModuleRecord.
 mod transformer;
 
+use std::collections::HashSet;
+use swc_common::DUMMY_SP;
+use swc_plugin::ast::{Id, Ident};
 use self::{binding_descriptor::*, config::Config};
 
 /// Convert code into
@@ -23,6 +26,10 @@ pub struct StaticModuleRecordTransformer {
     uses_top_level_await: bool,
     bindings: Vec<Binding>,
     local_modifiable_bindings: Vec<LocalModifiableBinding>,
+    local_ident: HashSet<Id>,
+    module_env_record_ident: Ident,
+    import_meta_ident: Ident,
+    dynamic_import_ident: Ident,
     pub config: Config,
 }
 
@@ -33,6 +40,10 @@ impl StaticModuleRecordTransformer {
             uses_top_level_await: false,
             bindings: Vec::new(),
             local_modifiable_bindings: Vec::new(),
+            local_ident: HashSet::new(),
+            module_env_record_ident: Ident::new("lexical_scope".into(), DUMMY_SP),
+            import_meta_ident: Ident::new("import_meta".into(), DUMMY_SP),
+            dynamic_import_ident: Ident::new("import_".into(), DUMMY_SP),
             config,
         }
     }

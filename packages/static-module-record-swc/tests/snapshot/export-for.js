@@ -18,7 +18,7 @@ export default new StaticModuleRecord({
             2
         ]){
             lexical_scope.x = x;
-            console.log(x);
+            lexical_scope.console.log(x);
         }
         {
             for ([x, y] of [
@@ -33,7 +33,7 @@ export default new StaticModuleRecord({
             ]){
                 lexical_scope.x = x;
                 lexical_scope.y = y;
-                console.log(x);
+                lexical_scope.console.log(x);
             }
         }
         for(x in {
@@ -49,7 +49,7 @@ export default new StaticModuleRecord({
             2,
             3
         ].length; x++, lexical_scope.x = x){
-            console.log(x);
+            lexical_scope.console.log(x);
         }
     }
 });
