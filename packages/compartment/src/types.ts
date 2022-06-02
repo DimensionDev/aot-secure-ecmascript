@@ -105,20 +105,3 @@ export const enum PROMISE_STATE {
     Pending = 1,
     Err = 2,
 }
-
-/**
- * This kind of Static Module Record is used for source compiled by the compiler.
- * @internal
- */
-export type StaticModuleRecordPrecompiledInitialize = (this: {
-    opaqueProxy: object
-    globalThis: object
-}) => (this: { register(imports: string[], register: SystemJS.DeclareFunction): void }) => void
-
-/** @internal */
-export interface StaticModuleRecordPrecompiled extends ThirdPartyStaticModuleRecord {
-    [StaticModuleRecordPrecompiledSymbol]: (this: {
-        opaqueProxy: object
-        globalThis: object
-    }) => (this: { register(imports: string[], register: SystemJS.DeclareFunction): void }) => void
-}

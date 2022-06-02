@@ -188,37 +188,22 @@ export class Compartment implements CompartmentInstance {
                 },
             ]
         } else if (module.type === 'record') {
-            const { initialize, initializeInternal, bindings } = internalSlot_StaticModuleRecord_get(module.module)
-            if (initializeInternal) {
-                let x, y
-                initializeInternal
-                    .call({
-                        opaqueProxy,
-                        globalThis: this.#globalThis,
-                    })
-                    .call({
-                        register(a, b) {
-                            ;[x, y] = [a, b]
-                        },
-                    })
-                if (!x || !y) internalError()
-                return [x, y]
-            } else {
-                const { imports, moduleEnvironmentProxy, setters, init } = makeModuleEnvironmentProxy(
-                    bindings,
-                    this.#globalThis,
-                )
-                return [
-                    imports,
-                    (_export, _context) => {
-                        init(_export)
-                        return {
-                            execute: () => initialize(moduleEnvironmentProxy, _context.meta, _context.import),
-                            setters,
-                        }
-                    },
-                ]
-            }
+            const { initialize, bindings } = internalSlot_StaticModuleRecord_get(module.module)
+
+            const { imports, moduleEnvironmentProxy, setters, init } = makeModuleEnvironmentProxy(
+                bindings,
+                this.#globalThis,
+            )
+            return [
+                imports,
+                (_export, _context) => {
+                    init(_export)
+                    return {
+                        execute: () => initialize(moduleEnvironmentProxy, _context.meta, _context.import),
+                        setters,
+                    }
+                },
+            ]
         } else {
             let _: never = module
             internalError()
