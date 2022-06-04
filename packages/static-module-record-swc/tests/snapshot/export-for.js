@@ -1,5 +1,5 @@
 // @ts-nocheck
-export default new StaticModuleRecord({
+export default {
     bindings: [
         {
             export: "x"
@@ -52,4 +52,4 @@ export default new StaticModuleRecord({
             _.console.log(x);
         }
     }
-});
+};

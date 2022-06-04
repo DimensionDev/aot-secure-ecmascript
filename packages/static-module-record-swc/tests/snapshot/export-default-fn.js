@@ -1,5 +1,5 @@
 // @ts-nocheck
-export default new StaticModuleRecord({
+export default {
     bindings: [
         {
             export: "_ref",
@@ -14,4 +14,4 @@ export default new StaticModuleRecord({
         function _ref() {}
         __0._ref = __0.default = _ref;
     }
-});
+};

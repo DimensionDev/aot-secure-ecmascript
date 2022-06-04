@@ -1,5 +1,5 @@
 // @ts-nocheck
-export default new StaticModuleRecord({
+export default {
     bindings: [
         {
             export: "default"
@@ -10,4 +10,4 @@ export default new StaticModuleRecord({
         _.default = class {
         };
     }
-});
+};

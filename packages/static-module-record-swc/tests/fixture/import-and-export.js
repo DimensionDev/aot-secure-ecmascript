@@ -1,4 +1,3 @@
-/// { "globalStaticModuleRecord": false }
 import { x, setX } from 'live-test'
 
 debugger

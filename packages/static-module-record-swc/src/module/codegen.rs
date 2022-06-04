@@ -5,25 +5,17 @@ use swc_plugin::ast::*;
 
 impl StaticModuleRecordTransformer {
     pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &StaticModuleRecordTransformer) -> Module {
-        let new_expr = self.local_constructor_wrapper(self.new_static_module_record(stmt, transformer));
+        let new_expr = self.new_static_module_record(stmt, transformer);
         Module {
             body: export_default_expr(new_expr),
             ..Module::dummy()
         }
     }
-    fn local_constructor_wrapper(&self, expr: Expr) -> Expr {
-        if self.config.global_static_module_constructor {
-            expr
-        } else {
-            ArrowExpr {
-                params: vec![static_module_record().into()],
-                body: BlockStmtOrExpr::Expr(Box::new(expr)),
-                ..ArrowExpr::dummy()
-            }
-            .into()
-        }
-    }
-    fn new_static_module_record(&self, stmt: Vec<Stmt>, transformer: &StaticModuleRecordTransformer) -> Expr {
+    fn new_static_module_record(
+        &self,
+        stmt: Vec<Stmt>,
+        transformer: &StaticModuleRecordTransformer,
+    ) -> Expr {
         let init_fn = Function {
             is_async: self.uses_top_level_await,
             body: Some(BlockStmt {
@@ -38,7 +30,7 @@ impl StaticModuleRecordTransformer {
             ..Function::dummy()
         };
 
-        let third_party_module = ObjectLit {
+        ObjectLit {
             span: DUMMY_SP,
             props: vec![
                 key_value(
@@ -74,14 +66,6 @@ impl StaticModuleRecordTransformer {
                     .into(),
                 ),
             ],
-        };
-        NewExpr {
-            callee: Box::new(static_module_record().into()),
-            args: Some(vec![ExprOrSpread {
-                expr: Box::new(third_party_module.into()),
-                spread: None,
-            }]),
-            ..NewExpr::dummy()
         }
         .into()
     }

@@ -1,2 +1,0 @@
-/// { "globalStaticModuleRecord": false }
-// @ts-nocheck

@@ -1,4 +1,3 @@
-/// { "globalStaticModuleRecord": false }
 export let x, y
 export { x as z }
 

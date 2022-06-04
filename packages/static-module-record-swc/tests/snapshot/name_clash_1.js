@@ -1,5 +1,5 @@
 // @ts-nocheck
-export default new StaticModuleRecord({
+export default {
     bindings: [],
     needsImportMeta: false,
     initialize: function(__0, import_meta_0, import__0) {
@@ -8,4 +8,4 @@ export default new StaticModuleRecord({
         import_meta;
         import_;
     }
-});
+};

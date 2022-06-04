@@ -1,5 +1,5 @@
 // @ts-nocheck
-export default new StaticModuleRecord({
+export default {
     bindings: [
         {
             export: "a"
@@ -55,4 +55,4 @@ export default new StaticModuleRecord({
         }
         _.T = T;
     }
-});
+};

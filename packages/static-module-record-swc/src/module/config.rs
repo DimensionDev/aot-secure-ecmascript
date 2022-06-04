@@ -5,21 +5,12 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     /// The template of code generation
     pub template: Template,
-
-    #[serde(rename = "globalStaticModuleRecord")]
-    /// When there is no global StaticModuleRecord constructor available,
-    /// switch on this option, and it will generate code like this so you can provide your local implementation.
-    /// ```js
-    /// (StaticModuleRecord) => new StaticModuleRecord(...)
-    /// ```
-    pub global_static_module_constructor: bool,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             template: Template::ExportDefault,
-            global_static_module_constructor: true,
         }
     }
 }
