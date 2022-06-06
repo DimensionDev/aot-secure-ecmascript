@@ -38,7 +38,7 @@ impl StaticModuleRecordTransformer {
                     ArrayLit {
                         span: DUMMY_SP,
                         elems: (&self.bindings)
-                            .into_iter()
+                            .iter()
                             .map(|binding| {
                                 Some(ExprOrSpread {
                                     expr: Box::new(binding.to_object_lit().into()),

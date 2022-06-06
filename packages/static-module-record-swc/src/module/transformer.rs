@@ -103,7 +103,7 @@ impl StaticModuleRecordTransformer {
                         VarDeclOrExpr::Expr(_) => (),
                     }
                 }
-                if tracing.len() == 0 {
+                if tracing.is_empty() {
                     vec![node.fold_children_with(self).into()]
                 } else {
                     vec![ForStmt {
@@ -131,10 +131,10 @@ impl StaticModuleRecordTransformer {
                         }
                     }
                     VarDeclOrPat::Pat(pat) => {
-                        self.trace_live_export_pat(&pat, &mut tracing);
+                        self.trace_live_export_pat(pat, &mut tracing);
                     }
                 };
-                if tracing.len() == 0 {
+                if tracing.is_empty() {
                     vec![node.fold_children_with(self).into()]
                 } else {
                     vec![ForInStmt {
@@ -162,10 +162,10 @@ impl StaticModuleRecordTransformer {
                         }
                     }
                     VarDeclOrPat::Pat(pat) => {
-                        self.trace_live_export_pat(&pat, &mut tracing);
+                        self.trace_live_export_pat(pat, &mut tracing);
                     }
                 };
-                if tracing.len() == 0 {
+                if tracing.is_empty() {
                     vec![node.fold_children_with(self).into()]
                 } else {
                     vec![ForOfStmt {
@@ -184,7 +184,7 @@ impl StaticModuleRecordTransformer {
             Stmt::Decl(decl) => self.fold_declaration_to_multiple(decl),
             // no reliable analysis can be made within a with block.
             Stmt::With(_) => unimplemented!(),
-            _ => vec![node.fold_children_with(self).into()],
+            _ => vec![node.fold_children_with(self)],
         }
     }
     fn fold_declaration_to_multiple(&mut self, decl: Decl) -> Vec<Stmt> {
@@ -210,10 +210,8 @@ impl StaticModuleRecordTransformer {
         match pat {
             Pat::Ident(ident) => self.trace_live_export_ident(&ident.id, tracing),
             Pat::Array(arr) => {
-                for item in &arr.elems {
-                    if let Some(pat) = item {
-                        self.trace_live_export_pat(pat, tracing);
-                    }
+                for pat in arr.elems.iter().flatten() {
+                    self.trace_live_export_pat(pat, tracing);
                 }
             }
             Pat::Rest(rest) => self.trace_live_export_pat(&rest.arg, tracing),
@@ -243,15 +241,14 @@ impl StaticModuleRecordTransformer {
     fn trace_live_export_ident(&self, local_ident: &Ident, tracing: &mut Vec<Expr>) {
         let init_expr: Expr = local_ident.clone().into();
         let assign = (&self.local_modifiable_bindings)
-            .into_iter()
+            .iter()
             .filter(|x| x.local_ident.to_id() == local_ident.to_id())
             .fold(init_expr, |expr, x| match &x.export {
                 ModuleExportName::Ident(ident) => assign_prop(
                     self.module_env_record_ident.clone(),
-                    MemberProp::Ident(ident.clone().into()),
+                    MemberProp::Ident(ident.clone()),
                     Box::new(expr),
-                )
-                .into(),
+                ),
                 ModuleExportName::Str(str) => assign_prop(
                     self.module_env_record_ident.clone(),
                     MemberProp::Computed(ComputedPropName {
@@ -259,8 +256,7 @@ impl StaticModuleRecordTransformer {
                         expr: Box::new(str.clone().into()),
                     }),
                     Box::new(expr),
-                )
-                .into(),
+                ),
             });
         tracing.push(assign);
     }
@@ -280,13 +276,13 @@ impl Fold for StaticModuleRecordTransformer {
             Expr::Update(expr) => {
                 if let Some(id) = (&expr.arg).as_ident() {
                     let mut tracing = vec![];
-                    self.trace_live_export_ident(&id, &mut tracing);
-                    if tracing.len() == 0 {
+                    self.trace_live_export_ident(id, &mut tracing);
+                    if tracing.is_empty() {
                         expr.fold_children_with(self).into()
                     } else {
                         tracing.insert(0, expr.into());
                         SeqExpr {
-                            exprs: tracing.into_iter().map(|x| Box::new(x)).collect(),
+                            exprs: tracing.into_iter().map(Box::new).collect(),
                             span: DUMMY_SP,
                         }
                         .into()
@@ -307,7 +303,7 @@ impl Fold for StaticModuleRecordTransformer {
                     PatOrExpr::Pat(pat) => self.trace_live_export_pat(pat, &mut tracing),
                 };
 
-                if tracing.len() == 0 {
+                if tracing.is_empty() {
                     expr.fold_children_with(self).into()
                 } else {
                     tracing.insert(0, expr.fold_children_with(self).into());
@@ -371,7 +367,7 @@ impl Fold for StaticModuleRecordTransformer {
                         .expect("all imports/exports should be converted into statement.")
                 })
                 .collect(),
-            &self,
+            self,
         )
     }
     fn fold_module_items(&mut self, items: Vec<ModuleItem>) -> Vec<ModuleItem> {

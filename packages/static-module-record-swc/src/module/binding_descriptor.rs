@@ -28,22 +28,19 @@ pub enum ModuleBinding {
     Namespace,
 }
 
-impl Into<ModuleBinding> for Ident {
-    #[inline]
-    fn into(self) -> ModuleBinding {
-        ModuleBinding::ModuleExportName(self.into())
+impl From<Ident> for ModuleBinding {
+    fn from(x: Ident) -> Self {
+        ModuleBinding::ModuleExportName(x.into())
     }
 }
-impl Into<ModuleBinding> for ModuleExportName {
-    #[inline]
-    fn into(self) -> ModuleBinding {
-        ModuleBinding::ModuleExportName(self)
+impl From<ModuleExportName> for ModuleBinding {
+    fn from(x: ModuleExportName) -> Self {
+        ModuleBinding::ModuleExportName(x)
     }
 }
-impl Into<ModuleBinding> for Str {
-    #[inline]
-    fn into(self) -> ModuleBinding {
-        ModuleBinding::ModuleExportName(self.into())
+impl From<Str> for ModuleBinding {
+    fn from(x: Str) -> ModuleBinding {
+        ModuleBinding::ModuleExportName(x.into())
     }
 }
 
@@ -53,7 +50,7 @@ impl ModuleBinding {
             ModuleBinding::ModuleExportName(id) => match id {
                 ModuleExportName::Ident(id) => Str {
                     raw: None,
-                    value: id.to_id().0.into(),
+                    value: id.to_id().0,
                     span: id.span,
                 }
                 .into(),
@@ -63,7 +60,7 @@ impl ModuleBinding {
         }
     }
     pub fn default_export() -> ModuleBinding {
-        ModuleBinding::ModuleExportName(ModuleExportName::Ident(ident_default().into()))
+        ModuleBinding::ModuleExportName(ModuleExportName::Ident(ident_default()))
     }
 }
 impl ImportBinding {
@@ -74,7 +71,7 @@ impl ImportBinding {
         ];
         // TODO: omit "as" when it is the same as "import"
         if let Some(alias) = &self.alias {
-            result.push(key_value("as".into(), str_lit(alias.to_id().0).into()));
+            result.push(key_value("as".into(), str_lit(alias.to_id().0)));
         }
         ObjectLit {
             span: DUMMY_SP,
@@ -83,17 +80,15 @@ impl ImportBinding {
     }
 }
 
-impl Into<Binding> for ImportBinding {
-    #[inline]
-    fn into(self) -> Binding {
-        Binding::Import(self)
+impl From<ImportBinding> for Binding {
+    fn from(x: ImportBinding) -> Self {
+        Binding::Import(x)
     }
 }
 
-impl Into<Binding> for ExportBinding {
-    #[inline]
-    fn into(self) -> Binding {
-        Binding::Export(self)
+impl From<ExportBinding> for Binding {
+    fn from(x: ExportBinding) -> Self {
+        Binding::Export(x)
     }
 }
 
@@ -110,7 +105,7 @@ impl ExportBinding {
             result.push(key_value(
                 "as".into(),
                 match alias {
-                    ModuleExportName::Ident(alias) => str_lit(alias.to_id().0).into(),
+                    ModuleExportName::Ident(alias) => str_lit(alias.to_id().0),
                     ModuleExportName::Str(str) => str.clone().into(),
                 },
             ));
@@ -148,9 +143,9 @@ pub struct LocalModifiableBinding {
     pub local_ident: Ident,
     pub export: ModuleExportName,
 }
-pub fn local_modifiable_bindings(bindings: &Vec<Binding>) -> Vec<LocalModifiableBinding> {
+pub fn local_modifiable_bindings(bindings: &[Binding]) -> Vec<LocalModifiableBinding> {
     bindings
-        .into_iter()
+        .iter()
         .filter_map(|binding: &Binding| -> Option<LocalModifiableBinding> {
             match binding {
                 Binding::Import(_) => None,
@@ -162,7 +157,7 @@ pub fn local_modifiable_bindings(bindings: &Vec<Binding>) -> Vec<LocalModifiable
                             ModuleBinding::ModuleExportName(name) => match name {
                                 ModuleExportName::Ident(id) => Some(LocalModifiableBinding {
                                     local_ident: id.clone(),
-                                    export: export.alias.clone().unwrap_or(id.clone().into()),
+                                    export: export.alias.clone().unwrap_or_else(|| id.clone().into()),
                                 }),
                                 // export { "x" } from 'other'
                                 ModuleExportName::Str(_) => None,

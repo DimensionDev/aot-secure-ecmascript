@@ -26,7 +26,7 @@ pub fn param(id: Ident) -> Param {
 pub fn str_lit(value: JsWord) -> Expr {
     Str {
         span: DUMMY_SP,
-        value: value.into(),
+        value,
         raw: None,
     }
     .into()

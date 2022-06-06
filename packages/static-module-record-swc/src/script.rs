@@ -7,10 +7,10 @@ pub struct ErrorTransformer {
     pub msg: String,
 }
 
-fn err(msg: &String) -> ThrowStmt {
+fn err(msg: &str) -> ThrowStmt {
     ThrowStmt {
         span: DUMMY_SP,
-        arg: Box::new(str_lit(msg.as_str().into()).into()),
+        arg: Box::new(str_lit(msg.into())),
     }
 }
 

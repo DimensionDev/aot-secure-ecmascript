@@ -1,3 +1,5 @@
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
+
 use module::{config::Config, StaticModuleRecordTransformer};
 use script::ErrorTransformer;
 use swc_common::DUMMY_SP;
@@ -19,10 +21,10 @@ pub fn process_transform(program: Program, metadata: TransformPluginProgramMetad
             Program::Script(script) => {
                 emit_error(
                     script.span,
-                    &format!("StaticModuleRecord transformer must run in the Module mode."),
+                    "StaticModuleRecord transformer must run in the Module mode.",
                 );
                 program.fold_with(&mut ErrorTransformer {
-                    msg: format!("StaticModuleRecord transformer must run in the Module mode."),
+                    msg: "StaticModuleRecord transformer must run in the Module mode.".to_string(),
                 })
             }
             Program::Module(_) => {

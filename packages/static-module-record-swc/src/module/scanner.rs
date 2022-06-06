@@ -98,7 +98,7 @@ impl Visit for ScannerResult {
                             self.bindings.push(
                                 ExportBinding {
                                     export: (&spec.orig).clone().into(),
-                                    alias: (&spec.exported).clone().into(),
+                                    alias: (&spec.exported).clone(),
                                     from: export.src.clone(),
                                 }
                                 .into(),
@@ -205,10 +205,8 @@ impl ScannerResult {
                 self.local_ident.insert(id.to_id());
             }
             Pat::Array(arr) => {
-                for elem in &arr.elems {
-                    if let Some(elem) = elem {
-                        self.visit_pat_inner(elem, is_collect_bindings);
-                    }
+                for elem in arr.elems.iter().flatten() {
+                    self.visit_pat_inner(elem, is_collect_bindings);
                 }
             }
             Pat::Rest(rest) => self.visit_pat_inner(&rest.arg, is_collect_bindings),
@@ -232,7 +230,7 @@ impl ScannerResult {
                             self.local_ident.insert(assign.key.to_id());
                         }
                         ObjectPatProp::Rest(RestPat { arg, .. }) => {
-                            self.visit_pat_inner(&arg, is_collect_bindings)
+                            self.visit_pat_inner(arg, is_collect_bindings)
                         }
                     }
                 }
@@ -265,19 +263,17 @@ impl StaticModuleRecordTransformer {
 
 pub fn resolve_private_ident(str: &str, local_ident: &HashSet<Id>) -> Ident {
     // use starts_with not eq because we need to get the un-hygiene name
-    if local_ident.into_iter().all(|id| !id.0.starts_with(str)) {
+    if local_ident.iter().all(|id| !id.0.starts_with(str)) {
         return Ident::new(str.into(), DUMMY_SP);
     }
 
     let mut i = 0;
-    loop {
-        let current_search = format!("{}_{}", str, i);
-        for (name, _) in local_ident {
-            if name.starts_with(&current_search) {
-                i += 1;
-                continue;
-            }
+    let current_search = format!("{}_{}", str, i);
+    for (name, _) in local_ident {
+        if name.starts_with(&current_search) {
+            i += 1;
+            continue;
         }
-        return Ident::new(current_search.into(), DUMMY_SP);
     }
+    Ident::new(current_search.into(), DUMMY_SP)
 }
