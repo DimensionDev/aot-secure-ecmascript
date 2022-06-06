@@ -27,8 +27,7 @@ impl Fold for ErrorTransformer {
     /// ```
     fn fold_script(&mut self, n: Script) -> Script {
         Script {
-            body: vec![err(&self.msg).into().into()
-            ],
+            body: vec![err(&self.msg).into()],
             ..n
         }
     }
