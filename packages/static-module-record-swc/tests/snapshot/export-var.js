@@ -30,7 +30,6 @@ export default {
             export: "T"
         }
     ],
-    needsImportMeta: false,
     initialize: function(_, import_meta, import_) {
         const a = 1;
         _.z = _.a = a;

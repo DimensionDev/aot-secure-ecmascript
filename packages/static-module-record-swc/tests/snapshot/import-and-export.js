@@ -12,7 +12,6 @@ export default {
             as: "setX"
         }
     ],
-    needsImportMeta: false,
     initialize: function(_, import_meta, import_) {
         debugger;
         _.setX(1);

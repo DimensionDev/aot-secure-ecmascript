@@ -1,15 +1,15 @@
 {
     "name": "@masknet/static-module-record-swc",
     "version": "0.1.0",
-    "description": "",
+    "description": "@swc/core plugin to transform ES Module into StaticModuleRecord.",
     "type": "module",
-    "author": "",
+    "author": "Jack Works",
     "license": "MIT",
     "keywords": ["swc-plugin"],
     "main": "target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm",
     "scripts": {
-        "prepublishOnly": "cargo build --release --target wasm32-unknown-unknown",
+        "build": "cargo build --release --target wasm32-unknown-unknown",
         "test": "cargo test"
     },
-    "files": []
+    "files": ["target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm"]
 }

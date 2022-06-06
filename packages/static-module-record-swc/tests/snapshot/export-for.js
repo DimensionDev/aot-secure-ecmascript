@@ -8,7 +8,6 @@ export default {
             export: "y"
         }
     ],
-    needsImportMeta: false,
     initialize: function(_, import_meta, import_) {
         var x, y;
         _.x = x;

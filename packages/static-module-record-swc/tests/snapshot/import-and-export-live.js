@@ -15,7 +15,6 @@ export default {
             export: "setX"
         }
     ],
-    needsImportMeta: false,
     initialize: function(_, import_meta, import_) {
         let x, y;
         _.z = _.x = x;
