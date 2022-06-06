@@ -1,10 +1,5 @@
 {
-  "references": [
-    { "path": "./packages/static-module-record" },
-    { "path": "./packages/compartment" },
-    { "path": "./packages/membrane" },
-    { "path": "./packages/web-endowments" }
-  ],
+  "references": [{ "path": "./packages/compartment" }],
   "compilerOptions": {
     // Classification follows https://www.typescriptlang.org/tsconfig
 
