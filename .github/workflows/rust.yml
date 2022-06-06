@@ -1,14 +1,11 @@
 on: [push]
 
 name: Rust
-
+# https://github.com/actions-rs/cargo/issues/86
 jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/static-module-record-swc
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -19,12 +16,10 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --manifest-path ./packages/static-module-record-swc/Cargo.toml
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/static-module-record-swc
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -35,12 +30,10 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --manifest-path ./packages/static-module-record-swc/Cargo.toml
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/static-module-record-swc
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -52,13 +45,11 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all -- --check
+          args: --manifest-path ./packages/static-module-record-swc/Cargo.toml --all -- --check
+          args:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/static-module-record-swc
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -70,4 +61,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: --manifest-path ./packages/static-module-record-swc/Cargo.toml -- -D warnings
