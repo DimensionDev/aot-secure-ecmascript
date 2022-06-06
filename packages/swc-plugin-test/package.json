@@ -1,5 +1,5 @@
 {
-  "name": "internal-test",
+  "name": "install-swc-plugin-test",
   "private": true,
   "type": "module",
   "dependencies": {
