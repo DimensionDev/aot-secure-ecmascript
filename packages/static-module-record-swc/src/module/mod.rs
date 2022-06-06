@@ -25,17 +25,21 @@ pub struct StaticModuleRecordTransformer {
     uses_import_meta: bool,
     uses_top_level_await: bool,
     uses_dynamic_import: bool,
+
     bindings: Vec<Binding>,
     local_modifiable_bindings: Vec<LocalModifiableBinding>,
     local_ident: HashSet<Id>,
+
     module_env_record_ident: Ident,
     import_meta_ident: Ident,
     dynamic_import_ident: Ident,
+
     pub config: Config,
+    pub file_name: Option<String>,
 }
 
 impl StaticModuleRecordTransformer {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: Config, file_name: Option<String>) -> Self {
         Self {
             uses_import_meta: false,
             uses_top_level_await: false,
@@ -47,6 +51,7 @@ impl StaticModuleRecordTransformer {
             import_meta_ident: Ident::new("import_meta".into(), DUMMY_SP),
             dynamic_import_ident: Ident::new("_import".into(), DUMMY_SP),
             config,
+            file_name,
         }
     }
 }

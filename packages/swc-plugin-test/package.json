@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@swc/core": "latest",
+    "@types/node": "latest",
+    "@masknet/static-module-record-swc": "workspace:*"
+  },
+  "scripts": {
+    "build": "node ./test.js"
+  }
+}

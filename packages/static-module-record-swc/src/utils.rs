@@ -41,3 +41,17 @@ pub fn emit_error(span: Span, msg: &str) {
         .unwrap()
         .emit(&m_span, msg, Level::Error);
 }
+
+pub fn relative(file_name: &String, base: &String) -> String {
+    if !file_name.starts_with(base) {
+        panic!("file_name {} should starts with cwd {}", file_name, base);
+    }
+
+    let uri = file_name[base.len()..].to_string().replace('\\', "/");
+
+    if uri.starts_with('/') {
+        uri
+    } else {
+        format!("/{}", uri)
+    }
+}

@@ -9,7 +9,7 @@
     "main": "target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm",
     "scripts": {
         "build": "cargo build --release --target wasm32-unknown-unknown",
-        "test": "cargo clippy && cargo test"
+        "test": "cargo fmt && cargo clippy && cargo test"
     },
     "files": ["target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm"]
 }
