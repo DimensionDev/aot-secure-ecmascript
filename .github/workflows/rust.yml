@@ -1,4 +1,4 @@
-on: [push, pull_request]
+on: [push]
 
 name: Rust
 
@@ -6,9 +6,11 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/static-module-record-swc
     steps:
       - uses: actions/checkout@v3
-      - run: cd packages/static-module-record-swc
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -20,9 +22,11 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/static-module-record-swc
     steps:
       - uses: actions/checkout@v3
-      - run: cd packages/static-module-record-swc
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -34,9 +38,11 @@ jobs:
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/static-module-record-swc
     steps:
       - uses: actions/checkout@v3
-      - run: cd packages/static-module-record-swc
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -50,9 +56,11 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/static-module-record-swc
     steps:
       - uses: actions/checkout@v3
-      - run: cd packages/static-module-record-swc
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
