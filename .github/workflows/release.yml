@@ -21,7 +21,6 @@ jobs:
       - run: pnpm install
       - uses: changesets/action@v1
         with:
-          createGithubReleases: true
-          publish: echo "hello~"
+          publish: npx changeset tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
