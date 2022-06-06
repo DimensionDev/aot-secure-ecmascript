@@ -8,8 +8,16 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 indent_style = space
 
-[{.*rc,ts*.json,package.json}]
+[{.*rc,package.json}]
 indent_size = 2
 
 [*.{yaml,yml,md}]
 indent_size = 2
+
+[packages/compartment/src/utils/system.js]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset

@@ -1,0 +1,6 @@
+.github
+package.json
+pnpm-lock.yaml
+packages/static-module-record-swc/tests/**/*
+packages/static-module-record-swc/target/**/*
+packages/compartment/src/utils/system.js
