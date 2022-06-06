@@ -28,6 +28,18 @@ pub enum ModuleBinding {
     Namespace,
 }
 
+impl ToString for ModuleBinding {
+    fn to_string(&self) -> String {
+        match self {
+            ModuleBinding::ModuleExportName(name) => match name {
+                ModuleExportName::Ident(ident) => ident.to_string(),
+                ModuleExportName::Str(str) => str.value.to_string(),
+            },
+            ModuleBinding::Namespace => "*".to_string(),
+        }
+    }
+}
+
 impl From<Ident> for ModuleBinding {
     fn from(x: Ident) -> Self {
         ModuleBinding::ModuleExportName(x.into())
@@ -44,9 +56,9 @@ impl From<Str> for ModuleBinding {
     }
 }
 
-impl ModuleBinding {
-    fn to_str(&self) -> Expr {
-        match self {
+impl From<ModuleBinding> for Expr {
+    fn from(x: ModuleBinding) -> Expr {
+        match x {
             ModuleBinding::ModuleExportName(id) => match id {
                 ModuleExportName::Ident(id) => Str {
                     raw: None,
@@ -54,11 +66,13 @@ impl ModuleBinding {
                     span: id.span,
                 }
                 .into(),
-                ModuleExportName::Str(f) => f.clone().into(),
+                ModuleExportName::Str(f) => f.into(),
             },
             ModuleBinding::Namespace => str_lit("*".into()),
         }
     }
+}
+impl ModuleBinding {
     pub fn default_export() -> ModuleBinding {
         ModuleBinding::ModuleExportName(ModuleExportName::Ident(ident_default()))
     }
@@ -66,12 +80,13 @@ impl ModuleBinding {
 impl ImportBinding {
     pub fn to_object_lit(&self) -> ObjectLit {
         let mut result: Vec<PropOrSpread> = vec![
-            key_value("import".into(), self.import.to_str()),
+            key_value("import".into(), self.import.clone().into()),
             key_value("from".into(), (&self.from).clone().into()),
         ];
-        // TODO: omit "as" when it is the same as "import"
         if let Some(alias) = &self.alias {
-            result.push(key_value("as".into(), str_lit(alias.to_id().0)));
+            if alias.to_string() != self.import.to_string() {
+                result.push(key_value("as".into(), str_lit(alias.to_id().0)));
+            }
         }
         ObjectLit {
             span: DUMMY_SP,
@@ -98,7 +113,7 @@ impl ExportBinding {
             ModuleExportName::Ident(alias) => str_lit(alias.to_id().0),
             ModuleExportName::Str(str) => str.into(),
         });
-        let original_export_name = (&self.export).to_str();
+        let original_export_name = self.export.clone().into();
 
         ObjectLit {
             span: DUMMY_SP,
@@ -110,7 +125,10 @@ impl ExportBinding {
                 result.push(key_value("from".into(), from.clone().into()));
                 result
             } else {
-                vec![key_value("export".into(), actual_export_value.unwrap_or(original_export_name))]
+                vec![key_value(
+                    "export".into(),
+                    actual_export_value.unwrap_or(original_export_name),
+                )]
             },
         }
     }

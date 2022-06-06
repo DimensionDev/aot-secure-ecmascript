@@ -3,8 +3,7 @@ export default {
     bindings: [
         {
             import: "a",
-            from: 'mod',
-            as: "a"
+            from: 'mod'
         },
         {
             import: "x",

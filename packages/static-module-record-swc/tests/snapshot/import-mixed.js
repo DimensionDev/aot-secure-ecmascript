@@ -8,8 +8,7 @@ export default {
         },
         {
             import: "b",
-            from: 'mod',
-            as: "b"
+            from: 'mod'
         },
         {
             import: "default",
