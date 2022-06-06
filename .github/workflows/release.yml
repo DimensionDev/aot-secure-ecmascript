@@ -20,5 +20,8 @@ jobs:
           cache: "pnpm"
       - run: pnpm install
       - uses: changesets/action@v1
+        with:
+          createGithubReleases: true
+          publish: echo "hello~"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
