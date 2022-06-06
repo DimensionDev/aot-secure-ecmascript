@@ -5,10 +5,10 @@
  * Run addSystemJS.mjs to follow the upstream.
  */
 export let SystemJS
-/*
- * SJS 6.12.1
- * Minimal SystemJS Build
- */
+    /*
+     * SJS 6.12.1
+     * Minimal SystemJS Build
+     */
 ;(function () {
     function errMsg(errCode, msg) {
         return (msg || '') + ' (SystemJS https://git.io/JvFET#' + errCode + ')'

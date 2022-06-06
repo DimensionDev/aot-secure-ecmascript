@@ -1,11 +1,11 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "rootDir": "./src/",
-    "outDir": "./dist/",
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "allowJs": true
-  },
-  "include": ["./src"],
-  "references": []
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "./src/",
+        "outDir": "./dist/",
+        "tsBuildInfoFile": "./dist/.tsbuildinfo",
+        "allowJs": true
+    },
+    "include": ["./src"],
+    "references": []
 }
