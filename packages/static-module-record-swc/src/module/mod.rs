@@ -8,10 +8,10 @@ mod scanner;
 /// Transform bindings into StaticModuleRecord.
 mod transformer;
 
+use self::{binding_descriptor::*, config::Config};
 use std::collections::HashSet;
 use swc_common::DUMMY_SP;
 use swc_plugin::ast::{Id, Ident};
-use self::{binding_descriptor::*, config::Config};
 
 /// Convert code into
 /// ```js

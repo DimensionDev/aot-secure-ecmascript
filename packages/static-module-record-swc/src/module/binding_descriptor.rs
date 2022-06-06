@@ -157,7 +157,10 @@ pub fn local_modifiable_bindings(bindings: &[Binding]) -> Vec<LocalModifiableBin
                             ModuleBinding::ModuleExportName(name) => match name {
                                 ModuleExportName::Ident(id) => Some(LocalModifiableBinding {
                                     local_ident: id.clone(),
-                                    export: export.alias.clone().unwrap_or_else(|| id.clone().into()),
+                                    export: export
+                                        .alias
+                                        .clone()
+                                        .unwrap_or_else(|| id.clone().into()),
                                 }),
                                 // export { "x" } from 'other'
                                 ModuleExportName::Str(_) => None,
