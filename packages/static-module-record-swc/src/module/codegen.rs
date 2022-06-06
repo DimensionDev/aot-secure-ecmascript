@@ -22,11 +22,19 @@ impl StaticModuleRecordTransformer {
                 span: DUMMY_SP,
                 stmts: stmt,
             }),
-            params: vec![
-                param(transformer.module_env_record_ident.clone()),
-                param(transformer.import_meta_ident.clone()),
-                param(transformer.dynamic_import_ident.clone()),
-            ],
+            params: {
+                let emit_import_meta = self.uses_import_meta || self.uses_dynamic_import;
+                let emit_dynamic_import = self.uses_dynamic_import;
+
+                let mut result = vec![param(transformer.module_env_record_ident.clone())];
+                if emit_import_meta {
+                    result.push(param(transformer.import_meta_ident.clone()));
+                }
+                if emit_dynamic_import {
+                    result.push(param(transformer.dynamic_import_ident.clone()));
+                }
+                result
+            },
             ..Function::dummy()
         };
 

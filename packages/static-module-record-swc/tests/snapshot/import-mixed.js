@@ -22,7 +22,7 @@ export default {
             as: "d"
         }
     ],
-    initialize: function(_, import_meta, import_) {
+    initialize: function(_) {
         _.console.log(_.a, _.b, _.c, _.d);
     }
 };

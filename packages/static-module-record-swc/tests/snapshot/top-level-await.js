@@ -1,6 +1,6 @@
 // @ts-nocheck
 export default {
-    initialize: async function(_, import_meta, import_) {
+    initialize: async function(_) {
         await 1;
     }
 };

@@ -266,6 +266,7 @@ impl StaticModuleRecordTransformer {
 impl Fold for StaticModuleRecordTransformer {
     fn fold_callee(&mut self, n: Callee) -> Callee {
         if n.is_import() {
+            self.uses_dynamic_import = true;
             Callee::Expr(Box::new(self.dynamic_import_ident.clone().into()))
         } else {
             n.fold_children_with(self)

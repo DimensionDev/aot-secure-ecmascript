@@ -5,7 +5,7 @@ export default {
             export: "default"
         }
     ],
-    initialize: function(_, import_meta, import_) {
+    initialize: function(_) {
         _.default = class {
         };
     }

@@ -1,6 +1,6 @@
 // @ts-nocheck
 export default {
-    initialize: function(_, import_meta, import_) {
+    initialize: function(_) {
         _.globalThis;
         _.window;
         function f(globalThis) {

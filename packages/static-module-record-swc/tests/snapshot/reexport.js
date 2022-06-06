@@ -29,5 +29,5 @@ export default {
             from: 'mod3'
         }
     ],
-    initialize: function(_, import_meta, import_) {}
+    initialize: function(_) {}
 };

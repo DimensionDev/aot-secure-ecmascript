@@ -24,6 +24,7 @@ use swc_plugin::ast::{Id, Ident};
 pub struct StaticModuleRecordTransformer {
     uses_import_meta: bool,
     uses_top_level_await: bool,
+    uses_dynamic_import: bool,
     bindings: Vec<Binding>,
     local_modifiable_bindings: Vec<LocalModifiableBinding>,
     local_ident: HashSet<Id>,
@@ -38,6 +39,7 @@ impl StaticModuleRecordTransformer {
         Self {
             uses_import_meta: false,
             uses_top_level_await: false,
+            uses_dynamic_import: false,
             bindings: Vec::new(),
             local_modifiable_bindings: Vec::new(),
             local_ident: HashSet::new(),

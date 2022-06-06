@@ -17,7 +17,7 @@ export default {
             as: "z"
         }
     ],
-    initialize: function(_, import_meta, import_) {
+    initialize: function(_) {
         _.console.log(_.x, _.y, _.z);
     }
 };

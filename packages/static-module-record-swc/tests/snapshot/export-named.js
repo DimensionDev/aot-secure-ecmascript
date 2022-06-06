@@ -23,7 +23,7 @@ export default {
             export: "x3"
         }
     ],
-    initialize: function(_, import_meta, import_) {
+    initialize: function(_) {
         {
             var a = 1;
             _.b = _.a = a;
