@@ -30,42 +30,50 @@ impl StaticModuleRecordTransformer {
             ..Function::dummy()
         };
 
+        let mut props = vec![];
+
+        if !self.bindings.is_empty() {
+            props.push(key_value(
+                "bindings".into(),
+                ArrayLit {
+                    span: DUMMY_SP,
+                    elems: (&self.bindings)
+                        .iter()
+                        .map(|binding| {
+                            Some(ExprOrSpread {
+                                expr: Box::new(binding.to_object_lit().into()),
+                                spread: None,
+                            })
+                        })
+                        .collect(),
+                }
+                .into(),
+            ));
+        }
+
+        if self.uses_import_meta {
+            props.push(key_value(
+                "needsImportMeta".into(),
+                Bool {
+                    span: DUMMY_SP,
+                    value: self.uses_import_meta,
+                }
+                .into(),
+            ));
+        }
+
+        props.push(key_value(
+            "initialize".into(),
+            FnExpr {
+                ident: None,
+                function: init_fn,
+            }
+            .into(),
+        ));
+
         ObjectLit {
             span: DUMMY_SP,
-            props: vec![
-                key_value(
-                    "bindings".into(),
-                    ArrayLit {
-                        span: DUMMY_SP,
-                        elems: (&self.bindings)
-                            .iter()
-                            .map(|binding| {
-                                Some(ExprOrSpread {
-                                    expr: Box::new(binding.to_object_lit().into()),
-                                    spread: None,
-                                })
-                            })
-                            .collect(),
-                    }
-                    .into(),
-                ),
-                key_value(
-                    "needsImportMeta".into(),
-                    Bool {
-                        span: DUMMY_SP,
-                        value: self.uses_import_meta,
-                    }
-                    .into(),
-                ),
-                key_value(
-                    "initialize".into(),
-                    FnExpr {
-                        ident: None,
-                        function: init_fn,
-                    }
-                    .into(),
-                ),
-            ],
+            props,
         }
         .into()
     }

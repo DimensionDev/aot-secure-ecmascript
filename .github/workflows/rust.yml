@@ -25,6 +25,10 @@ jobs:
         with:
           command: build
           args: --manifest-path ./packages/static-module-record-swc/Cargo.toml --release --target wasm32-unknown-unknown
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wasm
+          path: ./packages/static-module-record-swc/target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm
   test:
     name: Test Suite
     runs-on: ubuntu-latest
@@ -42,6 +46,7 @@ jobs:
         with:
           command: test
           args: --manifest-path ./packages/static-module-record-swc/Cargo.toml
+      - run: git diff --exit-code
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
