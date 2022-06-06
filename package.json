@@ -5,6 +5,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "publish": "pnpm run build && pnpm run -r build && npx changeset tag && npx changeset publish",
     "build": "tsc -b ./tsconfig.json",
     "build:watch": "tsc -b ./tsconfig.json --watch"
   },
