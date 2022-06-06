@@ -3,6 +3,7 @@ name: Linters and tests
 on:
   push:
     paths:
+      - './**'
       - '!packages/static-module-record-swc/**'
 
 concurrency:
