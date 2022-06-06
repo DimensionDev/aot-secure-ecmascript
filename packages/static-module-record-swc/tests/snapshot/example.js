@@ -17,7 +17,6 @@ export default {
             export: "add"
         }
     ],
-    needsImportMeta: false,
     initialize: function(_, import_meta, import_) {
         _.console.log(_.utils);
         function init() {

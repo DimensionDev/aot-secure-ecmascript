@@ -9,7 +9,6 @@ export default {
             export: "_ref"
         }
     ],
-    needsImportMeta: false,
     initialize: function(__0, import_meta, import_) {
         function _ref() {}
         __0._ref = __0.default = _ref;

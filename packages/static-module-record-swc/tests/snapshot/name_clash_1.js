@@ -1,7 +1,5 @@
 // @ts-nocheck
 export default {
-    bindings: [],
-    needsImportMeta: false,
     initialize: function(__0, import_meta_0, import__0) {
         let _, import_meta, import_;
         _;
