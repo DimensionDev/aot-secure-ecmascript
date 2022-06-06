@@ -126,13 +126,22 @@ fn callback(callee: Ident, first_arg: Expr, second_arg: Expr) -> Vec<ModuleItem>
         ],
         ..CallExpr::dummy()
     };
-    vec![ModuleItem::Stmt(
-        ExprStmt {
-            expr: Box::new(call.into()),
-            span: DUMMY_SP,
-        }
-        .into(),
-    )]
+    vec![
+        ModuleItem::Stmt(
+            ExprStmt {
+                expr: Box::new(Expr::Lit("use strict".into())),
+                span: DUMMY_SP,
+            }
+            .into(),
+        ),
+        ModuleItem::Stmt(
+            ExprStmt {
+                expr: Box::new(call.into()),
+                span: DUMMY_SP,
+            }
+            .into(),
+        ),
+    ]
 }
 
 pub fn prop_access(obj: Ident, prop: Ident) -> Expr {

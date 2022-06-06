@@ -1,4 +1,5 @@
 // @ts-nocheck
+"use strict";
 __register("node:fs", {
     bindings: [
         {
