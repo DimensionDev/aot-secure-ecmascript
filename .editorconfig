@@ -14,7 +14,7 @@ indent_size = 2
 [*.{yaml,yml,md}]
 indent_size = 2
 
-[{packages/compartment/src/utils/system.js,packages/static-module-record-swc/tests}]
+[packages/compartment/src/utils/system.js]
 charset = unset
 end_of_line = unset
 insert_final_newline = unset
