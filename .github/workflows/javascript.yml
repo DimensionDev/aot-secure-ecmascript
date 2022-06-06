@@ -1,10 +1,7 @@
 name: Linters and tests
 
 on:
-  push:
-    paths:
-      - './**'
-      - '!packages/static-module-record-swc/**'
+  push
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
