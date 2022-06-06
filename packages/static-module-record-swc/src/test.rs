@@ -1,7 +1,9 @@
 use std::fs::{read_to_string, write};
 use std::{path::PathBuf, rc::Rc};
+use swc_common::{chain, Mark};
 use swc_common::comments::SingleThreadedComments;
 use swc_ecma_parser::Syntax;
+use swc_ecma_transforms::resolver;
 use swc_ecma_transforms_testing::{test, Tester};
 
 use crate::module::config::Config;
@@ -15,7 +17,10 @@ fn test(input: PathBuf) {
 
     Tester::run(|tester| {
         let actual = tester.apply_transform(
-            StaticModuleRecordTransformer::new(config.unwrap_or_default()),
+            chain!(
+                resolver(Mark::new(), Mark::new(), false),
+                StaticModuleRecordTransformer::new(config.unwrap_or_default())
+            ),
             "input.js",
             Syntax::Es(Default::default()),
             file.as_str(),
