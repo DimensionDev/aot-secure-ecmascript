@@ -29,7 +29,7 @@ fn test(input: PathBuf) {
         )?;
         let result = tester.print(&actual, &Rc::new(SingleThreadedComments::default()));
         // TODO: why comments are missing?
-        write(&output, format!("// @ts-nocheck\n{}", result)).unwrap();
+        write(&output, result).unwrap();
         Ok(())
     })
 }

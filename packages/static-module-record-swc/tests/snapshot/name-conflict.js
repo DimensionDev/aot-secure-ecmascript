@@ -1,4 +1,3 @@
-// @ts-nocheck
 export default {
     needsImportMeta: true,
     initialize: function(__0, import_meta_0, import__0) {

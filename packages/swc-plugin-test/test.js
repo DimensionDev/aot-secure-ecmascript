@@ -14,7 +14,7 @@ const { code } = await transformFile(out, {
                     '@masknet/static-module-record-swc',
                     {
                         template: {
-                            type: 'callback-infer',
+                            type: 'callback-cwd',
                             callback: '__register_module__',
                             cwd,
                         },

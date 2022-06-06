@@ -1,2 +1,2 @@
-/// {"template": {"type": "callback-infer", "callback": "__register", "cwd": "BLANK_IN_TEST"}}
+/// {"template": {"type": "callback-cwd", "callback": "__register", "cwd": "BLANK_IN_TEST"}}
 await 1

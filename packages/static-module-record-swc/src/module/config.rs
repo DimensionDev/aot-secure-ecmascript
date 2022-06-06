@@ -19,7 +19,7 @@ impl Default for Config {
 #[serde(tag = "type")]
 pub enum Template {
     /// export default { ... }
-    #[serde(rename = "ExportDefault")]
+    #[serde(rename = "export-default")]
     ExportDefault,
 
     /// callback_name("first_arg", { ... })
@@ -31,7 +31,7 @@ pub enum Template {
         first_arg: String,
     },
     /// callback_name("/path_from/cwd", { ... })
-    #[serde(rename = "callback-infer")]
+    #[serde(rename = "callback-cwd")]
     CallbackInfer {
         #[serde(rename = "callback")]
         callback_name: String,
