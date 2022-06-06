@@ -64,7 +64,7 @@ export interface ModuleDescriptor_ModuleInstance {
     namespace: object
 }
 
-" " + 1..x()
+' ' + (1).x()
 
 export interface CompartmentOptions {
     // We do not support this because we running in a lockdown environment.

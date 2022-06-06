@@ -23,4 +23,7 @@ const text = `/**
 export let SystemJS;
 ${source}`
 writeFile(new URL('./src/utils/system.js', import.meta.url), text)
-execSync('npx prettier --write ' + fileURLToPath(new URL('./src/utils/system.js', import.meta.url)))
+execSync(
+    'npx prettier --config ../../prettierrc --write ' +
+        fileURLToPath(new URL('./src/utils/system.js', import.meta.url)),
+)
