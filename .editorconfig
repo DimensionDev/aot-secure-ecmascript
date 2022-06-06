@@ -13,3 +13,6 @@ indent_size = 2
 
 [*.{yaml,yml,md}]
 indent_size = 2
+
+[packages/compartment/src/utils/system.js]
+generated_code = true
