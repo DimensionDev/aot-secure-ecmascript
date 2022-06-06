@@ -13,3 +13,11 @@ indent_size = 2
 
 [*.{yaml,yml,md}]
 indent_size = 2
+
+[{packages/compartment/src/utils/system.js,packages/static-module-record-swc/tests}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset
