@@ -1,0 +1,4 @@
+.github
+package.json
+pnpm-lock.yaml
+packages/static-module-record-swc/tests/**/*

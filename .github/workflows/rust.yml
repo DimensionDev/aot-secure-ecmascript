@@ -4,6 +4,10 @@ on:
       - 'packages/static-module-record-swc/**'
       - '.github/workflows/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
 name: Rust
 # https://github.com/actions-rs/cargo/issues/86
 jobs:
