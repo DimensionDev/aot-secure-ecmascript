@@ -1,4 +1,8 @@
-on: [push]
+on:
+  push:
+    paths:
+      - 'packages/static-module-record-swc/**'
+      - '.github/workflows/**'
 
 name: Rust
 # https://github.com/actions-rs/cargo/issues/86
