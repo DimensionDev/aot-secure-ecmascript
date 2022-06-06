@@ -3,8 +3,26 @@ on: [push]
 name: Rust
 # https://github.com/actions-rs/cargo/issues/86
 jobs:
-  check:
-    name: Check
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v1
+        with:
+          working-directory: ./packages/static-module-record-swc/
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --manifest-path ./packages/static-module-record-swc/Cargo.toml --release --target wasm32-unknown-unknown
+  test:
+    name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -16,20 +34,6 @@ jobs:
       - uses: Swatinem/rust-cache@v1
         with:
           working-directory: ./packages/static-module-record-swc/
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --manifest-path ./packages/static-module-record-swc/Cargo.toml
-  test:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -59,6 +63,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - uses: Swatinem/rust-cache@v1
+        with:
+          working-directory: ./packages/static-module-record-swc/
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
