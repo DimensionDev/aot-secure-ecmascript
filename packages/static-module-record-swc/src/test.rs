@@ -1,7 +1,7 @@
 use std::fs::{read_to_string, write};
 use std::{path::PathBuf, rc::Rc};
-use swc_common::{chain, Mark};
 use swc_common::comments::SingleThreadedComments;
+use swc_common::{chain, Mark};
 use swc_ecma_parser::Syntax;
 use swc_ecma_transforms::resolver;
 use swc_ecma_transforms_testing::{test, Tester};
