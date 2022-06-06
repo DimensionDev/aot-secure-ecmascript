@@ -1,5 +1,6 @@
 {
   "name": "@masknet/compartment",
+  "private": true,
   "version": "0.0.0",
   "type": "module",
   "exports": {
@@ -7,7 +8,8 @@
   },
   "scripts": {
     "install-system.js": "node --experimental-fetch ./addSystemJS.mjs",
-    "play": "node ./test/index.js"
+    "play": "node ./test/index.js",
+    "build": "echo 'No build command'"
   },
   "dependencies": {},
   "devDependencies": {},

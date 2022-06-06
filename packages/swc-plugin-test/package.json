@@ -8,6 +8,7 @@
     "@masknet/static-module-record-swc": "workspace:*"
   },
   "scripts": {
-    "build": "node ./test.js"
+    "play": "node ./test.js",
+    "build": "echo 'No build command'"
   }
 }
