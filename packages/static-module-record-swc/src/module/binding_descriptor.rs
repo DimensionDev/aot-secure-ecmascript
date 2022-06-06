@@ -92,30 +92,26 @@ impl From<ExportBinding> for Binding {
     }
 }
 
-// TODO: for export default class T {},
-// we should not emit { export: "T", as: "default" }
-// but { export: "default" } only (since it does not have a "from" property).
-
-// But this information is useful in our local transforming so we should keep it.
-// It allows us to track the modification of T and reflect it to env.default.
 impl ExportBinding {
     pub fn to_object_lit(&self) -> ObjectLit {
-        let mut result: Vec<PropOrSpread> = vec![key_value("export".into(), self.export.to_str())];
-        if let Some(alias) = &self.alias {
-            result.push(key_value(
-                "as".into(),
-                match alias {
-                    ModuleExportName::Ident(alias) => str_lit(alias.to_id().0),
-                    ModuleExportName::Str(str) => str.clone().into(),
-                },
-            ));
-        }
-        if let Some(from) = &self.from {
-            result.push(key_value("from".into(), from.clone().into()));
-        }
+        let actual_export_value = self.alias.clone().map(|alias| match alias {
+            ModuleExportName::Ident(alias) => str_lit(alias.to_id().0),
+            ModuleExportName::Str(str) => str.into(),
+        });
+        let original_export_name = (&self.export).to_str();
+
         ObjectLit {
             span: DUMMY_SP,
-            props: result,
+            props: if let Some(from) = &self.from {
+                let mut result = vec![key_value("export".into(), original_export_name)];
+                if let Some(export) = actual_export_value {
+                    result.push(key_value("as".into(), export))
+                }
+                result.push(key_value("from".into(), from.clone().into()));
+                result
+            } else {
+                vec![key_value("export".into(), actual_export_value.unwrap_or(original_export_name))]
+            },
         }
     }
 

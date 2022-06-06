@@ -5,8 +5,7 @@ export default {
             export: "a"
         },
         {
-            export: "a",
-            as: "b"
+            export: "b"
         },
         {
             export: "c"

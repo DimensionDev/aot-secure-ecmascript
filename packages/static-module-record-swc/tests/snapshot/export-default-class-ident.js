@@ -2,8 +2,7 @@
 export default {
     bindings: [
         {
-            export: "T",
-            as: "default"
+            export: "default"
         }
     ],
     initialize: function(_, import_meta, import_) {
