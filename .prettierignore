@@ -2,4 +2,3 @@
 package.json
 pnpm-lock.yaml
 packages/static-module-record-swc/tests/**/*
-packages/compartment/src/utils/system.js
