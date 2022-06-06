@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: cd packages/static-module-record-swc
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -21,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: cd packages/static-module-record-swc
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -34,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: cd packages/static-module-record-swc
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -49,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: cd packages/static-module-record-swc
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
