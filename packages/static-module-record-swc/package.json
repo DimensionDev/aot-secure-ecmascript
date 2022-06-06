@@ -1,18 +1,22 @@
 {
-    "name": "@masknet/static-module-record-swc",
-    "publishConfig": {
-      "access": "public"
-    },
-    "version": "0.0.0",
-    "description": "@swc/core plugin to transform ES Module into StaticModuleRecord.",
-    "type": "module",
-    "author": "Jack Works",
-    "license": "MIT",
-    "keywords": ["swc-plugin"],
-    "main": "target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm",
-    "scripts": {
-        "build": "cargo build --release --target wasm32-unknown-unknown",
-        "test": "cargo fmt && cargo clippy && cargo test"
-    },
-    "files": ["target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm"]
+  "name": "@masknet/static-module-record-swc",
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "1.0.0",
+  "description": "@swc/core plugin to transform ES Module into StaticModuleRecord.",
+  "type": "module",
+  "author": "Jack Works",
+  "license": "MIT",
+  "keywords": [
+    "swc-plugin"
+  ],
+  "main": "target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm",
+  "scripts": {
+    "build": "cargo build --release --target wasm32-unknown-unknown",
+    "test": "cargo fmt && cargo clippy && cargo test"
+  },
+  "files": [
+    "target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm"
+  ]
 }
