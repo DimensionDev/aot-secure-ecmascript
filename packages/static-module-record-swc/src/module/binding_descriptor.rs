@@ -1,6 +1,6 @@
 use crate::utils::*;
 use swc_common::DUMMY_SP;
-use swc_plugin::ast::*;
+use swc_plugin::{ast::*, utils::quote_ident};
 
 #[derive(Clone)]
 pub enum Binding {
@@ -74,7 +74,7 @@ impl From<ModuleBinding> for Expr {
 }
 impl ModuleBinding {
     pub fn default_export() -> ModuleBinding {
-        ModuleBinding::ModuleExportName(ModuleExportName::Ident(ident_default()))
+        ModuleBinding::ModuleExportName(ModuleExportName::Ident(quote_ident!("default")))
     }
 }
 impl ImportBinding {

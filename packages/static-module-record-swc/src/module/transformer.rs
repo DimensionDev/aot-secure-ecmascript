@@ -1,7 +1,5 @@
 use swc_common::DUMMY_SP;
-use swc_plugin::ast::*;
-
-use crate::utils::*;
+use swc_plugin::{ast::*, utils::quote_ident};
 
 use super::{
     codegen::{assign_prop, prop_access},
@@ -47,7 +45,7 @@ impl StaticModuleRecordTransformer {
                         } else {
                             vec![expr_to_stmt(assign_prop(
                                 self.module_env_record_ident.clone(),
-                                ident_default().into(),
+                                quote_ident!("default").into(),
                                 Box::new(node.fold_children_with(self).into()),
                             ))]
                         }
@@ -65,7 +63,7 @@ impl StaticModuleRecordTransformer {
                         } else {
                             vec![expr_to_stmt(assign_prop(
                                 self.module_env_record_ident.clone(),
-                                ident_default().into(),
+                                quote_ident!("default").into(),
                                 Box::new(node.fold_children_with(self).into()),
                             ))]
                         }
@@ -75,7 +73,7 @@ impl StaticModuleRecordTransformer {
                 // export default expr => env.default = expr
                 ModuleDecl::ExportDefaultExpr(node) => vec![expr_to_stmt(assign_prop(
                     self.module_env_record_ident.clone(),
-                    ident_default().into(),
+                    quote_ident!("default").into(),
                     node.expr.fold_children_with(self),
                 ))],
                 // export * from './foo' => No emit
@@ -267,7 +265,11 @@ impl Fold for StaticModuleRecordTransformer {
     fn fold_callee(&mut self, n: Callee) -> Callee {
         if n.is_import() {
             self.uses_dynamic_import = true;
-            Callee::Expr(Box::new(self.dynamic_import_ident.clone().into()))
+            Callee::Expr(Box::new(Expr::Member(MemberExpr {
+                obj: Box::new(self.import_context_ident.clone().into()),
+                prop: MemberProp::Ident(quote_ident!("import")),
+                span: DUMMY_SP,
+            })))
         } else {
             n.fold_children_with(self)
         }
@@ -347,7 +349,11 @@ impl Fold for StaticModuleRecordTransformer {
             }
             Expr::MetaProp(meta) if meta.kind == MetaPropKind::ImportMeta => {
                 self.uses_import_meta = true;
-                self.import_meta_ident.clone().into()
+                Expr::Member(MemberExpr {
+                    obj: Box::new(self.import_context_ident.clone().into()),
+                    prop: MemberProp::Ident(quote_ident!("importMeta")),
+                    span: DUMMY_SP,
+                })
             }
             // Explicitly reject those JSX expressions that might involve Ident
             Expr::JSXMember(_) => unimplemented!(),

@@ -1,11 +1,11 @@
 export default {
     needsImportMeta: true,
-    initialize: function(__0, import_meta_0, import__0) {
-        var _, import_meta, import_;
+    needsImport: true,
+    initialize: function(__0, context_0) {
+        var _, context;
         _;
-        import_meta;
-        import_;
-        import_meta_0;
-        import__0('');
+        context;
+        context_0.importMeta;
+        context_0.import('');
     }
 };

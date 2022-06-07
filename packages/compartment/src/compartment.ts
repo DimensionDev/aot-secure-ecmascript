@@ -14,9 +14,8 @@ import {
     type ModuleDescriptor,
 } from './types.js'
 import { normalizeModuleDescriptor } from './utils/normalize.js'
-import { internalError, opaqueProxy } from './utils/opaqueProxy.js'
+import { internalError } from './utils/opaqueProxy.js'
 import {
-    isExportBinding,
     isImportBinding,
     isModuleDescriptor_FullSpecReference,
     isModuleDescriptor_ModuleInstance,
@@ -199,7 +198,11 @@ export class Compartment implements CompartmentInstance {
                 (_export, _context) => {
                     init(_export)
                     return {
-                        execute: () => initialize(moduleEnvironmentProxy, _context.meta, _context.import),
+                        execute: () =>
+                            initialize(moduleEnvironmentProxy, {
+                                dynamicImport: _context.import,
+                                importMeta: _context.meta,
+                            }),
                         setters,
                     }
                 },

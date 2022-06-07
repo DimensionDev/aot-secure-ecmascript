@@ -255,9 +255,8 @@ impl StaticModuleRecordTransformer {
         self.uses_top_level_await = contains_top_level_await(module);
         self.local_ident = scanner.local_ident;
 
-        self.dynamic_import_ident = resolve_private_ident("import_", &self.local_ident);
-        self.import_meta_ident = resolve_private_ident("import_meta", &self.local_ident);
         self.module_env_record_ident = resolve_private_ident("_", &self.local_ident);
+        self.import_context_ident = resolve_private_ident("context", &self.local_ident);
     }
 }
 

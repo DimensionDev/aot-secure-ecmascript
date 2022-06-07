@@ -1,10 +1,6 @@
 use swc_common::{errors::Level, MultiSpan, Span, DUMMY_SP};
 use swc_plugin::ast::*;
 
-pub fn ident_default() -> Ident {
-    Ident::new("default".into(), DUMMY_SP)
-}
-
 pub fn key_value(key: JsWord, expr: Expr) -> PropOrSpread {
     PropOrSpread::Prop(Box::new(
         KeyValueProp {

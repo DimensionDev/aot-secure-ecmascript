@@ -38,15 +38,11 @@ impl StaticModuleRecordTransformer {
                 stmts: stmt,
             }),
             params: {
-                let emit_import_meta = self.uses_import_meta || self.uses_dynamic_import;
-                let emit_dynamic_import = self.uses_dynamic_import;
+                let emit_import_context = self.uses_import_meta || self.uses_dynamic_import;
 
                 let mut result = vec![param(transformer.module_env_record_ident.clone())];
-                if emit_import_meta {
-                    result.push(param(transformer.import_meta_ident.clone()));
-                }
-                if emit_dynamic_import {
-                    result.push(param(transformer.dynamic_import_ident.clone()));
+                if emit_import_context {
+                    result.push(param(transformer.import_context_ident.clone()));
                 }
                 result
             },
@@ -80,6 +76,17 @@ impl StaticModuleRecordTransformer {
                 Bool {
                     span: DUMMY_SP,
                     value: self.uses_import_meta,
+                }
+                .into(),
+            ));
+        }
+
+        if self.uses_dynamic_import {
+            props.push(key_value(
+                "needsImport".into(),
+                Bool {
+                    span: DUMMY_SP,
+                    value: self.uses_dynamic_import,
                 }
                 .into(),
             ));

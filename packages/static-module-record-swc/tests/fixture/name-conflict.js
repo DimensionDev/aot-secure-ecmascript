@@ -1,3 +1,3 @@
-var _, import_meta, import_
+var _, context
 import.meta
 import('')
