@@ -31,8 +31,7 @@ pub struct StaticModuleRecordTransformer {
     local_ident: HashSet<Id>,
 
     module_env_record_ident: Ident,
-    import_meta_ident: Ident,
-    dynamic_import_ident: Ident,
+    import_context_ident: Ident,
 
     pub config: Config,
     pub file_name: Option<String>,
@@ -48,8 +47,7 @@ impl StaticModuleRecordTransformer {
             local_modifiable_bindings: Vec::new(),
             local_ident: HashSet::new(),
             module_env_record_ident: Ident::new("_".into(), DUMMY_SP),
-            import_meta_ident: Ident::new("import_meta".into(), DUMMY_SP),
-            dynamic_import_ident: Ident::new("_import".into(), DUMMY_SP),
+            import_context_ident: Ident::new("context".into(), DUMMY_SP),
             config,
             file_name,
         }

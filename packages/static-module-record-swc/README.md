@@ -1,6 +1,8 @@
 # @masknet/static-module-record-swc
 
-A @swc/core plugin to convert an ES Module into a [StaticModuleRecord](https://github.com/tc39/proposal-compartments/blob/775024d93830ee6464363b4b373d9353425a0776/README.md#sketch).
+> WARNING: This package currently does not follow the [Semantic Versioning](https://semver.org/) because the original standard is still developing. Minor version might include breaking changes!
+
+A @swc/core plugin to convert an ES Module into a [StaticModuleRecord](https://github.com/tc39/proposal-compartments/blob/6a180313515f6faec2818dad229e6921109b50f5/README.md#sketch).
 
 ## Usage
 
@@ -52,27 +54,7 @@ export const url = new URL('./here.txt', import.meta.url)
 await writeFile(url, 'Hello World')
 ```
 
-into
-
-```js
-export default {
-    bindings: [
-        {
-            import: 'writeFile',
-            from: 'node:fs/promises',
-        },
-        {
-            export: 'url',
-        },
-    ],
-    needsImportMeta: true,
-    initialize: async function (_, import_meta) {
-        const url = new _.URL('./here.txt', import_meta.url)
-        _.url = url
-        await _.writeFile(url, 'Hello World')
-    },
-}
-```
+into [this file](./tests/snapshot/example.js)
 
 #### `config.template.type: "callback"`
 
@@ -92,28 +74,7 @@ export const url = new URL('./here.txt', import.meta.url)
 await writeFile(url, 'Hello World')
 ```
 
-into
-
-```js
-'use strict'
-__register('/index.js', {
-    bindings: [
-        {
-            import: 'writeFile',
-            from: 'node:fs/promises',
-        },
-        {
-            export: 'url',
-        },
-    ],
-    needsImportMeta: true,
-    initialize: async function (_, import_meta) {
-        const url = new _.URL('./here.txt', import_meta.url)
-        _.url = url
-        await _.writeFile(url, 'Hello World')
-    },
-})
-```
+into [this file](./tests/snapshot/example-callback.js)
 
 #### `config.template.type: "callback-cwd"`
 
@@ -143,25 +104,4 @@ export const url = new URL('./here.txt', import.meta.url)
 await writeFile(url, 'Hello World')
 ```
 
-into
-
-```js
-'use strict'
-__register('/tests/fixture/example-callback-infer.js', {
-    bindings: [
-        {
-            import: 'writeFile',
-            from: 'node:fs/promises',
-        },
-        {
-            export: 'url',
-        },
-    ],
-    needsImportMeta: true,
-    initialize: async function (_, import_meta) {
-        const url = new _.URL('./here.txt', import_meta.url)
-        _.url = url
-        await _.writeFile(url, 'Hello World')
-    },
-})
-```
+into [this file](./tests/snapshot/example-callback-infer.js)
