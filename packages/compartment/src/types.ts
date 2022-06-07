@@ -31,11 +31,12 @@ export interface ExportBinding {
 export interface ThirdPartyStaticModuleRecord {
     bindings?: Array<Binding>
     initialize(environment: object, context: ThirdPartyStaticModuleRecordInitializeContext): void | Promise<void>
-    needsImportMeta: boolean
+    needsImportMeta?: boolean | undefined
+    needsImport?: boolean | undefined
 }
 export interface ThirdPartyStaticModuleRecordInitializeContext {
     importMeta?: object
-    dynamicImport?(spec: string, options?: ImportCallOptions): Promise<SystemJS.Module>
+    import?(spec: string, options?: ImportCallOptions): Promise<SystemJS.Module>
 }
 
 export interface StaticModuleRecordInstance {
@@ -97,7 +98,7 @@ export type ModuleCache =
 /** @internal */
 export type ModuleCacheItem =
     | { type: 'instance'; moduleInstance: SystemJS.Module }
-    | { type: 'record'; module: StaticModuleRecord; extraImportMeta: object | null | undefined }
+    | { type: 'record'; module: ThirdPartyStaticModuleRecord; extraImportMeta: object | null | undefined }
 
 /** @internal */
 export const enum PROMISE_STATE {

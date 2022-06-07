@@ -1,9 +1,5 @@
 import { makeGlobalThis } from './makeGlobalThis.js'
-import {
-    brandCheck_StaticModuleRecord,
-    internalSlot_StaticModuleRecord_get,
-    StaticModuleRecord,
-} from './StaticModuleRecord.js'
+import { StaticModuleRecord } from './StaticModuleRecord.js'
 import {
     PROMISE_STATE,
     type Binding,
@@ -12,6 +8,7 @@ import {
     type ModuleCache,
     type ModuleCacheItem,
     type ModuleDescriptor,
+    type ThirdPartyStaticModuleRecordInitializeContext,
 } from './types.js'
 import { normalizeModuleDescriptor } from './utils/normalize.js'
 import { internalError } from './utils/opaqueProxy.js'
@@ -110,7 +107,7 @@ export class Compartment implements CompartmentInstance {
         if (status === PROMISE_STATE.Err) throw item
 
         const importMeta = Object.create(null)
-        if (item.type === 'record' && internalSlot_StaticModuleRecord_get(item.module).needImportMeta) {
+        if (item.type === 'record' && item.module.needsImportMeta) {
             if (item.extraImportMeta) Object.assign(importMeta, item.extraImportMeta)
             if (this.#opts.importMetaHook) {
                 this.#opts.importMetaHook(parentID, importMeta)
@@ -162,10 +159,10 @@ export class Compartment implements CompartmentInstance {
                     throw new TypeError(`Cannot load the StaticModuleRecord "${fullSpec}" from the top compartment.`)
                 }
                 return this.#incubatorCompartment.#loadModuleDescriptor(desc.record)
-            } else if (brandCheck_StaticModuleRecord(desc.record)) {
-                return { type: 'record', module: desc.record, extraImportMeta: desc.importMeta }
+            } else if (desc.record instanceof StaticModuleRecord) {
+                throw new TypeError('StaticModuleRecord is not supported.')
             } else {
-                return { type: 'record', module: new StaticModuleRecord(desc.record), extraImportMeta: desc.importMeta }
+                return { type: 'record', module: desc.record, extraImportMeta: desc.importMeta }
             }
         } else {
             const _: never = desc
@@ -187,22 +184,24 @@ export class Compartment implements CompartmentInstance {
                 },
             ]
         } else if (module.type === 'record') {
-            const { initialize, bindings } = internalSlot_StaticModuleRecord_get(module.module)
+            const { initialize, bindings = [], needsImport, needsImportMeta } = module.module
 
             const { imports, moduleEnvironmentProxy, setters, init } = makeModuleEnvironmentProxy(
                 bindings,
                 this.#globalThis,
             )
+
             return [
                 imports,
                 (_export, _context) => {
+                    const context: ThirdPartyStaticModuleRecordInitializeContext | undefined =
+                        needsImport || needsImportMeta ? {} : undefined
+                    if (needsImport) context!.import = _context.import
+                    if (needsImportMeta) context!.importMeta = _context.meta
+
                     init(_export)
                     return {
-                        execute: () =>
-                            initialize(moduleEnvironmentProxy, {
-                                dynamicImport: _context.import,
-                                importMeta: _context.meta,
-                            }),
+                        execute: () => initialize(moduleEnvironmentProxy, _context),
                         setters,
                     }
                 },

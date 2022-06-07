@@ -1,5 +1,5 @@
 import { brandCheck_Compartment } from '../compartment.js'
-import { brandCheck_StaticModuleRecord } from '../StaticModuleRecord.js'
+import { StaticModuleRecord } from '../StaticModuleRecord.js'
 import type {
     ModuleDescriptor,
     ModuleDescriptor_Source,
@@ -32,17 +32,18 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
         let normalizedRecord: ModuleDescriptor_StaticModuleRecord['record']
         if (typeof record === 'string') {
             normalizedRecord = record
-        } else if (brandCheck_StaticModuleRecord(record)) {
-            normalizedRecord = record
         } else if (typeof record !== 'object' || record === null) {
             throw new TypeError(
                 'ModuleDescriptor must be either a string, StaticModuleRecord or ThirdPartyStaticModuleRecord',
             )
+        } else if (record instanceof StaticModuleRecord) {
+            throw new TypeError('StaticModuleRecord is not supported')
         } else {
-            const { initialize, needsImportMeta, bindings } = record
+            const { initialize, needsImportMeta, needsImport, bindings } = record
             const _: ThirdPartyStaticModuleRecord = (normalizedRecord = {
                 initialize,
                 needsImportMeta: Boolean(needsImportMeta),
+                needsImport: Boolean(needsImport),
                 bindings: normalizeBindings(bindings),
             })
 

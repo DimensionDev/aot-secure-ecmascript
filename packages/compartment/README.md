@@ -11,5 +11,5 @@ This package should be run in the environment described below:
 
 ## Limitations
 
--   `Compartment.prototype.evaluate()`, `new StaticModuleRecord(sourceText)` and `new StaticModuleRecord({ source: sourceText })` is not supported.
+-   `Compartment.prototype.evaluate()`, `StaticModuleRecord` constructor is not supported.
 -   `Compartment` does not support inherits the root compartment because it does not created by this polyfill.
