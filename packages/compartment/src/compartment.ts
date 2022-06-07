@@ -135,6 +135,7 @@ export class Compartment implements CompartmentInstance {
             return promise
         }
     }
+
     async #loadModuleDescriptorOnce(fullSpec: string): Promise<ModuleCacheItem> {
         let desc: ModuleDescriptor | undefined
         if (this.#opts.moduleMap) desc = normalizeModuleDescriptor(this.#opts.moduleMap[fullSpec])
@@ -145,8 +146,10 @@ export class Compartment implements CompartmentInstance {
         if (isModuleDescriptor_Source(desc)) {
             throw new TypeError(`Cannot compile source file for module "${fullSpec}"`)
         } else if (isModuleDescriptor_FullSpecReference(desc)) {
-            // TODO:
-            internalError()
+            const { instance, compartment } = desc
+            const target = compartment || this
+            // TODO: throw when this kind of reference builds a cycle
+            return target.#loadModuleDescriptor(instance)
         } else if (isModuleDescriptor_ModuleInstance(desc)) {
             return { type: 'instance', moduleInstance: desc.namespace as any }
         } else if (isModuleDescriptor_StaticModuleRecord(desc)) {

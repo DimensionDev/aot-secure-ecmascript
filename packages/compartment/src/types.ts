@@ -54,12 +54,10 @@ export interface ModuleDescriptor_Source {
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_StaticModuleRecord {
-    // TODO: string support
     record: StaticModuleRecord | ThirdPartyStaticModuleRecord | string
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_FullSpecReference {
-    // TODO: support
     instance: string
     compartment?: Compartment | undefined
 }
