@@ -3,7 +3,7 @@ import type { Compartment } from './compartment.js'
 export function makeGlobalThis(
     prototype = Object.prototype,
     compartment: typeof Compartment,
-    endowments: object | undefined | null,
+    globals: object | undefined | null,
 ): typeof globalThis {
     const global = Object.create(null)
 
@@ -23,11 +23,26 @@ export function makeGlobalThis(
 
     Object.defineProperty(global, 'Compartment', {
         value: compartment,
+        configurable: true,
+        writable: true,
     })
 
-    if (endowments) Object.assign(global, endowments)
+    if (globals) Object.assign(global, globals)
 
     return Object.setPrototypeOf(global, prototype)
+}
+
+export function makeBorrowedGlobalThis(compartment: typeof Compartment, globalThis: object) {
+    const global = Object.create(null)
+
+    Object.defineProperty(global, 'Compartment', {
+        value: compartment,
+        configurable: true,
+        writable: true,
+    })
+
+    Object.setPrototypeOf(global, globalThis)
+    return global
 }
 
 // https://tc39.es/ecma262/multipage/global-object.html#sec-global-object

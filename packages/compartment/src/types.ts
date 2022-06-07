@@ -66,7 +66,6 @@ export interface ModuleDescriptor_ModuleInstance {
 }
 
 export interface CompartmentOptions {
-    // TODO: support this
     borrowGlobals?: boolean
     globals?: object | undefined
     resolveHook(importSpec: string, referrerSpec: string): string

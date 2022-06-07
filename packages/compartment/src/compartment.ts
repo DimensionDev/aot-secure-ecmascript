@@ -1,4 +1,4 @@
-import { makeGlobalThis } from './makeGlobalThis.js'
+import { makeBorrowedGlobalThis, makeGlobalThis } from './makeGlobalThis.js'
 import { StaticModuleRecord } from './StaticModuleRecord.js'
 import {
     PROMISE_STATE,
@@ -56,9 +56,8 @@ export class Compartment implements CompartmentInstance {
         if (typeof options !== 'object' || options === null)
             throw new TypeError('Compartment cannot be created without options.')
         {
-            const { resolveHook, globals, importMetaHook, borrowGlobals: inherit, loadHook, moduleMap } = options
+            const { resolveHook, globals, importMetaHook, borrowGlobals, loadHook, moduleMap } = options
 
-            if (inherit) throw new TypeError('Compartment: inherit cannot be true when lockdown is enabled.')
             if (typeof resolveHook !== 'function') throw new TypeError('Compartment: resolveHook must be a function')
             if (importMetaHook && typeof importMetaHook !== 'function')
                 throw new TypeError('Compartment: importMetaHook must be a function')
@@ -67,6 +66,7 @@ export class Compartment implements CompartmentInstance {
             if (moduleMap && typeof moduleMap !== 'object')
                 throw new TypeError('Compartment: moduleMap must be an object')
 
+            normalizedOptions.borrowGlobals = Boolean(borrowGlobals)
             normalizedOptions.moduleMap = moduleMap
             normalizedOptions.globals = globals
             normalizedOptions.resolveHook = resolveHook
@@ -78,16 +78,15 @@ export class Compartment implements CompartmentInstance {
         {
             const ParentCompartment = Compartment
             const parentCompartment = this
-            this.#globalThis = makeGlobalThis(
-                Object.prototype,
-                class Compartment extends ParentCompartment {
-                    constructor(options: CompartmentOptions) {
-                        super(options)
-                        this.#incubatorCompartment = parentCompartment
-                    }
-                },
-                normalizedOptions.globals,
-            )
+            const Subcompartment = class Compartment extends ParentCompartment {
+                constructor(options: CompartmentOptions) {
+                    super(options)
+                    this.#incubatorCompartment = parentCompartment
+                }
+            }
+            this.#globalThis = normalizedOptions.borrowGlobals
+                ? makeBorrowedGlobalThis(Subcompartment, this.#incubatorCompartment?.globalThis ?? globalThis)
+                : makeGlobalThis(Object.prototype, Subcompartment, normalizedOptions.globals)
         }
 
         this.#opts = normalizedOptions
