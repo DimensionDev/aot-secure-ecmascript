@@ -16,7 +16,7 @@ This project has the following security assumptions (based on our usage):
 
 -   ✅ `@masknet/static-module-record-swc`: A [swc][2] plugin to transform ES Module into [ThirdPartyStaticModuleRecord][1].
 -   ⌛ `@masknet/compartment`: An eval-less implementation of [Compartment][1].
--   ❓`@masknet/web-endowments`: Provide common Web APIs, with `AbortSignal` support to cancel out all side
+-   ⌛`@masknet/web-endowments`: Provide common Web APIs, with `AbortSignal` support to cancel out all side
     effects within a compartment, and provide attenuations (e.g. limits accessible databases of `indexedDB`, or limit
     accessible domains in `fetch`).
 -   ❓`@masknet/membrane`: A membrane library.

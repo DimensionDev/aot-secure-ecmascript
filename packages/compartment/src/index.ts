@@ -2,15 +2,12 @@ export type {
     Binding,
     ImportBinding,
     ExportBinding,
-
     CompartmentOptions,
-
     ModuleDescriptor,
     ModuleDescriptor_Source,
     ModuleDescriptor_ModuleInstance,
     ModuleDescriptor_FullSpecReference,
     ModuleDescriptor_StaticModuleRecord,
-
     ModuleNamespace,
     ThirdPartyStaticModuleRecord,
     ThirdPartyStaticModuleRecordInitializeContext,

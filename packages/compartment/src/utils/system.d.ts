@@ -1,4 +1,4 @@
-import type { ModuleNamespace } from "../types.js"
+import type { ModuleNamespace } from '../types.js'
 
 /**
  * @see https://github.com/systemjs/systemjs/blob/main/docs/system-register.md
