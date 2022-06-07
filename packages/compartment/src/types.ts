@@ -30,14 +30,14 @@ export interface ExportBinding {
 }
 export interface ThirdPartyStaticModuleRecord {
     bindings?: Array<Binding>
-    initialize(
-        environment: object,
-        importMeta: object | undefined,
-        /** NON STANDARD */
-        dynamicImport: (spec: string, options?: ImportCallOptions) => Promise<SystemJS.Module>,
-    ): void | Promise<void>
+    initialize(environment: object, context: ThirdPartyStaticModuleRecordInitializeContext): void | Promise<void>
     needsImportMeta: boolean
 }
+export interface ThirdPartyStaticModuleRecordInitializeContext {
+    importMeta?: object
+    dynamicImport?(spec: string, options?: ImportCallOptions): Promise<SystemJS.Module>
+}
+
 export interface StaticModuleRecordInstance {
     get bindings(): readonly Binding[]
 }
