@@ -1,18 +1,13 @@
-import { Compartment, createModuleCache, createWebImportMeta, simpleResolveHook } from '../dist/index.js'
-import mod1 from '../../static-module-record-swc/tests/snapshot/import-and-export.js'
-import mod2 from '../../static-module-record-swc/tests/snapshot/import-and-export-live.js'
+import { Compartment, createModuleCache, createWebImportMeta, URLResolveHook } from '../dist/index.js'
 
-const { modules } = createModuleCache()
+const { moduleMap, addAlias, addModuleRecord, addNamespace } = createModuleCache()
 
-modules.set('/index.js', { record: mod1 })
-modules.set('live-test', { record: mod2 })
-
+addNamespace('/index.js', { a: 1 })
 const compartment = new Compartment({
-    resolveHook: simpleResolveHook,
+    resolveHook: URLResolveHook,
     importMetaHook: createWebImportMeta,
     globals: { console },
-    moduleMapHook(fullSpec) {
-        return modules.get(fullSpec)
-    },
+    moduleMap,
 })
-await compartment.import('/index.js')
+const mod = await compartment.import('/index.js')
+console.log(mod)

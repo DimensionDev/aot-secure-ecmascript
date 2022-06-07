@@ -1,22 +1,30 @@
-/** Please read <https://github.com/systemjs/systemjs/blob/main/docs/system-register.md> */
+import type { ModuleNamespace } from "../types.js"
+
+/**
+ * @see https://github.com/systemjs/systemjs/blob/main/docs/system-register.md
+ * @internal
+ */
 export namespace SystemJS {
     export type RegisterArray = readonly [imports: readonly string[], module: SystemJS.DeclareFunction]
-    export type Module = Record<string, unknown>
     export type DeclareFunction = (_export: ExportFunction, _context: Context) => DeclareResult
     export interface DeclareResult {
         setters: SetterFunction[]
         execute(): void | Promise<void>
     }
-    export type SetterFunction = (module: Module) => void
+    export type SetterFunction = (module: ModuleNamespace) => void
     export type ExportFunction = {
         <T>(name: string, value: T): T
-        <T extends Module>(object: T): T
+        <T extends ModuleNamespace>(object: T): T
     }
     export interface Context {
         meta: object
-        import(id: string): Promise<Module>
+        import(id: string): Promise<ModuleNamespace>
     }
 }
+/**
+ * @see https://github.com/systemjs/systemjs/blob/main/docs/system-register.md
+ * @internal
+ */
 export class SystemJS {
     import(id: string, parentURL: string | undefined): Promise<object>
     createContext(parentID: string): object

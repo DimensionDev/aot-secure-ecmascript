@@ -1,15 +1,22 @@
-import type { StaticModuleRecord } from '../index.js'
-import type { ModuleDescriptor } from '../types.js'
-import type { SystemJS } from './system.js'
+import type {
+    ModuleDescriptor,
+    ModuleDescriptor_FullSpecReference,
+    ModuleNamespace,
+    ThirdPartyStaticModuleRecord,
+} from '../types.js'
 
 export function createModuleCache() {
-    const modules = new Map<string, ModuleDescriptor>()
+    const moduleMap: Record<string, ModuleDescriptor> = Object.create(null)
 
-    function defineByNamespace(fullSpec: string, namespace: SystemJS.Module) {
-        modules.set(fullSpec, { namespace })
+    function addNamespace(fullSpec: string, namespace: ModuleNamespace) {
+        moduleMap[fullSpec] = { namespace }
     }
-    function defineByStaticModuleRecord(fullSpec: string, record: StaticModuleRecord) {
-        modules.set(fullSpec, { record })
+    function addModuleRecord(fullSpec: string, record: ThirdPartyStaticModuleRecord, extraImportMeta?: object) {
+        moduleMap[fullSpec] = { record, importMeta: extraImportMeta }
     }
-    return { modules, defineByNamespace, defineByStaticModuleRecord }
+
+    function addAlias(fullSpec: string, alias: ModuleDescriptor_FullSpecReference) {
+        moduleMap[fullSpec] = alias
+    }
+    return { moduleMap, addNamespace, addModuleRecord, addAlias }
 }

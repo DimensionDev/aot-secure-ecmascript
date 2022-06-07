@@ -1,8 +1,8 @@
 {
   "name": "@masknet/compartment",
-  "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "./dist/index.js",
   "exports": {
     "default": "./dist/index.js"
   },
@@ -13,5 +13,6 @@
   },
   "dependencies": {},
   "devDependencies": {},
-  "peerDependencies": {}
+  "peerDependencies": {},
+  "files": ["dist", "src"]
 }
