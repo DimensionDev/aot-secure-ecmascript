@@ -2,17 +2,36 @@ use std::collections::HashSet;
 
 use super::{binding_descriptor::*, StaticModuleRecordTransformer};
 use swc_common::DUMMY_SP;
-use swc_plugin::{ast::*, utils::contains_top_level_await};
+use swc_plugin::{
+    ast::*,
+    utils::{contains_top_level_await, quote_ident},
+};
 
 struct ScannerResult {
     bindings: Vec<Binding>,
     local_ident: HashSet<Id>,
+    non_accessible_binding_id: u32,
 }
 impl Visit for ScannerResult {
     /// Scan all import/export bindings inside a ModuleDecl
     fn visit_module_decl(&mut self, decl: &ModuleDecl) {
         match decl {
             ModuleDecl::Import(import) if !import.type_only => {
+                if import.specifiers.is_empty() {
+                    self.non_accessible_binding_id += 1;
+                    self.bindings.push(
+                        ImportBinding {
+                            import: ModuleBinding::Namespace,
+                            from: import.src.clone(),
+                            alias: Some(
+                                // provide an invalid ident (has a space in it) so it is not accessible from the source code
+                                quote_ident!(format!("import {}", self.non_accessible_binding_id))
+                                    .into(),
+                            ),
+                        }
+                        .into(),
+                    )
+                }
                 for item in &import.specifiers {
                     match item {
                         ImportSpecifier::Named(spec) => {
@@ -247,6 +266,7 @@ impl StaticModuleRecordTransformer {
         let mut scanner = ScannerResult {
             bindings: vec![],
             local_ident: HashSet::new(),
+            non_accessible_binding_id: 0,
         };
         module.visit_with(&mut scanner);
 
