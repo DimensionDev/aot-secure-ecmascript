@@ -11,6 +11,7 @@ import type {
     ImportBinding,
 } from '../types.js'
 import {
+    isImportBinding,
     isModuleDescriptor_FullSpecReference,
     isModuleDescriptor_ModuleInstance,
     isModuleDescriptor_Source,
@@ -110,6 +111,20 @@ export function normalizeBindings(binding: Binding[] | undefined): Binding[] {
         }
     }
     Object.freeze(result)
+
+    const LexicallyDeclaredNames = new Set<string>()
+    const ExportedNames = new Set<string>()
+    for (const item of result) {
+        if (isImportBinding(item)) {
+            const bind = item.as || item.import
+            if (LexicallyDeclaredNames.has(bind)) throw new TypeError(`Duplicate lexical binding for "${bind}"`)
+            LexicallyDeclaredNames.add(bind)
+        } else if (item.from === undefined) {
+            const bind = item.as || item.export
+            if (ExportedNames.has(bind)) throw new TypeError(`Duplicate export binding for "${bind}"`)
+            ExportedNames.add(bind)
+        }
+    }
     return result
 }
 

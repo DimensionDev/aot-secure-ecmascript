@@ -25,8 +25,7 @@ impl Visit for ScannerResult {
                             from: import.src.clone(),
                             alias: Some(
                                 // provide an invalid ident (has a space in it) so it is not accessible from the source code
-                                quote_ident!(format!("import {}", self.non_accessible_binding_id))
-                                    .into(),
+                                quote_ident!(format!("import {}", self.non_accessible_binding_id)),
                             ),
                         }
                         .into(),

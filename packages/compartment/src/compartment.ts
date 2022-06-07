@@ -221,8 +221,7 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
         .filter((b) => typeof b.from === 'string')
         .forEach((b) => (modules.has(b.from!) ? modules.get(b.from!)!.push(b) : modules.set(b.from!, [b])))
 
-    // Scope order: Export > Imports > GlobalThis
-    // TODO: in normalizeBinding, do not allow duplicated local bindings.
+    // Scope order: Export & Imports > GlobalThis
 
     // here we initialize the initial import(TDZ)/export bindings for importExportLexical
     const importExportLexical = Object.create(

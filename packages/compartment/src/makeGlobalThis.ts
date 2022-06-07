@@ -57,7 +57,7 @@ const cloneFromCurrentCompartment = [
     'BigInt64Array',
     'BigUint64Array',
     'Boolean',
-    'Date', // TODO: virtualize Date?
+    'Date',
     'DataView',
     'Error',
     'EvalError',
@@ -94,6 +94,6 @@ const cloneFromCurrentCompartment = [
 
     // NO Atomics (because we don't have SharedArrayBuffer)
     'JSON',
-    'Math', // TODO: virtualize Math.random?
+    'Math',
     'Reflect',
 ]
