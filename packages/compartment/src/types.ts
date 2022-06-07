@@ -54,10 +54,12 @@ export interface ModuleDescriptor_Source {
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_StaticModuleRecord {
+    // TODO: string support
     record: StaticModuleRecord | ThirdPartyStaticModuleRecord | string
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_FullSpecReference {
+    // TODO: support
     instance: string
     compartment?: Compartment | undefined
 }
@@ -66,12 +68,11 @@ export interface ModuleDescriptor_ModuleInstance {
 }
 
 export interface CompartmentOptions {
-    // We do not support this because we running in a lockdown environment.
-    inherit?: boolean
+    // TODO: support this
+    borrowGlobals?: boolean
     globals?: object | undefined
     resolveHook(importSpec: string, referrerSpec: string): string
     moduleMap?: Record<string, ModuleDescriptor> | undefined
-    moduleMapHook?(fullSpec: string): ModuleDescriptor | undefined
     loadHook?(fullSpec: string): Promise<ModuleDescriptor | undefined>
     importMetaHook?(fullSpec: string, importMeta: object): void
 }

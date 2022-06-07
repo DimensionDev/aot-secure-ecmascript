@@ -56,11 +56,9 @@ export class Compartment implements CompartmentInstance {
         if (typeof options !== 'object' || options === null)
             throw new TypeError('Compartment cannot be created without options.')
         {
-            const { resolveHook, globals, importMetaHook, inherit, loadHook, moduleMap, moduleMapHook } = options
+            const { resolveHook, globals, importMetaHook, borrowGlobals: inherit, loadHook, moduleMap } = options
 
             if (inherit) throw new TypeError('Compartment: inherit cannot be true when lockdown is enabled.')
-            if (moduleMapHook && typeof moduleMapHook !== 'function')
-                throw new TypeError('Compartment: moduleMapHook must be a function')
             if (typeof resolveHook !== 'function') throw new TypeError('Compartment: resolveHook must be a function')
             if (importMetaHook && typeof importMetaHook !== 'function')
                 throw new TypeError('Compartment: importMetaHook must be a function')
@@ -71,7 +69,6 @@ export class Compartment implements CompartmentInstance {
 
             normalizedOptions.moduleMap = moduleMap
             normalizedOptions.globals = globals
-            normalizedOptions.moduleMapHook = moduleMapHook
             normalizedOptions.resolveHook = resolveHook
             normalizedOptions.importMetaHook = importMetaHook
             normalizedOptions.loadHook = loadHook
@@ -141,7 +138,6 @@ export class Compartment implements CompartmentInstance {
     async #loadModuleDescriptorOnce(fullSpec: string): Promise<ModuleCacheItem> {
         let desc: ModuleDescriptor | undefined
         if (this.#opts.moduleMap) desc = normalizeModuleDescriptor(this.#opts.moduleMap[fullSpec])
-        if (!desc && this.#opts.moduleMapHook) desc = normalizeModuleDescriptor(this.#opts.moduleMapHook(fullSpec))
         if (!desc && this.#opts.loadHook) desc = normalizeModuleDescriptor(await this.#opts.loadHook(fullSpec))
 
         if (!desc) throw new TypeError(`Cannot resolve module "${fullSpec}"`)
