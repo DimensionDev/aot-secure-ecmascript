@@ -198,10 +198,11 @@ export class Compartment implements CompartmentInstance {
                 (_export, _context) => {
                     init(_export)
                     return {
-                        execute: () => initialize(moduleEnvironmentProxy, {
-                            dynamicImport: _context.import,
-                            importMeta: _context.meta,
-                        }),
+                        execute: () =>
+                            initialize(moduleEnvironmentProxy, {
+                                dynamicImport: _context.import,
+                                importMeta: _context.meta,
+                            }),
                         setters,
                     }
                 },
