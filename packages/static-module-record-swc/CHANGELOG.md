@@ -1,5 +1,11 @@
 # @masknet/static-module-record-swc
 
+## 0.2.1
+
+### Patch Changes
+
+-   d1f8d16: Add a workaround for imports without binding cannot be imported after converted into ThirdPartyStaticModuleRecord
+
 ## 0.2.0
 
 ### Minor Changes
