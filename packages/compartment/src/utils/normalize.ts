@@ -34,9 +34,7 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
         if (typeof record === 'string') {
             normalizedRecord = record
         } else if (typeof record !== 'object' || record === null) {
-            throw new TypeError(
-                'ModuleDescriptor must be either a string, StaticModuleRecord or SyntheticModuleRecord',
-            )
+            throw new TypeError('ModuleDescriptor must be either a string, StaticModuleRecord or SyntheticModuleRecord')
         } else if (record instanceof StaticModuleRecord) {
             throw new TypeError('StaticModuleRecord is not supported')
         } else {
