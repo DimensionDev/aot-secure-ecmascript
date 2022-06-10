@@ -4,7 +4,7 @@ import type {
     ModuleDescriptor,
     ModuleDescriptor_Source,
     ModuleDescriptor_StaticModuleRecord,
-    ThirdPartyStaticModuleRecord,
+    SyntheticModuleRecord,
     ModuleDescriptor_ModuleInstance,
     Binding,
     ExportBinding,
@@ -35,13 +35,13 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
             normalizedRecord = record
         } else if (typeof record !== 'object' || record === null) {
             throw new TypeError(
-                'ModuleDescriptor must be either a string, StaticModuleRecord or ThirdPartyStaticModuleRecord',
+                'ModuleDescriptor must be either a string, StaticModuleRecord or SyntheticModuleRecord',
             )
         } else if (record instanceof StaticModuleRecord) {
             throw new TypeError('StaticModuleRecord is not supported')
         } else {
             const { initialize, needsImportMeta, needsImport, bindings } = record
-            const _: ThirdPartyStaticModuleRecord = (normalizedRecord = {
+            const _: SyntheticModuleRecord = (normalizedRecord = {
                 initialize,
                 needsImportMeta: Boolean(needsImportMeta),
                 needsImport: Boolean(needsImport),
@@ -49,7 +49,7 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
             })
 
             if (typeof initialize !== 'function')
-                throw new TypeError('ThirdPartyStaticModuleRecord.initialize must be a function')
+                throw new TypeError('SyntheticModuleRecord.initialize must be a function')
         }
         const copy: ModuleDescriptor_StaticModuleRecord = { record, importMeta: normalizeImportMeta(importMeta) }
         return copy

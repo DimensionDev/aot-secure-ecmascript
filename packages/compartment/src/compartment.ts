@@ -8,7 +8,7 @@ import {
     type ModuleCache,
     type ModuleCacheItem,
     type ModuleDescriptor,
-    type ThirdPartyStaticModuleRecordInitializeContext,
+    type SyntheticModuleRecordInitializeContext,
 } from './types.js'
 import { normalizeModuleDescriptor } from './utils/normalize.js'
 import { internalError } from './utils/opaqueProxy.js'
@@ -192,7 +192,7 @@ export class Compartment implements CompartmentInstance {
             return [
                 imports,
                 (_export, _context) => {
-                    const context: ThirdPartyStaticModuleRecordInitializeContext | undefined =
+                    const context: SyntheticModuleRecordInitializeContext | undefined =
                         needsImport || needsImportMeta ? {} : undefined
                     if (needsImport) context!.import = _context.import
                     if (needsImportMeta) context!.importMeta = _context.meta

@@ -27,15 +27,15 @@ export interface ExportBinding {
     as?: string | undefined
     from?: string | undefined
 }
-export interface ThirdPartyStaticModuleRecord {
+export interface SyntheticModuleRecord {
     bindings?: Array<Binding>
-    initialize(environment: object, context: ThirdPartyStaticModuleRecordInitializeContext): void | Promise<void>
+    initialize(environment: object, context: SyntheticModuleRecordInitializeContext): void | Promise<void>
     needsImportMeta?: boolean | undefined
     needsImport?: boolean | undefined
 }
 
 export type ModuleNamespace = Record<string, unknown>
-export interface ThirdPartyStaticModuleRecordInitializeContext {
+export interface SyntheticModuleRecordInitializeContext {
     importMeta?: object
     import?(spec: string, options?: ImportCallOptions): Promise<ModuleNamespace>
 }
@@ -55,7 +55,7 @@ export interface ModuleDescriptor_Source {
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_StaticModuleRecord {
-    record: StaticModuleRecord | ThirdPartyStaticModuleRecord | string
+    record: StaticModuleRecord | SyntheticModuleRecord | string
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_FullSpecReference {
@@ -97,7 +97,7 @@ export type ModuleCache =
 /** @internal */
 export type ModuleCacheItem =
     | { type: 'instance'; moduleInstance: ModuleNamespace }
-    | { type: 'record'; module: ThirdPartyStaticModuleRecord; extraImportMeta: object | null | undefined }
+    | { type: 'record'; module: SyntheticModuleRecord; extraImportMeta: object | null | undefined }
 
 /** @internal */
 export const enum PROMISE_STATE {
