@@ -3,7 +3,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "@swc/core plugin to transform ES Module into StaticModuleRecord.",
   "type": "module",
   "author": "Jack Works",
