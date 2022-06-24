@@ -237,26 +237,32 @@ impl StaticModuleRecordTransformer {
         }
     }
     fn trace_live_export_ident(&self, local_ident: &Ident, tracing: &mut Vec<Expr>) {
+        let mut need_init_expr = false;
         let init_expr: Expr = local_ident.clone().into();
         let assign = (&self.local_modifiable_bindings)
             .iter()
             .filter(|x| x.local_ident.to_id() == local_ident.to_id())
-            .fold(init_expr, |expr, x| match &x.export {
-                ModuleExportName::Ident(ident) => assign_prop(
-                    self.module_env_record_ident.clone(),
-                    MemberProp::Ident(ident.clone()),
-                    Box::new(expr),
-                ),
-                ModuleExportName::Str(str) => assign_prop(
-                    self.module_env_record_ident.clone(),
-                    MemberProp::Computed(ComputedPropName {
-                        span: DUMMY_SP,
-                        expr: Box::new(str.clone().into()),
-                    }),
-                    Box::new(expr),
-                ),
+            .fold(init_expr, |expr, x| {
+                need_init_expr = true;
+                match &x.export {
+                    ModuleExportName::Ident(ident) => assign_prop(
+                        self.module_env_record_ident.clone(),
+                        MemberProp::Ident(ident.clone()),
+                        Box::new(expr),
+                    ),
+                    ModuleExportName::Str(str) => assign_prop(
+                        self.module_env_record_ident.clone(),
+                        MemberProp::Computed(ComputedPropName {
+                            span: DUMMY_SP,
+                            expr: Box::new(str.clone().into()),
+                        }),
+                        Box::new(expr),
+                    ),
+                }
             });
-        tracing.push(assign);
+        if need_init_expr {
+            tracing.push(assign);
+        }
     }
 }
 

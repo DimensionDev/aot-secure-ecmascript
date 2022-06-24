@@ -5,10 +5,8 @@ export default {
         function f(globalThis) {
             globalThis;
         }
-        f;
         const x = {
             a: _.a
         };
-        x;
     }
 };
