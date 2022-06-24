@@ -4,3 +4,7 @@ window
 function f(globalThis) {
     globalThis // local lookup
 }
+
+const x = {
+    a // global lookup
+}

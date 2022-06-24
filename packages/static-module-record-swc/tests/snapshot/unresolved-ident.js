@@ -6,5 +6,9 @@ export default {
             globalThis;
         }
         f;
+        const x = {
+            a
+        };
+        x;
     }
 };
