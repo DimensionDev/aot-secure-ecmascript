@@ -362,6 +362,26 @@ impl Fold for StaticModuleRecordTransformer {
             _ => n.fold_children_with(self),
         }
     }
+    fn fold_prop(&mut self, n: Prop) -> Prop {
+        if let Prop::Shorthand(id) = &n {
+            if self.local_ident.contains(&id.to_id()) {
+                n
+            } else {
+                Prop::KeyValue(
+                    KeyValueProp {
+                        key: PropName::Ident(id.clone()),
+                        value: Box::new(prop_access(
+                            self.module_env_record_ident.clone(),
+                            id.clone(),
+                        )),
+                    }
+                    .into(),
+                )
+            }
+        } else {
+            n.fold_children_with(self)
+        }
+    }
     fn fold_module(&mut self, module: Module) -> Module {
         self.scan(&module);
         let module = module.fold_children_with(self);

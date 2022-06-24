@@ -7,7 +7,7 @@ export default {
         }
         f;
         const x = {
-            a
+            a: _.a
         };
         x;
     }
