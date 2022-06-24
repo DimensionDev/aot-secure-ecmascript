@@ -262,6 +262,20 @@ impl StaticModuleRecordTransformer {
 
 // https://rustdoc.swc.rs/swc_ecma_visit/trait.Fold.html
 impl Fold for StaticModuleRecordTransformer {
+    fn fold_function(&mut self, n: Function) -> Function {
+        let old = self.may_include_implicit_arguments;
+        self.may_include_implicit_arguments = true;
+        let n = n.fold_children_with(self);
+        self.may_include_implicit_arguments = old;
+        n
+    }
+    fn fold_class(&mut self, n: Class) -> Class {
+        let old = self.may_include_implicit_arguments;
+        self.may_include_implicit_arguments = false;
+        let n = n.fold_children_with(self);
+        self.may_include_implicit_arguments = old;
+        n
+    }
     fn fold_callee(&mut self, n: Callee) -> Callee {
         if n.is_import() {
             self.uses_dynamic_import = true;
@@ -341,7 +355,8 @@ impl Fold for StaticModuleRecordTransformer {
                 }
             }
             Expr::Ident(id) => {
-                if self.local_ident.contains(&id.to_id()) {
+                let skip = self.may_include_implicit_arguments && id.sym == js_word!("arguments");
+                if self.local_ident.contains(&id.to_id()) || skip {
                     id.into()
                 } else {
                     prop_access(self.module_env_record_ident.clone(), id)
@@ -367,16 +382,13 @@ impl Fold for StaticModuleRecordTransformer {
             if self.local_ident.contains(&id.to_id()) {
                 n
             } else {
-                Prop::KeyValue(
-                    KeyValueProp {
-                        key: PropName::Ident(id.clone()),
-                        value: Box::new(prop_access(
-                            self.module_env_record_ident.clone(),
-                            id.clone(),
-                        )),
-                    }
-                    .into(),
-                )
+                Prop::KeyValue(KeyValueProp {
+                    key: PropName::Ident(id.clone()),
+                    value: Box::new(prop_access(
+                        self.module_env_record_ident.clone(),
+                        id.clone(),
+                    )),
+                })
             }
         } else {
             n.fold_children_with(self)

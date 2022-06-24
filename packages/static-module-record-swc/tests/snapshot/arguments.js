@@ -3,16 +3,20 @@ export default {
         'use strict';
         {
             function x() {
-                _.arguments;
+                arguments;
+                const x = {
+                    arguments: _.arguments
+                };
+                x;
             }
             x;
             function x1() {
-                return ()=>_.arguments;
+                return ()=>arguments;
             }
             x1;
             class T {
                 f() {
-                    return _.arguments;
+                    return arguments;
                 }
             }
             T;
@@ -21,6 +25,13 @@ export default {
             _.arguments;
             const x = ()=>_.arguments;
             x;
+            const y = ()=>{
+                const x = {
+                    arguments: _.arguments
+                };
+                x;
+            };
+            y;
         }
     }
 };

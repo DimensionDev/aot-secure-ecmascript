@@ -33,6 +33,8 @@ pub struct StaticModuleRecordTransformer {
     module_env_record_ident: Ident,
     import_context_ident: Ident,
 
+    may_include_implicit_arguments: bool,
+
     pub config: Config,
     pub file_name: Option<String>,
 }
@@ -43,6 +45,7 @@ impl StaticModuleRecordTransformer {
             uses_import_meta: false,
             uses_top_level_await: false,
             uses_dynamic_import: false,
+            may_include_implicit_arguments: false,
             bindings: Vec::new(),
             local_modifiable_bindings: Vec::new(),
             local_ident: HashSet::new(),

@@ -3,6 +3,7 @@
 {
     function x() {
         arguments
+        const x = { arguments }
     }
     function x1() {
         return () => arguments
@@ -18,4 +19,7 @@
 {
     arguments
     const x = () => arguments
+    const y = () => {
+        const x = { arguments }
+    }
 }
