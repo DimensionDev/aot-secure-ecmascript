@@ -273,7 +273,11 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
                     }
                 } else if (typeof binding.from === 'string') {
                     // export * from 'mod'
-                    if (binding.export === NAMESPACE_IMPORT) systemExport(module)
+                    // export * as name from 'mod'
+                    if (binding.export === NAMESPACE_IMPORT) {
+                        if (typeof binding.as === 'string') systemExport(binding.as, module)
+                        else systemExport(module)
+                    }
                     // export { a as b } from 'mod' (export = a, as = b)
                     else if (Reflect.getOwnPropertyDescriptor(module, binding.export)) {
                         systemExport(binding.as ?? binding.export, module[binding.export])
