@@ -1,5 +1,13 @@
 # @masknet/static-module-record-swc
 
+## 0.2.2
+
+### Patch Changes
+
+-   6791968: Fix object literal shorthand property not handled
+-   a05de8c: Remove unused tracing statements
+-   e0c998f: Fix arguments always transformed as unresolved
+
 ## 0.2.1
 
 ### Patch Changes
