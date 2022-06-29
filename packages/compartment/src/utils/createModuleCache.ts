@@ -1,4 +1,5 @@
 import type {
+    Binding,
     ModuleDescriptor,
     ModuleDescriptor_FullSpecReference,
     ModuleNamespace,
@@ -8,8 +9,21 @@ import type {
 export function createModuleCache() {
     const moduleMap: Record<string, ModuleDescriptor> = Object.create(null)
 
-    function addNamespace(fullSpec: string, namespace: ModuleNamespace) {
-        moduleMap[fullSpec] = { namespace }
+    function addNamespace(fullSpec: string, namespace: ModuleNamespace, bindings?: Binding[]) {
+        if (bindings) {
+            moduleMap[fullSpec] = {
+                record: {
+                    initialize(env: any) {
+                        for (const [key, val] of Object.entries(namespace)) {
+                            env[key] = val
+                        }
+                    },
+                    bindings: bindings.concat(Object.keys(namespace).map((x) => ({ export: x }))),
+                },
+            }
+        } else {
+            moduleMap[fullSpec] = { namespace }
+        }
     }
     function addModuleRecord(fullSpec: string, record: SyntheticModuleRecord, extraImportMeta?: object) {
         moduleMap[fullSpec] = { record, importMeta: extraImportMeta }
