@@ -1,4 +1,5 @@
-import { makeBorrowedGlobalThis, makeGlobalThis } from './makeGlobalThis.js'
+import { ExecutionContext } from './ExecutionContext.js'
+import { makeBorrowedGlobalThis, makeGlobalThis } from './utils/makeGlobalThis.js'
 import { StaticModuleRecord } from './StaticModuleRecord.js'
 import {
     PROMISE_STATE,
@@ -86,7 +87,14 @@ export class Compartment implements CompartmentInstance {
             }
             this.#globalThis = normalizedOptions.borrowGlobals
                 ? makeBorrowedGlobalThis(Subcompartment, this.#incubatorCompartment?.globalThis ?? globalThis)
-                : makeGlobalThis(Object.prototype, Subcompartment, normalizedOptions.globals)
+                : makeGlobalThis(
+                      Object.prototype,
+                      {
+                          Compartment: Subcompartment,
+                          ExecutionContext: ExecutionContext,
+                      },
+                      normalizedOptions.globals,
+                  )
         }
 
         this.#opts = normalizedOptions

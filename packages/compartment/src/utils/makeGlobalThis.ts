@@ -1,30 +1,31 @@
-import type { Compartment } from './compartment.js'
+import type { Compartment } from '../compartment.js'
+import type { ExecutionContext } from '../ExecutionContext.js'
 
+/** @internal */
+export interface Evaluators {
+    Compartment: typeof Compartment
+    ExecutionContext: typeof ExecutionContext
+}
+/** @internal */
 export function makeGlobalThis(
-    prototype = Object.prototype,
-    compartment: typeof Compartment,
+    prototype: object | null,
+    evaluators: Evaluators,
     globals: object | undefined | null,
 ): typeof globalThis {
     const global = Object.create(null)
 
-    Object.defineProperty(global, 'globalThis', {
-        writable: true,
-        configurable: true,
-        value: global,
-    })
-
     Object.defineProperties(
         global,
-        cloneFromCurrentCompartment.reduce((previous, name) => {
+        intrinsic.reduce((previous, name) => {
             previous[name] = Object.getOwnPropertyDescriptor(globalThis, name)
             return previous
         }, Object.create(null)),
     )
 
-    Object.defineProperty(global, 'Compartment', {
-        value: compartment,
-        configurable: true,
-        writable: true,
+    Object.defineProperties(global, {
+        globalThis: { writable: true, configurable: true, value: global },
+        Compartment: { writable: true, configurable: true, value: evaluators.Compartment },
+        ExecutionContext: { writable: true, configurable: true, value: evaluators.ExecutionContext },
     })
 
     if (globals) Object.assign(global, globals)
@@ -32,6 +33,10 @@ export function makeGlobalThis(
     return Object.setPrototypeOf(global, prototype)
 }
 
+/**
+ * @internal
+ * @deprecated
+ */
 export function makeBorrowedGlobalThis(compartment: typeof Compartment, globalThis: object) {
     const global = Object.create(null)
 
@@ -46,7 +51,7 @@ export function makeBorrowedGlobalThis(compartment: typeof Compartment, globalTh
 }
 
 // https://tc39.es/ecma262/multipage/global-object.html#sec-global-object
-const cloneFromCurrentCompartment = [
+const intrinsic = [
     'Infinity',
     'NaN',
     'undefined',
