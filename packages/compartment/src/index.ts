@@ -14,6 +14,8 @@ export type {
 } from './types.js'
 export { Compartment } from './compartment.js'
 export { StaticModuleRecord } from './StaticModuleRecord.js'
+export { ModuleSource } from './ModuleSource.js'
+export { ExecutionContext, type ExecutionContextConstructor } from './ExecutionContext.js'
 
 export { createModuleCache } from './utils/createModuleCache.js'
 export { createWebImportMeta } from './utils/importMeta.js'
