@@ -2,6 +2,14 @@
 export const empty = Symbol()
 /** @internal */
 export type empty = typeof empty
+/** @internal */
+export const namespace = Symbol()
+/** @internal */
+export const ambiguous = Symbol()
+/** @internal */
+export const all = Symbol()
+/** @internal */
+export const allButDefault = Symbol()
 
 /** @internal */
 export type PromiseCapability<T> = {

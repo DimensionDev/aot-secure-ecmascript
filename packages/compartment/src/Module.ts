@@ -1,9 +1,9 @@
 import type { ModuleSource } from './ModuleSource.js'
 import type { ModuleNamespace, SyntheticModuleRecord, SyntheticModuleRecordInitializeContext } from './types.js'
-import { empty, PromiseCapability } from './utils/spec.js'
+import { all, allButDefault, ambiguous, empty, namespace, PromiseCapability } from './utils/spec.js'
 import { normalizeSyntheticModuleRecord } from './utils/normalize.js'
 import { assert } from './utils/opaqueProxy.js'
-import { hasFromField, isExportBinding, isStarBinding } from './utils/shapeCheck.js'
+import { hasFromField, isImportBinding, isStarBinding } from './utils/shapeCheck.js'
 
 export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module>
 export let imports: (specifier: Module, options: ImportCallOptions) => Promise<ModuleNamespace>
@@ -14,31 +14,99 @@ export class Module {
         if (typeof importMeta !== 'object') throw new TypeError('importMeta must be an object')
         // impossible to create a ModuleSource instance
         source = source as SyntheticModuleRecord
-        const module = (this.#NormalizedSyntheticModuleRecord = normalizeSyntheticModuleRecord(source))
-        this.#AssignedImportMeta = importMeta
-        this.#ImportHook = importHook
-        this.#RequestedModules = module.bindings?.filter(hasFromField).map((x) => x.from) || []
 
+        const module = normalizeSyntheticModuleRecord(source)
+        this.#Initialize = module.initialize
+        this.#NeedsImport = module.needsImport
+        this.#NeedsImportMeta = module.needsImportMeta
         // TODO: static analysis of TLA
         this.#HasTLA = true
+
+        this.#AssignedImportMeta = importMeta
+        this.#ImportHook = importHook
+        const requestedModules: string[] = []
+
+        const imports: ModuleImportEntry[] = (this.#ImportEntries = [])
+        const localExports: ModuleExportEntry[] = (this.#LocalExportEntries = [])
+        const indirectExports: ModuleExportEntry[] = (this.#IndirectExportEntries = [])
+        const starExports: ModuleExportEntry[] = (this.#StarExportEntries = [])
+
+        for (const binding of module.bindings || []) {
+            if (isImportBinding(binding)) {
+                requestedModules.push(binding.from)
+                imports.push({
+                    ImportName: isStarBinding(binding) ? namespace : binding.import,
+                    LocalName: binding.as ?? binding.import,
+                    ModuleRequest: binding.from,
+                })
+            } else {
+                if (hasFromField(binding)) {
+                    requestedModules.push(binding.from)
+                    if (isStarBinding(binding)) {
+                        if (typeof binding.as === 'string') {
+                            // export * as name from 'mod'
+                            starExports.push({
+                                LocalName: binding.as,
+                                ExportName: null,
+                                ImportName: all,
+                                ModuleRequest: binding.from,
+                            })
+                        } else {
+                            // export * from 'mod'
+                            starExports.push({
+                                LocalName: null,
+                                ExportName: null,
+                                ImportName: allButDefault,
+                                ModuleRequest: binding.from,
+                            })
+                        }
+                    } else {
+                        indirectExports.push({
+                            ExportName: binding.as ?? binding.export,
+                            ImportName: binding.export,
+                            LocalName: null,
+                            ModuleRequest: binding.from,
+                        })
+                    }
+                } else {
+                    localExports.push({
+                        ExportName: binding.as ?? binding.export,
+                        LocalName: binding.export,
+                        ImportName: null,
+                        ModuleRequest: null,
+                    })
+                }
+            }
+        }
+        // Set is ordered.
+        this.#RequestedModules = [...new Set(requestedModules)]
+        // TODO: check duplicate import/export
+
+        // TODO:
         this.#AsyncEvaluation = true
     }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
     // #Realm: unknown
-    // #Environment: unknown
+    #Environment!: object
     #Namespace: ModuleNamespace | undefined
-    // #HostDefined: unknown
+    // #HostDefined: unknown = undefined
     //#endregion
 
     // #region SyntheticModuleRecord fields
-    #NormalizedSyntheticModuleRecord: SyntheticModuleRecord
+    #Initialize: SyntheticModuleRecord['initialize']
+    #NeedsImportMeta: boolean | undefined
+    #NeedsImport: boolean | undefined
     #ImportHook: ImportHook
-    // 3rd argument of Module constructor
     #AssignedImportMeta: object
+    // TODO:
+    #GlobalThis: typeof globalThis = globalThis
     #ReferencedModules = new Map<string, Module>()
     #FetchError: SyntaxError | undefined
     #FetchFinished = false
-    #LocalExportEntries = new Map<string, unknown>()
+    #ImportEntries: ModuleImportEntry[]
+    #LocalExportEntries: ModuleExportEntry[]
+    #IndirectExportEntries: ModuleExportEntry[]
+    #StarExportEntries: ModuleExportEntry[]
     //#endregion
 
     //#region SyntheticModuleRecord methods
@@ -51,22 +119,92 @@ export class Module {
         if (exportStarSet.includes(this)) return []
         exportStarSet.push(this)
         const exportedNames: string[] = []
-        this.#NormalizedSyntheticModuleRecord.bindings?.filter(isExportBinding).forEach((binding) => {
-            exportedNames.push(binding.as ?? binding.export)
-        })
-        this.#NormalizedSyntheticModuleRecord.bindings?.filter(isStarBinding).forEach((binding) => {
-            const requestedModule = Module.#HostResolveImportedModule(this, binding.from!)
+        for (const e of this.#LocalExportEntries) {
+            assert(e.ExportName)
+            exportedNames.push(e.ExportName)
+        }
+        for (const e of this.#IndirectExportEntries) {
+            assert(e.ExportName)
+            exportedNames.push(e.ExportName)
+        }
+        for (const e of this.#StarExportEntries) {
+            assert(e.ModuleRequest)
+            const requestedModule = Module.#HostResolveImportedModule(this, e.ModuleRequest)
             const starNames = requestedModule.#GetExportedNames(exportStarSet)
             for (const n of starNames) {
                 if (n === 'default') continue
                 if (exportedNames.includes(n)) continue
                 exportedNames.push(n)
             }
-        })
+        }
         return exportedNames
     }
-    // TODO:
-    #ResolveExport(exportName: string, resolveSet?: any) {}
+    // https://tc39.es/ecma262/#sec-resolveexport
+    #ResolveExport(
+        exportName: string,
+        resolveSet?: { module: Module; exportName: string }[],
+    ): typeof ambiguous | { module: Module; bindingName: string | typeof namespace } | null {
+        const module = this
+        if (!resolveSet) resolveSet = []
+        for (const r of resolveSet) {
+            if (module === r.module && exportName === r.exportName) {
+                // Assert: This is a circular import request.
+                return null
+            }
+        }
+        resolveSet.push({ module, exportName })
+        for (const e of module.#LocalExportEntries) {
+            if (exportName === e.ExportName) {
+                assert(e.LocalName)
+                return { module, bindingName: e.LocalName }
+            }
+        }
+        for (const e of module.#IndirectExportEntries) {
+            if (exportName === e.ExportName) {
+                assert(e.ModuleRequest)
+                const importedModule = Module.#HostResolveImportedModule(module, e.ModuleRequest)
+                if (e.ImportName === all) {
+                    // Assert: module does not provide the direct binding for this export.
+                    return { module: importedModule, bindingName: namespace }
+                } else {
+                    assert(e.ImportName && e.ImportName !== allButDefault)
+                    return importedModule.#ResolveExport(e.ImportName, resolveSet)
+                }
+            }
+        }
+        if (exportName === 'default') {
+            // Assert: A default export was not explicitly provided by this module.
+            // Note: A default export cannot be provided by an export * from "mod" declaration.
+            return null
+        }
+        let starResolution = null
+        for (const e of module.#StarExportEntries) {
+            assert(e.ModuleRequest)
+            const importedModule = Module.#HostResolveImportedModule(module, e.ModuleRequest)
+            let resolution = importedModule.#ResolveExport(exportName, resolveSet)
+            if (resolution === ambiguous) return ambiguous
+            if (resolution !== null) {
+                if (starResolution === null) starResolution = resolution
+                else {
+                    // Assert: There is more than one * import that includes the requested name.
+                    if (resolution.module !== starResolution.module) return ambiguous
+                    if (
+                        (resolution.bindingName === namespace && starResolution.bindingName !== namespace) ||
+                        (resolution.bindingName !== namespace && starResolution.bindingName === namespace)
+                    )
+                        return ambiguous
+                    if (
+                        typeof resolution.bindingName === 'string' &&
+                        typeof starResolution.bindingName === 'string' &&
+                        resolution.bindingName !== starResolution.bindingName
+                    ) {
+                        return ambiguous
+                    }
+                }
+            }
+        }
+        return starResolution
+    }
     //#endregion
 
     //#region CyclicModuleRecord fields https://tc39.es/ecma262/#sec-cyclic-module-records
@@ -85,36 +223,62 @@ export class Module {
 
     //#region CyclicModuleRecord methods https://tc39.es/ecma262/#table-cyclic-module-methods
     // https://tc39.es/ecma262/#sec-source-text-module-record-initialize-environment
-    // TODO:
-    #InitializeEnvironment() {}
+    #InitializeEnvironment() {
+        const module = this
+        for (const e of module.#IndirectExportEntries) {
+            assert(e.ExportName)
+            const resolution = module.#ResolveExport(e.ExportName)
+            if (resolution === null || resolution === ambiguous)
+                throw new SyntaxError(`Module has an invalid import ${e.ExportName}`)
+        }
+        // Assert: All named exports from module are resolvable.
+        const env = { __proto__: null }
+        module.#Environment = env
+        for (const i of module.#ImportEntries) {
+            const importedModule = Module.#HostResolveImportedModule(module, i.ModuleRequest)
+            if (i.ImportName === namespace) {
+                const namespaceObject = Module.#GetModuleNamespace(importedModule)
+                Object.defineProperty(env, i.LocalName, { value: namespaceObject })
+            } else {
+                const resolution = importedModule.#ResolveExport(i.ImportName)
+                if (resolution === null || resolution === ambiguous) {
+                    throw new SyntaxError(`Module has an invalid import ${i.ImportName}`)
+                }
+                if (resolution.bindingName === namespace) {
+                    const namespaceObject = Module.#GetModuleNamespace(resolution.module)
+                    Object.defineProperty(env, i.LocalName, { value: namespaceObject })
+                } else {
+                    // TODO: live binding
+                    Object.defineProperty(env, i.LocalName, { value: resolution.bindingName, configurable: true })
+                }
+            }
+        }
+        // TODO: export bindings
+        Object.setPrototypeOf(env, module.#GlobalThis)
+        // TODO: Two-pass initialization of module, here is var and function.
+    }
     // https://tc39.es/ecma262/#sec-source-text-module-record-execute-module
     #ExecuteModule(promise?: PromiseCapability<void>) {
         // prepare context
         const context: SyntheticModuleRecordInitializeContext = {}
-        if (this.#NormalizedSyntheticModuleRecord.needsImportMeta) {
+        if (this.#NeedsImportMeta) {
             context.importMeta = Object.assign({}, this.#AssignedImportMeta)
         }
-        if (this.#NormalizedSyntheticModuleRecord.needsImport) {
+        if (this.#NeedsImport) {
             context.import = async (specifier: string, options: ImportCallOptions) => {
                 const module = await this.#ImportHook(specifier, this.#AssignedImportMeta)
                 module.#Link()
                 await module.#Evaluate()
-                // TODO:
-                return {}
+                return Module.#GetModuleNamespace(module)
             }
         }
-        // assert
+        const init = this.#Initialize
         if (!this.#HasTLA) {
             assert(!promise)
-            // TODO:
-            this.#NormalizedSyntheticModuleRecord.initialize({}, context)
+            init(this.#Environment, context)
         } else {
             assert(promise)
-            // TODO:
-            Promise.resolve(this.#NormalizedSyntheticModuleRecord.initialize({}, context)).then(
-                promise.Resolve,
-                promise.Reject,
-            )
+            Promise.resolve(init(this.#Environment, context)).then(promise.Resolve, promise.Reject)
         }
     }
     // https://tc39.es/ecma262/#sec-moduledeclarationlinking
@@ -143,6 +307,7 @@ export class Module {
         assert([ModuleStatus.linked, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status))
         if ([ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status)) {
             module = module.#CycleRoot!
+            assert(module) // TODO: https://github.com/tc39/ecma262/issues/2823
         }
         if (module.#TopLevelCapability) return module.#TopLevelCapability
         const stack: Module[] = []
@@ -389,6 +554,23 @@ export class Module {
         assert(rec)
         return rec
     }
+
+    static #GetModuleNamespace(module: Module): ModuleNamespace {
+        assert(module.#Status !== ModuleStatus.unlinked)
+        if (!module.#Namespace) {
+            const exportedNames = module.#GetExportedNames()
+            const unambiguousNames = []
+            for (const name of exportedNames) {
+                const resolution = module.#ResolveExport(name)
+                if (typeof resolution === 'object' && resolution !== null) {
+                    unambiguousNames.push(name)
+                }
+            }
+            const raw = makeMutableNamespaceExoticObject(exportedNames)
+            module.#Namespace = new Proxy(raw, moduleNamespaceExoticMethods)
+        }
+        return module.#Namespace!
+    }
     //#endregion
 
     static {
@@ -396,15 +578,8 @@ export class Module {
         async function HostResolveModule(module: Module) {
             if (module.#FetchError) throw module.#FetchError
             if (module.#FetchFinished) return
-            if (!module.#NormalizedSyntheticModuleRecord.bindings) {
-                module.#FetchFinished = true
-                return
-            }
 
-            const referredModules = Array.from(
-                new Set(module.#NormalizedSyntheticModuleRecord.bindings.filter(hasFromField).map((x) => x.from)),
-            )
-            const promises = referredModules.map(async (spec) => {
+            const promises = module.#RequestedModules.map(async (spec) => {
                 try {
                     const ref = await module.#ImportHook(spec, module.#AssignedImportMeta)
                     if (!(#HasTLA in ref)) throw new TypeError('importHook must return a Module instance')
@@ -426,14 +601,14 @@ export class Module {
             await HostResolveModule(module)
             module.#Link()
             await module.#Evaluate()
-            // TODO:
-            return {}
+            return Module.#GetModuleNamespace(module)
         }
     }
 }
 function makeMutableNamespaceExoticObject(exports: string[]) {
     const namespace: ModuleNamespace = { __proto__: null }
     Object.defineProperty(namespace, Symbol.toStringTag, { value: 'Module' })
+    // TODO: live binding
     Object.defineProperties(
         namespace,
         Object.fromEntries(
@@ -449,6 +624,18 @@ function makeMutableNamespaceExoticObject(exports: string[]) {
     )
     Object.seal(namespace)
     return namespace
+}
+
+interface ModuleImportEntry {
+    ModuleRequest: string
+    ImportName: string | typeof namespace
+    LocalName: string
+}
+interface ModuleExportEntry {
+    ExportName: string | null
+    ModuleRequest: string | null
+    ImportName: string | typeof all | typeof allButDefault | null
+    LocalName: string | null
 }
 
 const enum ModuleStatus {
