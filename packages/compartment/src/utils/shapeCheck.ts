@@ -48,3 +48,13 @@ export function isExportBinding(binding: Binding): binding is ExportBinding {
 export function isReExportBinding(binding: Binding): binding is ExportBinding & { from: string } {
     return 'export' in binding && typeof binding.from === 'string'
 }
+
+/** @internal */
+export function hasFromField(binding: Binding): binding is Binding & { from: string } {
+    return typeof binding.from === 'string'
+}
+
+/** @internal */
+export function isStarBinding(binding: Binding): boolean {
+    return binding.as === '*'
+}

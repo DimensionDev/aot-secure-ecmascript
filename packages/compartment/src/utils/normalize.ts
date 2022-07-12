@@ -38,18 +38,12 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
         } else if (record instanceof StaticModuleRecord) {
             throw new TypeError('StaticModuleRecord is not supported')
         } else {
-            const { initialize, needsImportMeta, needsImport, bindings } = record
-            const _: SyntheticModuleRecord = (normalizedRecord = {
-                initialize,
-                needsImportMeta: Boolean(needsImportMeta),
-                needsImport: Boolean(needsImport),
-                bindings: normalizeBindings(bindings),
-            })
-
-            if (typeof initialize !== 'function')
-                throw new TypeError('SyntheticModuleRecord.initialize must be a function')
+            normalizedRecord = normalizeSyntheticModuleRecord(record)
         }
-        const copy: ModuleDescriptor_StaticModuleRecord = { record, importMeta: normalizeImportMeta(importMeta) }
+        const copy: ModuleDescriptor_StaticModuleRecord = {
+            record: normalizedRecord,
+            importMeta: normalizeImportMeta(importMeta),
+        }
         return copy
     } else if (isModuleDescriptor_FullSpecReference(desc)) {
         const { instance, compartment } = desc
@@ -67,9 +61,23 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
 }
 
 /** @internal */
+export function normalizeSyntheticModuleRecord(module: SyntheticModuleRecord): SyntheticModuleRecord {
+    const { initialize, bindings, needsImport, needsImportMeta } = module
+    if (typeof initialize !== 'function') {
+        throw new TypeError('SyntheticModuleRecord.initialize must be a function')
+    }
+    return {
+        initialize,
+        needsImportMeta: Boolean(needsImportMeta),
+        needsImport: Boolean(needsImport),
+        bindings: normalizeBindings(bindings),
+    }
+}
+
+/** @internal */
 export function normalizeImportMeta(importMeta: object | undefined | null) {
     if (!importMeta) return undefined
-    if (typeof importMeta !== 'object') throw new TypeError('Compartment: importMeta must be an object')
+    if (typeof importMeta !== 'object') throw new TypeError('importMeta must be an object')
     return importMeta
 }
 
