@@ -132,10 +132,7 @@ export class Compartment implements CompartmentInstance {
             return this.#moduleCache.get(fullSpec)!.Promise
         } else {
             const capability = PromiseCapability<ModuleCacheItem>()
-            Promise.resolve(this.#loadModuleDescriptorOnce(fullSpec)).then(
-                capability.Resolve,
-                capability.Reject,
-            )
+            Promise.resolve(this.#loadModuleDescriptorOnce(fullSpec)).then(capability.Resolve, capability.Reject)
             this.#moduleCache.set(fullSpec, capability)
             return capability.Promise
         }
