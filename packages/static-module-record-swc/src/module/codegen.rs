@@ -70,26 +70,21 @@ impl StaticModuleRecordTransformer {
             ));
         }
 
+        let t = Bool {
+            span: DUMMY_SP,
+            value: true,
+        };
+
+        if self.uses_top_level_await {
+            props.push(key_value("isAsync".into(), t.clone().into()));
+        }
+
         if self.uses_import_meta {
-            props.push(key_value(
-                "needsImportMeta".into(),
-                Bool {
-                    span: DUMMY_SP,
-                    value: self.uses_import_meta,
-                }
-                .into(),
-            ));
+            props.push(key_value("needsImportMeta".into(), t.clone().into()));
         }
 
         if self.uses_dynamic_import {
-            props.push(key_value(
-                "needsImport".into(),
-                Bool {
-                    span: DUMMY_SP,
-                    value: self.uses_dynamic_import,
-                }
-                .into(),
-            ));
+            props.push(key_value("needsImport".into(), t.clone().into()));
         }
 
         props.push(key_value(

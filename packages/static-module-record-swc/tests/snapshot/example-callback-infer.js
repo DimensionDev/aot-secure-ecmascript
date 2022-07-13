@@ -9,6 +9,7 @@ __register("/tests/fixture/example-callback-infer.js", {
             export: "url"
         }
     ],
+    isAsync: true,
     needsImportMeta: true,
     initialize: async function(_, context) {
         const url = new _.URL('./here.txt', context.importMeta.url);

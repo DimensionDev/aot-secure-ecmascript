@@ -8,6 +8,7 @@ export default {
             export: "url"
         }
     ],
+    isAsync: true,
     needsImportMeta: true,
     initialize: async function(_, context) {
         const url = new _.URL('./here.txt', context.importMeta.url);
