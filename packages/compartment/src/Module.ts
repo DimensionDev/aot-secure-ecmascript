@@ -296,18 +296,23 @@ export class Module {
                     Object.defineProperty(env, i.LocalName, { value: namespaceObject })
                 } else {
                     const { bindingName, module } = resolution
-                    resolution.module.#ExportCallback.add(() => {
+                    const f = () =>
                         Object.defineProperty(env, i.LocalName, {
                             value: module.#LocalExportValues.get(bindingName),
                             configurable: true,
                         })
-                    })
-                    Object.defineProperty(env, i.LocalName, {
-                        get() {
-                            throw new ReferenceError(`Cannot access '${i.LocalName}' before initialization`)
-                        },
-                        configurable: true,
-                    })
+                    resolution.module.#ExportCallback.add(f)
+
+                    if (resolution.module.#LocalExportValues.has(bindingName)) {
+                        f()
+                    } else {
+                        Object.defineProperty(env, i.LocalName, {
+                            get() {
+                                throw new ReferenceError(`Cannot access '${i.LocalName}' before initialization`)
+                            },
+                            configurable: true,
+                        })
+                    }
                 }
             }
         }
