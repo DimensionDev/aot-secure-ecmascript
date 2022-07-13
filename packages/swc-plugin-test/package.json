@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@swc/core": "latest",
-    "@types/node": "latest",
-    "@masknet/static-module-record-swc": "workspace:*"
+    "@masknet/static-module-record-swc": "workspace:*",
+    "@swc/core": "^1.2.213",
+    "@types/node": "^18.0.3"
   },
   "scripts": {
     "play": "node ./test.js",

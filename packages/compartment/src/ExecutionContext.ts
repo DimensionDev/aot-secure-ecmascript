@@ -17,7 +17,7 @@ export const ExecutionContext: ExecutionContextConstructor = class ExecutionCont
             {
                 Compartment,
                 ExecutionContext: _,
-                createModule: createModuleSubclass
+                createModule: createModuleSubclass,
             },
             global,
         )

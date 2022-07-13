@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: npx prettier@2.6.2 --check .
+      - run: npx prettier@2.7.1 --check .
   editorconfig:
     runs-on: ubuntu-latest
     steps:
