@@ -1,5 +1,15 @@
 # @masknet/static-module-record-swc
 
+## 0.3.0
+
+### Minor Changes
+
+-   c0b8659: Implement new binding format in virtual module
+
+### Patch Changes
+
+-   1657c4f: Add isAsync hint
+
 ## 0.2.2
 
 ### Patch Changes
