@@ -1,8 +1,7 @@
 export default {
     bindings: [
         {
-            import: "*",
-            from: 'mod',
+            importAllFrom: 'mod',
             as: "import 1"
         }
     ],

@@ -2,41 +2,36 @@ use crate::utils::*;
 use swc_common::DUMMY_SP;
 use swc_plugin::{ast::*, utils::quote_ident};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Binding {
     Import(ImportBinding),
     Export(ExportBinding),
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct ImportBinding {
     pub import: ModuleBinding,
     pub alias: Option<Ident>,
     pub from: Str,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct ExportBinding {
     pub export: ModuleBinding,
     pub alias: Option<ModuleExportName>,
     pub from: Option<Str>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum ModuleBinding {
     ModuleExportName(ModuleExportName),
     Namespace,
 }
 
-impl ToString for ModuleBinding {
-    fn to_string(&self) -> String {
-        match self {
-            ModuleBinding::ModuleExportName(name) => match name {
-                ModuleExportName::Ident(ident) => ident.to_string(),
-                ModuleExportName::Str(str) => str.value.to_string(),
-            },
-            ModuleBinding::Namespace => "*".to_string(),
-        }
+fn module_export_name_to_str(binding: &ModuleExportName) -> String {
+    match binding {
+        ModuleExportName::Ident(ident) => ident.to_id().0.to_string(),
+        ModuleExportName::Str(str) => str.value.to_string(),
     }
 }
 
@@ -79,13 +74,23 @@ impl ModuleBinding {
 }
 impl ImportBinding {
     pub fn to_object_lit(&self) -> ObjectLit {
-        let mut result: Vec<PropOrSpread> = vec![
-            key_value("import".into(), self.import.clone().into()),
-            key_value("from".into(), (&self.from).clone().into()),
-        ];
-        if let Some(alias) = &self.alias {
-            if alias.to_string() != self.import.to_string() {
-                result.push(key_value("as".into(), str_lit(alias.to_id().0)));
+        let mut result: Vec<PropOrSpread> = Vec::with_capacity(3);
+        match &self.import {
+            ModuleBinding::Namespace => {
+                result.push(key_value("importAllFrom".into(), self.from.clone().into()));
+                result.push(key_value(
+                    "as".into(),
+                    str_lit(self.alias.clone().unwrap().to_id().0),
+                ));
+            }
+            ModuleBinding::ModuleExportName(binding) => {
+                result.push(key_value("import".into(), self.import.clone().into()));
+                result.push(key_value("from".into(), self.from.clone().into()));
+                if let Some(alias) = &self.alias {
+                    if alias.to_id().0 != module_export_name_to_str(binding) {
+                        result.push(key_value("as".into(), str_lit(alias.to_id().0)));
+                    }
+                }
             }
         }
         ObjectLit {
@@ -109,27 +114,60 @@ impl From<ExportBinding> for Binding {
 
 impl ExportBinding {
     pub fn to_object_lit(&self) -> ObjectLit {
-        let actual_export_value = self.alias.clone().map(|alias| match alias {
-            ModuleExportName::Ident(alias) => str_lit(alias.to_id().0),
-            ModuleExportName::Str(str) => str.into(),
-        });
-        let original_export_name = self.export.clone().into();
+        let mut result: Vec<PropOrSpread> = Vec::with_capacity(3);
+        match &self.export {
+            ModuleBinding::Namespace => {
+                result.push(key_value(
+                    "exportAllFrom".into(),
+                    self.from.clone().unwrap().into(),
+                ));
+                if let Some(alias) = &self.alias {
+                    result.push(key_value(
+                        "as".into(),
+                        str_lit(module_export_name_to_str(alias).into()),
+                    ));
+                }
+            }
+            ModuleBinding::ModuleExportName(export_value) => {
+                let actual_export_name = self
+                    .alias
+                    .clone()
+                    .map(|alias| module_export_name_to_str(&alias));
+                let original_export_name = module_export_name_to_str(export_value);
+
+                if let Some(actual_export_name) = actual_export_name {
+                    if actual_export_name == original_export_name {
+                        result.push(key_value(
+                            "export".into(),
+                            str_lit(original_export_name.into()),
+                        ));
+                    } else if self.from.is_none() {
+                        result.push(key_value(
+                            "export".into(),
+                            str_lit(actual_export_name.into()),
+                        ));
+                    } else {
+                        result.push(key_value(
+                            "export".into(),
+                            str_lit(original_export_name.into()),
+                        ));
+                        result.push(key_value("as".into(), str_lit(actual_export_name.into())));
+                    }
+                } else {
+                    result.push(key_value(
+                        "export".into(),
+                        str_lit(original_export_name.into()),
+                    ));
+                }
+                if let Some(from) = &self.from {
+                    result.push(key_value("from".into(), from.clone().into()))
+                }
+            }
+        }
 
         ObjectLit {
             span: DUMMY_SP,
-            props: if let Some(from) = &self.from {
-                let mut result = vec![key_value("export".into(), original_export_name)];
-                if let Some(export) = actual_export_value {
-                    result.push(key_value("as".into(), export))
-                }
-                result.push(key_value("from".into(), from.clone().into()));
-                result
-            } else {
-                vec![key_value(
-                    "export".into(),
-                    actual_export_value.unwrap_or(original_export_name),
-                )]
-            },
+            props: result,
         }
     }
 

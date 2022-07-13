@@ -1,13 +1,11 @@
 export default {
     bindings: [
         {
-            export: "*",
-            from: 'mod'
+            exportAllFrom: 'mod'
         },
         {
-            export: "*",
-            as: "x2",
-            from: 'mod2'
+            exportAllFrom: 'mod2',
+            as: "x2"
         },
         {
             export: "default",
@@ -19,7 +17,7 @@ export default {
             from: 'mod3'
         },
         {
-            export: 'some export',
+            export: "some export",
             as: "x4",
             from: 'mod3'
         },

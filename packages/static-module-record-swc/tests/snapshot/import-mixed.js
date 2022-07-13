@@ -15,8 +15,7 @@ export default {
             as: "c"
         },
         {
-            import: "*",
-            from: 'mod2',
+            importAllFrom: 'mod2',
             as: "d"
         }
     ],

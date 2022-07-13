@@ -1,8 +1,7 @@
 export default {
     bindings: [
         {
-            import: "*",
-            from: 'a',
+            importAllFrom: 'a',
             as: "a"
         },
         {

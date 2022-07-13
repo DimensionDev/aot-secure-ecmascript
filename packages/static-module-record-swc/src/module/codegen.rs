@@ -76,15 +76,15 @@ impl StaticModuleRecordTransformer {
         };
 
         if self.uses_top_level_await {
-            props.push(key_value("isAsync".into(), t.clone().into()));
+            props.push(key_value("isAsync".into(), t.into()));
         }
 
         if self.uses_import_meta {
-            props.push(key_value("needsImportMeta".into(), t.clone().into()));
+            props.push(key_value("needsImportMeta".into(), t.into()));
         }
 
         if self.uses_dynamic_import {
-            props.push(key_value("needsImport".into(), t.clone().into()));
+            props.push(key_value("needsImport".into(), t.into()));
         }
 
         props.push(key_value(
