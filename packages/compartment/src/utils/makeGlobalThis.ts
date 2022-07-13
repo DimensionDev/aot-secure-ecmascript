@@ -1,6 +1,7 @@
 import type { Compartment } from '../compartment.js'
 import type { ExecutionContext } from '../ExecutionContext.js'
 import type { Module } from '../Module.js'
+import { ModuleSource } from '../ModuleSource.js'
 
 /** @internal */
 export interface Evaluators {
@@ -28,6 +29,7 @@ export function makeGlobalThis(
         globalThis: { writable: true, configurable: true, value: global },
         Compartment: { writable: true, configurable: true, value: evaluators.Compartment },
         ExecutionContext: { writable: true, configurable: true, value: evaluators.ExecutionContext },
+        ModuleSource: { writable: true, configurable: true, value: ModuleSource },
         Module: { writable: true, configurable: true, value: evaluators.createModule(global) },
     })
 
