@@ -123,7 +123,7 @@ export function normalizeBindings(binding: Binding[] | undefined): Binding[] {
                 throw new TypeError('ExportBinding cannot have "exportAllFrom", "importAllFrom", or "import" fields.')
             result.push({
                 export: normalizeString(item.export),
-                from: normalizeString(item.from),
+                from: normalizeStringOrUndefined(item.from),
                 as: normalizeStringOrUndefined(item.as),
             })
         } else {

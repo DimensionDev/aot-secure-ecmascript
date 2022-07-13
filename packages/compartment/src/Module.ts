@@ -2,7 +2,7 @@ import type { ModuleSource } from './ModuleSource.js'
 import type { ModuleNamespace, SyntheticModuleRecord, SyntheticModuleRecordInitializeContext } from './types.js'
 import { all, allButDefault, ambiguous, empty, namespace, PromiseCapability } from './utils/spec.js'
 import { normalizeSyntheticModuleRecord } from './utils/normalize.js'
-import { assert, internalError } from './utils/opaqueProxy.js'
+import { assert, internalError, opaqueProxy } from './utils/opaqueProxy.js'
 import {
     isImportBinding,
     isImportAllBinding,
@@ -11,11 +11,13 @@ import {
     hasFromField,
 } from './utils/shapeCheck.js'
 
-export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module>
-export let imports: (specifier: Module, options: ImportCallOptions) => Promise<ModuleNamespace>
+export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module | null>
+export let imports: (specifier: Module, options?: ImportCallOptions) => Promise<ModuleNamespace>
 /** @internal */
-export let createModuleClassWithGlobalThis: (globalThis: object) => typeof Module
+export let createModuleSubclass: (globalThis: object) => typeof Module
 export class Module {
+    // The constructor is equivalent to ParseModule in SourceTextModuleRecord
+    // https://tc39.es/ecma262/#sec-parsemodule
     constructor(source: ModuleSource | SyntheticModuleRecord, importHook: ImportHook, importMeta: object) {
         if (typeof importHook !== 'function') throw new TypeError('importHook must be a function')
         if (typeof importMeta !== 'object') throw new TypeError('importMeta must be an object')
@@ -32,67 +34,84 @@ export class Module {
         this.#ImportHook = importHook
 
         const requestedModules: string[] = []
-        const imports: ModuleImportEntry[] = (this.#ImportEntries = [])
-        const localExports: ModuleExportEntry[] = (this.#LocalExportEntries = [])
-        const indirectExports: ModuleExportEntry[] = (this.#IndirectExportEntries = [])
-        const starExports: ModuleExportEntry[] = (this.#StarExportEntries = [])
-
+        const importsEntries: ModuleImportEntry[] = (this.#ImportEntries = [])
         for (const binding of module.bindings || []) {
             if (isImportBinding(binding)) {
                 requestedModules.push(binding.from)
-                imports.push({
+                importsEntries.push({
                     ImportName: binding.import,
                     LocalName: binding.as ?? binding.import,
                     ModuleRequest: binding.from,
                 })
             } else if (isImportAllBinding(binding)) {
                 requestedModules.push(binding.importAllFrom)
-                imports.push({
+                importsEntries.push({
                     ImportName: namespace,
                     LocalName: binding.as,
                     ModuleRequest: binding.importAllFrom,
                 })
-            } else if (isExportBinding(binding)) {
+            }
+        }
+        const importedBoundNames = importsEntries.map((x) => x.LocalName)
+
+        const indirectExportEntries: ModuleExportEntry[] = (this.#IndirectExportEntries = [])
+        const localExportEntries: ModuleExportEntry[] = (this.#LocalExportEntries = [])
+        const starExportEntries: ModuleExportEntry[] = (this.#StarExportEntries = [])
+
+        for (const binding of module.bindings || []) {
+            if (isExportBinding(binding)) {
                 if (hasFromField(binding)) {
                     requestedModules.push(binding.from)
-                    indirectExports.push({
+                    indirectExportEntries.push({
                         ExportName: binding.as ?? binding.export,
                         ImportName: binding.export,
-                        LocalName: null,
+                        // LocalName: null,
                         ModuleRequest: binding.from,
                     })
                 } else {
-                    localExports.push({
+                    const ee: ModuleExportEntry = {
                         ExportName: binding.as ?? binding.export,
-                        LocalName: binding.export,
+                        // LocalName: binding.export,
                         ImportName: null,
                         ModuleRequest: null,
-                    })
+                    }
+                    if (!importedBoundNames.includes(binding.export)) {
+                        localExportEntries.push(ee)
+                    } else {
+                        const ie = importsEntries.find((x) => x.LocalName === binding.export)!
+                        if (ie.ImportName === namespace) {
+                            localExportEntries.push(ee)
+                        } else {
+                            indirectExportEntries.push({
+                                ModuleRequest: ie.ModuleRequest,
+                                ImportName: ie.ImportName,
+                                ExportName: ee.ExportName,
+                            })
+                        }
+                    }
                 }
             } else if (isExportAllBinding(binding)) {
                 requestedModules.push(binding.exportAllFrom)
                 if (typeof binding.as === 'string') {
                     // export * as name from 'mod'
-                    starExports.push({
-                        LocalName: binding.as,
-                        ExportName: null,
+                    starExportEntries.push({
+                        // LocalName: binding.as,
+                        ExportName: binding.as,
                         ImportName: all,
                         ModuleRequest: binding.exportAllFrom,
                     })
                 } else {
                     // export * from 'mod'
-                    starExports.push({
-                        LocalName: null,
+                    starExportEntries.push({
+                        // LocalName: null,
                         ExportName: null,
                         ImportName: allButDefault,
                         ModuleRequest: binding.exportAllFrom,
                     })
                 }
-            } else {
-                const _: never = binding
-                internalError()
             }
         }
+
         // Set is ordered.
         this.#RequestedModules = [...new Set(requestedModules)]
     }
@@ -109,6 +128,8 @@ export class Module {
     #Initialize: SyntheticModuleRecord['initialize']
     #NeedsImportMeta: boolean | undefined
     #NeedsImport: boolean | undefined
+    #ContextObject: SyntheticModuleRecordInitializeContext | undefined
+    #ContextObjectProxy: SyntheticModuleRecordInitializeContext | undefined
     #ImportHook: ImportHook
     #AssignedImportMeta: object
     /** the global environment this module binds to */
@@ -119,6 +140,10 @@ export class Module {
     #LocalExportEntries: ModuleExportEntry[]
     #IndirectExportEntries: ModuleExportEntry[]
     #StarExportEntries: ModuleExportEntry[]
+    /** Where local export stored */
+    #LocalExportValues = new Map<string, unknown>()
+    /** Callback to update live exports */
+    #ExportCallback = new Set<(name: string) => void>()
     //#endregion
 
     //#region SyntheticModuleRecord methods
@@ -126,22 +151,22 @@ export class Module {
 
     //#region ModuleRecord methods https://tc39.es/ecma262/#table-abstract-methods-of-module-records
     // https://tc39.es/ecma262/#sec-getexportednames
-    #GetExportedNames(exportStarSet?: Module[]): string[] {
-        if (!exportStarSet) exportStarSet = []
-        if (exportStarSet.includes(this)) return []
-        exportStarSet.push(this)
+    #GetExportedNames(exportStarSet: Module[] = []): string[] {
+        const module = this
+        if (exportStarSet.includes(module)) return []
+        exportStarSet.push(module)
         const exportedNames: string[] = []
-        for (const e of this.#LocalExportEntries) {
-            assert(e.ExportName)
+        for (const e of module.#LocalExportEntries) {
+            assert(e.ExportName !== null)
             exportedNames.push(e.ExportName)
         }
-        for (const e of this.#IndirectExportEntries) {
-            assert(e.ExportName)
+        for (const e of module.#IndirectExportEntries) {
+            assert(e.ExportName !== null)
             exportedNames.push(e.ExportName)
         }
-        for (const e of this.#StarExportEntries) {
-            assert(e.ModuleRequest)
-            const requestedModule = Module.#HostResolveImportedModule(this, e.ModuleRequest)
+        for (const e of module.#StarExportEntries) {
+            assert(e.ModuleRequest !== null)
+            const requestedModule = Module.#HostResolveImportedModule(module, e.ModuleRequest)
             const starNames = requestedModule.#GetExportedNames(exportStarSet)
             for (const n of starNames) {
                 if (n === 'default') continue
@@ -154,10 +179,9 @@ export class Module {
     // https://tc39.es/ecma262/#sec-resolveexport
     #ResolveExport(
         exportName: string,
-        resolveSet?: { module: Module; exportName: string }[],
+        resolveSet: { module: Module; exportName: string }[] = [],
     ): typeof ambiguous | { module: Module; bindingName: string | typeof namespace } | null {
         const module = this
-        if (!resolveSet) resolveSet = []
         for (const r of resolveSet) {
             if (module === r.module && exportName === r.exportName) {
                 // Assert: This is a circular import request.
@@ -167,19 +191,20 @@ export class Module {
         resolveSet.push({ module, exportName })
         for (const e of module.#LocalExportEntries) {
             if (exportName === e.ExportName) {
-                assert(e.LocalName)
-                return { module, bindingName: e.LocalName }
+                // assert(e.LocalName !== null)
+                // return { module, bindingName: e.LocalName }
+                return { module, bindingName: e.ExportName }
             }
         }
         for (const e of module.#IndirectExportEntries) {
             if (exportName === e.ExportName) {
-                assert(e.ModuleRequest)
+                assert(e.ModuleRequest !== null)
                 const importedModule = Module.#HostResolveImportedModule(module, e.ModuleRequest)
                 if (e.ImportName === all) {
                     // Assert: module does not provide the direct binding for this export.
                     return { module: importedModule, bindingName: namespace }
                 } else {
-                    assert(e.ImportName && e.ImportName !== allButDefault)
+                    assert(typeof e.ImportName === 'string')
                     return importedModule.#ResolveExport(e.ImportName, resolveSet)
                 }
             }
@@ -189,9 +214,9 @@ export class Module {
             // Note: A default export cannot be provided by an export * from "mod" declaration.
             return null
         }
-        let starResolution = null
+        let starResolution: null | { module: Module; bindingName: string | typeof namespace } = null
         for (const e of module.#StarExportEntries) {
-            assert(e.ModuleRequest)
+            assert(e.ModuleRequest !== null)
             const importedModule = Module.#HostResolveImportedModule(module, e.ModuleRequest)
             let resolution = importedModule.#ResolveExport(exportName, resolveSet)
             if (resolution === ambiguous) return ambiguous
@@ -227,7 +252,8 @@ export class Module {
     #RequestedModules: string[]
     #CycleRoot: Module | undefined
     #HasTLA: boolean
-    #AsyncEvaluation: boolean | undefined
+    #AsyncEvaluation = false
+    #__AsyncEvaluationPreviouslyTrue = false
     #TopLevelCapability: PromiseCapability<void> | undefined
     #AsyncParentModules: Module[] = []
     #PendingAsyncDependencies: number | empty = empty
@@ -238,14 +264,23 @@ export class Module {
     #InitializeEnvironment() {
         const module = this
         for (const e of module.#IndirectExportEntries) {
-            assert(e.ExportName)
+            assert(e.ExportName !== null)
             const resolution = module.#ResolveExport(e.ExportName)
-            if (resolution === null || resolution === ambiguous)
-                throw new SyntaxError(`Module has an invalid import ${e.ExportName}`)
+            if (resolution === null || resolution === ambiguous) {
+                throw new SyntaxError(`Module '${e.ModuleRequest}' does not provide an export ${e.ExportName}`)
+            }
         }
+
         // Assert: All named exports from module are resolvable.
+
         const env = { __proto__: null }
+        if (this.#NeedsImport || this.#NeedsImportMeta) {
+            const [context, proxy] = createContextObject()
+            module.#ContextObject = context
+            module.#ContextObjectProxy = proxy
+        }
         module.#Environment = env
+
         for (const i of module.#ImportEntries) {
             const importedModule = Module.#HostResolveImportedModule(module, i.ModuleRequest)
             if (i.ImportName === namespace) {
@@ -254,31 +289,59 @@ export class Module {
             } else {
                 const resolution = importedModule.#ResolveExport(i.ImportName)
                 if (resolution === null || resolution === ambiguous) {
-                    throw new SyntaxError(`Module has an invalid import ${i.ImportName}`)
+                    throw new SyntaxError(`${i.ModuleRequest} does not provide export ${i.ImportName}`)
                 }
                 if (resolution.bindingName === namespace) {
                     const namespaceObject = Module.#GetModuleNamespace(resolution.module)
                     Object.defineProperty(env, i.LocalName, { value: namespaceObject })
                 } else {
-                    // TODO: live binding
-                    Object.defineProperty(env, i.LocalName, { value: resolution.bindingName, configurable: true })
+                    const { bindingName, module } = resolution
+                    resolution.module.#ExportCallback.add(() => {
+                        Object.defineProperty(env, i.LocalName, {
+                            value: module.#LocalExportValues.get(bindingName),
+                            configurable: true,
+                        })
+                    })
+                    Object.defineProperty(env, i.LocalName, {
+                        get() {
+                            throw new ReferenceError(`Cannot access '${i.LocalName}' before initialization`)
+                        },
+                        configurable: true,
+                    })
                 }
             }
         }
-        // TODO: export bindings
-        Object.setPrototypeOf(env, module.#GlobalThis)
-        // TODO: Two-pass initialization of module, here is var and function.
+        for (const { ModuleRequest, ExportName, ImportName } of module.#LocalExportEntries) {
+            assert(ModuleRequest === null && typeof ExportName === 'string' && ImportName === null)
+            Object.defineProperty(env, ExportName, {
+                get: () => this.#LocalExportValues.get(ExportName),
+                set: (value) => {
+                    this.#LocalExportValues.set(ExportName, value)
+                    this.#ExportCallback.forEach((f) => f(ExportName))
+                },
+            })
+        }
+
+        for (const exports of module.#GetExportedNames()) {
+            if (module.#ResolveExport(exports) === ambiguous) {
+                throw new SyntaxError(`Module has multiple exports named '${exports}'`)
+            }
+        }
+        // TODO: https://github.com/tc39/proposal-compartments/issues/70
+
+        // prevent access to global env until [[ExecuteModule]]
+        Object.setPrototypeOf(env, opaqueProxy)
     }
-    // https://tc39.es/ecma262/#sec-source-text-module-record-execute-module
     #ExecuteModule(promise?: PromiseCapability<void>) {
+        Object.setPrototypeOf(this.#Environment, this.#GlobalThis)
         // prepare context
-        const context: SyntheticModuleRecordInitializeContext = {}
         if (this.#NeedsImportMeta) {
-            context.importMeta = Object.assign({}, this.#AssignedImportMeta)
+            this.#ContextObject!.importMeta = Object.assign({}, this.#AssignedImportMeta)
         }
         if (this.#NeedsImport) {
-            context.import = async (specifier: string, options: ImportCallOptions) => {
-                const module = await this.#ImportHook(specifier, this.#AssignedImportMeta)
+            this.#ContextObject!.import = async (specifier: string, options?: ImportCallOptions) => {
+                const [module] = await Module.#HostResolveModules(this, [specifier])
+                assert(module)
                 module.#Link()
                 await module.#Evaluate()
                 return Module.#GetModuleNamespace(module)
@@ -286,13 +349,15 @@ export class Module {
         }
         const init = this.#Initialize
         assert(this.#Environment)
+        const env = new Proxy(this.#Environment, moduleEnvExoticMethods)
         if (!this.#HasTLA) {
             assert(!promise)
-            init(this.#Environment, context)
+            init(env, this.#ContextObjectProxy)
         } else {
             assert(promise)
-            Promise.resolve(init(this.#Environment, context)).then(promise.Resolve, promise.Reject)
+            Promise.resolve(init(env, this.#ContextObjectProxy)).then(promise.Resolve, promise.Reject)
         }
+        this.#Initialize = undefined!
     }
     // https://tc39.es/ecma262/#sec-moduledeclarationlinking
     #Link() {
@@ -322,7 +387,7 @@ export class Module {
             module = module.#CycleRoot!
             assert(module) // TODO: https://github.com/tc39/ecma262/issues/2823
         }
-        if (module.#TopLevelCapability) return module.#TopLevelCapability
+        if (module.#TopLevelCapability) return module.#TopLevelCapability.Promise
         const stack: Module[] = []
         const capability = PromiseCapability<void>()
         module.#TopLevelCapability = capability
@@ -375,7 +440,7 @@ export class Module {
                     ModuleStatus.evaluated,
                 ].includes(requiredModule.#Status),
             )
-            if (stack.includes(module)) {
+            if (stack.includes(requiredModule)) {
                 assert(requiredModule.#Status === ModuleStatus.linking)
             } else {
                 assert(requiredModule.#Status !== ModuleStatus.linking)
@@ -423,6 +488,11 @@ export class Module {
                     requiredModule.#Status,
                 ),
             )
+            if (stack.includes(requiredModule)) {
+                assert(requiredModule.#Status === ModuleStatus.evaluating)
+            } else {
+                assert(requiredModule.#Status !== ModuleStatus.evaluating)
+            }
             if (requiredModule.#Status === ModuleStatus.evaluating) {
                 module.#DFSAncestorIndex = Math.min(
                     module.#DFSAncestorIndex,
@@ -440,7 +510,10 @@ export class Module {
         }
         if (module.#PendingAsyncDependencies > 0 || module.#HasTLA) {
             assert(module.#AsyncEvaluation === false)
+            assert(module.#__AsyncEvaluationPreviouslyTrue === false)
             module.#AsyncEvaluation = true
+            module.#__AsyncEvaluationPreviouslyTrue = true
+            // Note: The order in which module records have their [[AsyncEvaluation]] fields transition to true is significant. (See 16.2.1.5.2.4.)
             if (module.#PendingAsyncDependencies === 0) {
                 this.#ExecuteAsyncModule(module)
             }
@@ -488,8 +561,8 @@ export class Module {
                 assert(m.#Status === ModuleStatus.evaluatingAsync)
                 assert(m.#EvaluationError === empty)
                 assert(m.#AsyncEvaluation === true)
-                assert(typeof m.#PendingAsyncDependencies === 'number' && m.#PendingAsyncDependencies > 0)
-                m.#PendingAsyncDependencies--
+                assert((m.#PendingAsyncDependencies as number) > 0)
+                ;(m.#PendingAsyncDependencies as number)--
                 if (m.#PendingAsyncDependencies === 0) {
                     execList.push(m)
                     if (!m.#HasTLA) this.#GatherAvailableAncestors(m, execList)
@@ -505,7 +578,7 @@ export class Module {
             return
         }
         assert(module.#Status === ModuleStatus.evaluatingAsync)
-        assert((module.#AsyncEvaluation = true))
+        assert(module.#AsyncEvaluation === true)
         assert(module.#EvaluationError === empty)
         module.#AsyncEvaluation = false
         module.#Status = ModuleStatus.evaluated
@@ -550,7 +623,7 @@ export class Module {
             return
         }
         assert(module.#Status === ModuleStatus.evaluatingAsync)
-        assert(module.#AsyncEvaluation)
+        assert(module.#AsyncEvaluation === true)
         assert(module.#EvaluationError === empty)
         module.#EvaluationError = error
         module.#Status = ModuleStatus.evaluated
@@ -571,68 +644,91 @@ export class Module {
 
     static #GetModuleNamespace(module: Module): ModuleNamespace {
         assert(module.#Status !== ModuleStatus.unlinked)
-        if (!module.#Namespace) {
-            const exportedNames = module.#GetExportedNames()
-            const unambiguousNames = []
-            for (const name of exportedNames) {
-                const resolution = module.#ResolveExport(name)
-                if (typeof resolution === 'object' && resolution !== null) {
-                    unambiguousNames.push(name)
-                }
+        if (module.#Namespace) return module.#Namespace
+        const exportedNames = module.#GetExportedNames()
+        const unambiguousNames = []
+        for (const name of exportedNames) {
+            const resolution = module.#ResolveExport(name)
+            if (typeof resolution === 'object' && resolution !== null) {
+                unambiguousNames.push(name)
             }
-            const raw = makeMutableNamespaceExoticObject(exportedNames)
-            module.#Namespace = new Proxy(raw, moduleNamespaceExoticMethods)
         }
-        return module.#Namespace!
+
+        const namespace: ModuleNamespace = { __proto__: null }
+        Object.defineProperty(namespace, Symbol.toStringTag, { value: 'Module' })
+        for (const name of exportedNames) {
+            Object.defineProperty(namespace, name, {
+                get() {
+                    throw new ReferenceError(`Cannot access '${name}' before initialization`)
+                },
+                // Note: this should not be configurable, but it's a trade-off for DX.
+                configurable: true,
+                enumerable: true,
+            })
+        }
+        module.#ExportCallback.add((name) => {
+            Object.defineProperty(namespace, name, {
+                enumerable: true,
+                writable: true,
+                value: module.#LocalExportValues.get(name),
+            })
+        })
+
+        const proxy = new Proxy(namespace, moduleNamespaceExoticMethods)
+        module.#Namespace = proxy
+        return proxy
     }
     //#endregion
 
+    //#region Our host hook
+    static #HostResolveModulesInner(module: Module, spec: string) {
+        const capability = PromiseCapability<Module>()
+        module.#ResolvedModules.set(spec, capability)
+        Promise.resolve(module.#ImportHook(spec, module.#AssignedImportMeta))
+            .then(
+                async (module) => {
+                    if (module === null || module === undefined)
+                        throw new SyntaxError(`Failed to resolve module '${spec}'`)
+                    if (!(#HasTLA in module)) throw new TypeError('ImportHook must return a Module instance')
+                    await this.#HostResolveModules(module, module.#RequestedModules)
+                    return module
+                },
+                (error) => {
+                    throw new SyntaxError(
+                        `Failed to import module '${spec}'`,
+                        // @ts-expect-error
+                        { cause: error },
+                    )
+                },
+            )
+            .then(capability.Resolve, capability.Reject)
+        return capability.Promise
+    }
+    // call importHook recursively to get all module referenced.
+    static async #HostResolveModules(module: Module, requestModules: string[]) {
+        const promises = requestModules.map(async (spec) => {
+            const cache = module.#ResolvedModules.get(spec)
+            if (!cache) {
+                return this.#HostResolveModulesInner(module, spec)
+            } else if (cache.Status.Type === 'Pending') {
+                return cache.Status.Promise
+            } else if (cache.Status.Type === 'Fulfilled') {
+                return cache.Status.Value
+            } else {
+                throw cache.Status.Reason
+            }
+        })
+        return Promise.all(promises)
+    }
+    //#endregion
     static {
-        function HostResolveModuleUncached(module: Module, spec: string) {
-            const capability = PromiseCapability<Module>()
-            module.#ResolvedModules.set(spec, capability)
-            Promise.resolve(module.#ImportHook(spec, module.#AssignedImportMeta))
-                .then(
-                    async (module) => {
-                        if (!(#HasTLA in module)) throw new TypeError('Module is not a top-level module')
-                        await HostResolveModule(module)
-                        return module
-                    },
-                    (error) => {
-                        throw new SyntaxError(
-                            `Failed to import module "${spec}"`,
-                            // @ts-expect-error
-                            { cause: error },
-                        )
-                    },
-                )
-                .then(capability.Resolve, capability.Reject)
-            return capability.Promise
-        }
-        // call importHook recursively to get all module referenced.
-        async function HostResolveModule(module: Module) {
-            const promises = module.#RequestedModules.map(async (spec) => {
-                const cache = module.#ResolvedModules.get(spec)
-                if (!cache) {
-                    return HostResolveModuleUncached(module, spec)
-                } else if (cache.Status.Type === 'Pending') {
-                    return cache.Status.Promise
-                } else if (cache.Status.Type === 'Fulfilled') {
-                    return cache.Status.Value
-                } else {
-                    throw cache.Status.Reason
-                }
-            })
-            await Promise.all(promises)
-        }
         imports = async (module, options) => {
-            await HostResolveModule(module)
-            // TODO: check duplicate import/export
+            await this.#HostResolveModules(module, module.#RequestedModules)
             module.#Link()
             await module.#Evaluate()
             return Module.#GetModuleNamespace(module)
         }
-        createModuleClassWithGlobalThis = (globalThis) => {
+        createModuleSubclass = (globalThis) => {
             const Parent = Module
             const SubModule = class Module extends Parent {
                 constructor(source: ModuleSource | SyntheticModuleRecord, importHook: ImportHook, importMeta: object) {
@@ -644,26 +740,6 @@ export class Module {
         }
     }
 }
-function makeMutableNamespaceExoticObject(exports: string[]) {
-    const namespace: ModuleNamespace = { __proto__: null }
-    Object.defineProperty(namespace, Symbol.toStringTag, { value: 'Module' })
-    // TODO: live binding
-    Object.defineProperties(
-        namespace,
-        Object.fromEntries(
-            exports.map((exportName): [string, PropertyDescriptor] => [
-                exportName,
-                {
-                    enumerable: true,
-                    writable: true,
-                    value: undefined,
-                },
-            ]),
-        ),
-    )
-    Object.seal(namespace)
-    return namespace
-}
 
 interface ModuleImportEntry {
     ModuleRequest: string
@@ -674,7 +750,7 @@ interface ModuleExportEntry {
     ExportName: string | null
     ModuleRequest: string | null
     ImportName: string | typeof all | typeof allButDefault | null
-    LocalName: string | null
+    // LocalName: string | null
 }
 
 const enum ModuleStatus {
@@ -684,6 +760,15 @@ const enum ModuleStatus {
     evaluating,
     evaluatingAsync,
     evaluated,
+}
+
+function createContextObject() {
+    const context = {}
+    Object.defineProperties(context, {
+        import: { writable: true, enumerable: true, value: undefined },
+        importMeta: { writable: true, enumerable: true, value: undefined },
+    })
+    return [context, new Proxy(context, moduleContextExoticMethods)]
 }
 
 const moduleNamespaceExoticMethods: ProxyHandler<any> = {
@@ -697,7 +782,7 @@ const moduleNamespaceExoticMethods: ProxyHandler<any> = {
         if (!current) return false
         if (attributes.configurable) return false
         if (attributes.enumerable === false) return false
-        if (attributes.get || current.set) return false
+        if (attributes.get || attributes.set) return false
         if (attributes.writable === false) return false
         if ('value' in attributes) return Object.is(current.value, attributes.value)
         return true
@@ -705,4 +790,43 @@ const moduleNamespaceExoticMethods: ProxyHandler<any> = {
     set() {
         return false
     },
+    preventExtensions() {
+        return true
+    },
+    isExtensible() {
+        return false
+    },
+}
+
+const moduleContextExoticMethods: ProxyHandler<any> = {
+    // we create ModuleContext in [[InitializeEnvironment]]
+    // and set import and importMeta property in [[ExecuteModule]]
+
+    // and ModuleContext is reachable in user code in [[InitializeEnvironment]] after we have two-stage initialization
+    // therefore we need to prevent developers to touch the descriptor of ModuleContext.
+    defineProperty(target, p, attributes) {
+        if (typeof p === 'symbol' || (p !== 'import' && p !== 'importMeta'))
+            return Reflect.defineProperty(target, p, attributes)
+
+        if (attributes.configurable === false) return false
+        if (attributes.enumerable === false) return false
+        if (attributes.writable === false) return false
+        if (attributes.get || attributes.set) return false
+        target[p] = attributes.value
+        return true
+    },
+}
+
+const moduleEnvExoticMethods: ProxyHandler<any> = {
+    getOwnPropertyDescriptor: internalError,
+    defineProperty: internalError,
+    deleteProperty: internalError,
+    getPrototypeOf: internalError,
+    has: internalError,
+    isExtensible: internalError,
+    ownKeys: internalError,
+    preventExtensions: internalError,
+    setPrototypeOf: internalError,
+    apply: internalError,
+    construct: internalError,
 }

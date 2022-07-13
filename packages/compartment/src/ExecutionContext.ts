@@ -1,5 +1,5 @@
 import { Compartment } from './compartment.js'
-import { createModuleClassWithGlobalThis } from './Module.js'
+import { createModuleSubclass } from './Module.js'
 import { makeGlobalThis } from './utils/makeGlobalThis.js'
 
 export interface ExecutionContextConstructor {
@@ -17,7 +17,7 @@ export const ExecutionContext: ExecutionContextConstructor = class ExecutionCont
             {
                 Compartment,
                 ExecutionContext: _,
-                createModule: createModuleClassWithGlobalThis
+                createModule: createModuleSubclass
             },
             global,
         )

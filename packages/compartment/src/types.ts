@@ -37,7 +37,7 @@ export interface ExportAllBinding {
 }
 export interface SyntheticModuleRecord {
     bindings?: Array<Binding>
-    initialize(environment: object, context: SyntheticModuleRecordInitializeContext): void | Promise<void>
+    initialize(environment: object, context?: SyntheticModuleRecordInitializeContext): void | Promise<void>
     needsImportMeta?: boolean | undefined
     needsImport?: boolean | undefined
     isAsync?: boolean | undefined

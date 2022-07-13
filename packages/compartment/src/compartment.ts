@@ -26,7 +26,7 @@ import {
     isReExportBinding,
 } from './utils/shapeCheck.js'
 import { SystemJS } from './utils/system.js'
-import { createModuleClassWithGlobalThis } from './Module.js'
+import { createModuleSubclass } from './Module.js'
 
 /** @internal */
 export let brandCheck_Compartment: (compartment: Compartment) => boolean
@@ -98,7 +98,7 @@ export class Compartment implements CompartmentInstance {
                       {
                           Compartment: Subcompartment,
                           ExecutionContext: ExecutionContext,
-                          createModule: createModuleClassWithGlobalThis,
+                          createModule: createModuleSubclass,
                       },
                       normalizedOptions.globals,
                   )
