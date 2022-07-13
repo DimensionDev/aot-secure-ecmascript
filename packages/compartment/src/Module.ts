@@ -96,13 +96,10 @@ export class Module {
         // Set is ordered.
         this.#RequestedModules = [...new Set(requestedModules)]
         // TODO: check duplicate import/export
-
-        // TODO:
-        this.#AsyncEvaluation = true
     }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
     // #Realm: unknown
-    #Environment!: object
+    #Environment: object | undefined
     #Namespace: ModuleNamespace | undefined
     // #HostDefined: unknown = undefined
     //#endregion
@@ -229,7 +226,7 @@ export class Module {
     #RequestedModules: string[]
     #CycleRoot: Module | undefined
     #HasTLA: boolean
-    #AsyncEvaluation: boolean
+    #AsyncEvaluation: boolean | undefined
     #TopLevelCapability: PromiseCapability<void> | undefined
     #AsyncParentModules: Module[] = []
     #PendingAsyncDependencies: number | empty = empty
@@ -287,6 +284,7 @@ export class Module {
             }
         }
         const init = this.#Initialize
+        assert(this.#Environment)
         if (!this.#HasTLA) {
             assert(!promise)
             init(this.#Environment, context)
@@ -434,7 +432,7 @@ export class Module {
                 assert([ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(requiredModule.#Status))
                 if (requiredModule.#EvaluationError !== empty) throw requiredModule.#EvaluationError
             }
-            if (requiredModule.#AsyncEvaluation) {
+            if (requiredModule.#AsyncEvaluation === true) {
                 module.#PendingAsyncDependencies++
                 requiredModule.#AsyncParentModules.push(module)
             }
@@ -488,7 +486,7 @@ export class Module {
             if (!execList.includes(m) && m.#CycleRoot!.#EvaluationError === empty) {
                 assert(m.#Status === ModuleStatus.evaluatingAsync)
                 assert(m.#EvaluationError === empty)
-                assert(m.#AsyncEvaluation)
+                assert(m.#AsyncEvaluation === true)
                 assert(typeof m.#PendingAsyncDependencies === 'number' && m.#PendingAsyncDependencies > 0)
                 m.#PendingAsyncDependencies--
                 if (m.#PendingAsyncDependencies === 0) {
@@ -506,7 +504,7 @@ export class Module {
             return
         }
         assert(module.#Status === ModuleStatus.evaluatingAsync)
-        assert(module.#AsyncEvaluation)
+        assert(module.#AsyncEvaluation = true)
         assert(module.#EvaluationError === empty)
         module.#AsyncEvaluation = false
         module.#Status = ModuleStatus.evaluated
