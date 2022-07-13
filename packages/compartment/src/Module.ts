@@ -657,14 +657,22 @@ export class Module {
         const namespace: ModuleNamespace = { __proto__: null }
         Object.defineProperty(namespace, Symbol.toStringTag, { value: 'Module' })
         for (const name of exportedNames) {
-            Object.defineProperty(namespace, name, {
-                get() {
-                    throw new ReferenceError(`Cannot access '${name}' before initialization`)
-                },
-                // Note: this should not be configurable, but it's a trade-off for DX.
-                configurable: true,
-                enumerable: true,
-            })
+            if (module.#LocalExportValues.has(name)) {
+                Object.defineProperty(namespace, name, {
+                    enumerable: true,
+                    writable: true,
+                    value: module.#LocalExportValues.get(name),
+                })
+            } else {
+                Object.defineProperty(namespace, name, {
+                    get() {
+                        throw new ReferenceError(`Cannot access '${name}' before initialization`)
+                    },
+                    // Note: this should not be configurable, but it's a trade-off for DX.
+                    configurable: true,
+                    enumerable: true,
+                })
+            }
         }
         module.#ExportCallback.add((name) => {
             Object.defineProperty(namespace, name, {

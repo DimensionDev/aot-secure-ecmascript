@@ -1,21 +1,23 @@
 import { Module, imports, ExecutionContext } from '../dist/index.js'
 
 async function importHook(spec, meta) {
-    if (spec === 'b') return new Module(modules.b, importHook, {})
-    if (spec === 'c') return new Module(modules.b, importHook, {})
-    if (spec == 'undefined') debugger
+    return null
 }
 /** @type {Record<string, import('../dist/index.js').SyntheticModuleRecord>} */
 const modules = {
     a: {
-        bindings: [{ exportAllFrom: 'c' }],
-        initialize(env, context) {},
-    },
-    b: {
-        bindings: [{ export: 'x' }],
-        initialize(env, context) {},
+        bindings: [{ export: 'x' }, { export: 'setX' }],
+        initialize(env, context) {
+            debugger
+            env.x = 1
+            env.setX = function (x) {
+                env.x = x
+            }
+            env.console.log(env.globalThis)
+        },
     },
 }
 
-const module = new Module(modules.a, importHook, {})
-await imports(module)
+const global = new ExecutionContext({ console })
+const module = new global.Module(modules.a, importHook, {})
+globalThis.mod = await imports(module)
