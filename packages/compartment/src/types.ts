@@ -40,6 +40,7 @@ export interface SyntheticModuleRecord {
     initialize(environment: object, context: SyntheticModuleRecordInitializeContext): void | Promise<void>
     needsImportMeta?: boolean | undefined
     needsImport?: boolean | undefined
+    isAsync?: boolean | undefined
 }
 
 export type ModuleNamespace = Record<string, unknown>

@@ -1,10 +1,12 @@
 import type { Compartment } from '../compartment.js'
 import type { ExecutionContext } from '../ExecutionContext.js'
+import type { Module } from '../Module.js'
 
 /** @internal */
 export interface Evaluators {
     Compartment: typeof Compartment
     ExecutionContext: typeof ExecutionContext
+    createModule: (globalThis: object) => typeof Module
 }
 /** @internal */
 export function makeGlobalThis(
@@ -26,6 +28,7 @@ export function makeGlobalThis(
         globalThis: { writable: true, configurable: true, value: global },
         Compartment: { writable: true, configurable: true, value: evaluators.Compartment },
         ExecutionContext: { writable: true, configurable: true, value: evaluators.ExecutionContext },
+        Module: { writable: true, configurable: true, value: evaluators.createModule(global) },
     })
 
     if (globals) Object.assign(global, globals)

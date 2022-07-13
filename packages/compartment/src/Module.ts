@@ -13,7 +13,8 @@ import {
 
 export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module>
 export let imports: (specifier: Module, options: ImportCallOptions) => Promise<ModuleNamespace>
-
+/** @internal */
+export let createModuleClassWithGlobalThis: (globalThis: object) => typeof Module
 export class Module {
     constructor(source: ModuleSource | SyntheticModuleRecord, importHook: ImportHook, importMeta: object) {
         if (typeof importHook !== 'function') throw new TypeError('importHook must be a function')
@@ -25,8 +26,7 @@ export class Module {
         this.#Initialize = module.initialize
         this.#NeedsImport = module.needsImport
         this.#NeedsImportMeta = module.needsImportMeta
-        // TODO: static analysis of TLA
-        this.#HasTLA = true
+        this.#HasTLA = !!module.isAsync
 
         this.#AssignedImportMeta = importMeta
         this.#ImportHook = importHook
@@ -113,8 +113,7 @@ export class Module {
     #NeedsImport: boolean | undefined
     #ImportHook: ImportHook
     #AssignedImportMeta: object
-    // TODO:
-    #GlobalThis: typeof globalThis = globalThis
+    #GlobalThis: object = globalThis
     #ReferencedModules = new Map<string, Module>()
     #FetchError: SyntaxError | undefined
     #FetchFinished = false
@@ -617,6 +616,16 @@ export class Module {
             module.#Link()
             await module.#Evaluate()
             return Module.#GetModuleNamespace(module)
+        }
+        createModuleClassWithGlobalThis = (globalThis) => {
+            const Parent = Module
+            const SubModule = class Module extends Parent {
+                constructor(source: ModuleSource | SyntheticModuleRecord, importHook: ImportHook, importMeta: object) {
+                    super(source, importHook, importMeta)
+                    this.#GlobalThis = globalThis
+                }
+            }
+            return SubModule
         }
     }
 }
