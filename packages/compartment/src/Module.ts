@@ -30,8 +30,8 @@ export class Module {
 
         this.#AssignedImportMeta = importMeta
         this.#ImportHook = importHook
-        const requestedModules: string[] = []
 
+        const requestedModules: string[] = []
         const imports: ModuleImportEntry[] = (this.#ImportEntries = [])
         const localExports: ModuleExportEntry[] = (this.#LocalExportEntries = [])
         const indirectExports: ModuleExportEntry[] = (this.#IndirectExportEntries = [])
@@ -95,11 +95,12 @@ export class Module {
         }
         // Set is ordered.
         this.#RequestedModules = [...new Set(requestedModules)]
-        // TODO: check duplicate import/export
     }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
     // #Realm: unknown
+    /** first argument of initialize() */
     #Environment: object | undefined
+    /** result of await import(mod) */
     #Namespace: ModuleNamespace | undefined
     // #HostDefined: unknown = undefined
     //#endregion
@@ -110,10 +111,10 @@ export class Module {
     #NeedsImport: boolean | undefined
     #ImportHook: ImportHook
     #AssignedImportMeta: object
+    /** the global environment this module binds to */
     #GlobalThis: object = globalThis
-    #ReferencedModules = new Map<string, Module>()
-    #FetchError: SyntaxError | undefined
-    #FetchFinished = false
+    /** imported module cache */
+    #ResolvedModules = new Map<string, PromiseCapability<Module>>()
     #ImportEntries: ModuleImportEntry[]
     #LocalExportEntries: ModuleExportEntry[]
     #IndirectExportEntries: ModuleExportEntry[]
@@ -504,7 +505,7 @@ export class Module {
             return
         }
         assert(module.#Status === ModuleStatus.evaluatingAsync)
-        assert(module.#AsyncEvaluation = true)
+        assert((module.#AsyncEvaluation = true))
         assert(module.#EvaluationError === empty)
         module.#AsyncEvaluation = false
         module.#Status = ModuleStatus.evaluated
@@ -562,9 +563,10 @@ export class Module {
         }
     }
     static #HostResolveImportedModule(module: Module, spec: string) {
-        const rec = module.#ReferencedModules.get(spec)
-        assert(rec)
-        return rec
+        const cache = module.#ResolvedModules.get(spec)
+        assert(cache && cache.Status.Type !== 'Pending')
+        if (cache.Status.Type === 'Rejected') throw cache.Status.Reason
+        return cache.Status.Value
     }
 
     static #GetModuleNamespace(module: Module): ModuleNamespace {
@@ -586,31 +588,46 @@ export class Module {
     //#endregion
 
     static {
+        function HostResolveModuleUncached(module: Module, spec: string) {
+            const capability = PromiseCapability<Module>()
+            module.#ResolvedModules.set(spec, capability)
+            Promise.resolve(module.#ImportHook(spec, module.#AssignedImportMeta))
+                .then(
+                    async (module) => {
+                        if (!(#HasTLA in module)) throw new TypeError('Module is not a top-level module')
+                        await HostResolveModule(module)
+                        return module
+                    },
+                    (error) => {
+                        throw new SyntaxError(
+                            `Failed to import module "${spec}"`,
+                            // @ts-expect-error
+                            { cause: error },
+                        )
+                    },
+                )
+                .then(capability.Resolve, capability.Reject)
+            return capability.Promise
+        }
         // call importHook recursively to get all module referenced.
         async function HostResolveModule(module: Module) {
-            if (module.#FetchError) throw module.#FetchError
-            if (module.#FetchFinished) return
-
             const promises = module.#RequestedModules.map(async (spec) => {
-                try {
-                    const ref = await module.#ImportHook(spec, module.#AssignedImportMeta)
-                    if (!(#HasTLA in ref)) throw new TypeError('importHook must return a Module instance')
-                    module.#ReferencedModules.set(spec, ref)
-                    await HostResolveModule(ref)
-                    if (ref.#FetchError) throw ref.#FetchError
-                } catch (error) {
-                    module.#FetchError ||= new SyntaxError(
-                        `Failed to fetch ${spec}`,
-                        // @ts-expect-error
-                        { cause: err },
-                    )
+                const cache = module.#ResolvedModules.get(spec)
+                if (!cache) {
+                    return HostResolveModuleUncached(module, spec)
+                } else if (cache.Status.Type === 'Pending') {
+                    return cache.Status.Promise
+                } else if (cache.Status.Type === 'Fulfilled') {
+                    return cache.Status.Value
+                } else {
+                    throw cache.Status.Reason
                 }
             })
             await Promise.all(promises)
-            if (module.#FetchError) throw module.#FetchError
         }
         imports = async (module, options) => {
             await HostResolveModule(module)
+            // TODO: check duplicate import/export
             module.#Link()
             await module.#Evaluate()
             return Module.#GetModuleNamespace(module)
