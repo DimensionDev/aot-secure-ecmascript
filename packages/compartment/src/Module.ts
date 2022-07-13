@@ -2,8 +2,14 @@ import type { ModuleSource } from './ModuleSource.js'
 import type { ModuleNamespace, SyntheticModuleRecord, SyntheticModuleRecordInitializeContext } from './types.js'
 import { all, allButDefault, ambiguous, empty, namespace, PromiseCapability } from './utils/spec.js'
 import { normalizeSyntheticModuleRecord } from './utils/normalize.js'
-import { assert } from './utils/opaqueProxy.js'
-import { hasFromField, isImportBinding, isStarBinding } from './utils/shapeCheck.js'
+import { assert, internalError } from './utils/opaqueProxy.js'
+import {
+    isImportBinding,
+    isImportAllBinding,
+    isExportAllBinding,
+    isExportBinding,
+    hasFromField,
+} from './utils/shapeCheck.js'
 
 export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module>
 export let imports: (specifier: Module, options: ImportCallOptions) => Promise<ModuleNamespace>
@@ -35,39 +41,26 @@ export class Module {
             if (isImportBinding(binding)) {
                 requestedModules.push(binding.from)
                 imports.push({
-                    ImportName: isStarBinding(binding) ? namespace : binding.import,
+                    ImportName: binding.import,
                     LocalName: binding.as ?? binding.import,
                     ModuleRequest: binding.from,
                 })
-            } else {
+            } else if (isImportAllBinding(binding)) {
+                requestedModules.push(binding.importAllFrom)
+                imports.push({
+                    ImportName: namespace,
+                    LocalName: binding.as,
+                    ModuleRequest: binding.importAllFrom,
+                })
+            } else if (isExportBinding(binding)) {
                 if (hasFromField(binding)) {
                     requestedModules.push(binding.from)
-                    if (isStarBinding(binding)) {
-                        if (typeof binding.as === 'string') {
-                            // export * as name from 'mod'
-                            starExports.push({
-                                LocalName: binding.as,
-                                ExportName: null,
-                                ImportName: all,
-                                ModuleRequest: binding.from,
-                            })
-                        } else {
-                            // export * from 'mod'
-                            starExports.push({
-                                LocalName: null,
-                                ExportName: null,
-                                ImportName: allButDefault,
-                                ModuleRequest: binding.from,
-                            })
-                        }
-                    } else {
-                        indirectExports.push({
-                            ExportName: binding.as ?? binding.export,
-                            ImportName: binding.export,
-                            LocalName: null,
-                            ModuleRequest: binding.from,
-                        })
-                    }
+                    indirectExports.push({
+                        ExportName: binding.as ?? binding.export,
+                        ImportName: binding.export,
+                        LocalName: null,
+                        ModuleRequest: binding.from,
+                    })
                 } else {
                     localExports.push({
                         ExportName: binding.as ?? binding.export,
@@ -76,6 +69,28 @@ export class Module {
                         ModuleRequest: null,
                     })
                 }
+            } else if (isExportAllBinding(binding)) {
+                requestedModules.push(binding.exportAllFrom)
+                if (typeof binding.as === 'string') {
+                    // export * as name from 'mod'
+                    starExports.push({
+                        LocalName: binding.as,
+                        ExportName: null,
+                        ImportName: all,
+                        ModuleRequest: binding.exportAllFrom,
+                    })
+                } else {
+                    // export * from 'mod'
+                    starExports.push({
+                        LocalName: null,
+                        ExportName: null,
+                        ImportName: allButDefault,
+                        ModuleRequest: binding.exportAllFrom,
+                    })
+                }
+            } else {
+                const _: never = binding
+                internalError()
             }
         }
         // Set is ordered.

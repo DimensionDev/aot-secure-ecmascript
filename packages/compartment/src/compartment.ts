@@ -14,11 +14,16 @@ import {
 import { normalizeModuleDescriptor } from './utils/normalize.js'
 import { internalError } from './utils/opaqueProxy.js'
 import {
+    hasFromField,
+    isExportAllBinding,
+    isExportBinding,
+    isImportAllBinding,
     isImportBinding,
     isModuleDescriptor_FullSpecReference,
     isModuleDescriptor_ModuleInstance,
     isModuleDescriptor_Source,
     isModuleDescriptor_StaticModuleRecord,
+    isReExportBinding,
 } from './utils/shapeCheck.js'
 import { SystemJS } from './utils/system.js'
 
@@ -219,7 +224,6 @@ export class Compartment implements CompartmentInstance {
     }
 }
 
-const NAMESPACE_IMPORT = '*'
 function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: object) {
     const systemImports: string[] = []
     const systemSetters: SystemJS.SetterFunction[] = []
@@ -227,9 +231,18 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
 
     // categorize bindings by module name, so our work will be easier later.
     const modules = new Map<string, Binding[]>()
-    bindings
-        .filter((b) => typeof b.from === 'string')
-        .forEach((b) => (modules.has(b.from!) ? modules.get(b.from!)!.push(b) : modules.set(b.from!, [b])))
+    for (const b of bindings) {
+        let from: string | undefined
+        if (isImportBinding(b) || isReExportBinding(b)) {
+            from = b.from
+        } else if (isImportAllBinding(b)) {
+            from = b.importAllFrom
+        } else if (isExportAllBinding(b)) {
+            from = b.exportAllFrom
+        }
+        if (from === undefined) continue
+        modules.has(from) ? modules.get(from)!.push(b) : modules.set(from, [b])
+    }
 
     // Scope order: Export & Imports > GlobalThis
 
@@ -239,16 +252,17 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
         Object.fromEntries(
             bindings
                 .map((binding): [string, PropertyDescriptor] => {
-                    if (isImportBinding(binding)) {
-                        // TDZ for import bindings.
-                        if (binding.import === NAMESPACE_IMPORT)
-                            return [binding.as!, { configurable: true, get: internalError }]
-                        else return [binding.as ?? binding.import, { configurable: true, get: internalError }]
-                    } else {
-                        if (typeof binding.from === 'string') return undefined!
-                        // export live binding here.
-                        let value: any
+                    // TDZ for import bindings.
+                    if (isImportAllBinding(binding)) {
+                        return [binding.as!, { configurable: true, get: internalError }]
+                    } else if (isImportBinding(binding)) {
+                        return [binding.as ?? binding.import, { configurable: true, get: internalError }]
+                    } else if (isExportAllBinding(binding)) {
+                        return undefined!
+                    } else if (isExportBinding(binding)) {
+                        if (hasFromField(binding)) return undefined!
                         const exportName = binding.as ?? binding.export
+                        let value: any
                         return [
                             exportName,
                             {
@@ -259,6 +273,9 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
                                 },
                             },
                         ]
+                    } else {
+                        let _: never = binding
+                        internalError()
                     }
                 })
                 .filter(Boolean),
@@ -269,25 +286,28 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
         systemImports.push(module)
         systemSetters.push((module) => {
             for (const binding of bindings) {
-                if (isImportBinding(binding)) {
+                if (isImportAllBinding(binding)) {
+                    Object.defineProperty(importExportLexical, binding.as!, { configurable: true, value: module })
+                } else if (isImportBinding(binding)) {
                     // update live binding
-                    if (binding.import === NAMESPACE_IMPORT) {
-                        Object.defineProperty(importExportLexical, binding.as!, { configurable: true, value: module })
-                    } else if (Reflect.getOwnPropertyDescriptor(module, binding.import)) {
+                    if (Reflect.getOwnPropertyDescriptor(module, binding.import)) {
                         Object.defineProperty(importExportLexical, binding.as ?? binding.import, {
                             configurable: true,
                             value: module[binding.import],
                         })
                     }
-                } else if (typeof binding.from === 'string') {
+                } else if (isExportAllBinding(binding)) {
                     // export * from 'mod'
                     // export * as name from 'mod'
-                    if (binding.export === NAMESPACE_IMPORT) {
-                        if (typeof binding.as === 'string') systemExport(binding.as, module)
-                        else systemExport(module)
+                    if (typeof binding.as === 'string') systemExport(binding.as, module)
+                    else {
+                        const items = Object.assign({}, module)
+                        delete (items as any).default
+                        systemExport(items)
                     }
+                } else if (isExportBinding(binding)) {
                     // export { a as b } from 'mod' (export = a, as = b)
-                    else if (Reflect.getOwnPropertyDescriptor(module, binding.export)) {
+                    if (Reflect.getOwnPropertyDescriptor(module, binding.export)) {
                         systemExport(binding.as ?? binding.export, module[binding.export])
                     }
                 }

@@ -2,7 +2,7 @@
 import type { Compartment } from './compartment.js'
 import type { StaticModuleRecord } from './StaticModuleRecord.js'
 
-export type Binding = ImportBinding | ExportBinding
+export type Binding = ImportBinding | ExportBinding | ImportAllBinding | ExportAllBinding
 /**
  * ```
  * import { X as Y } from 'Z'
@@ -15,6 +15,10 @@ export interface ImportBinding {
     as?: string | undefined
     from: string
 }
+export interface ImportAllBinding {
+    importAllFrom: string
+    as: string
+}
 /**
  * ```
  * export { X as Y } from 'Z'
@@ -26,6 +30,10 @@ export interface ExportBinding {
     export: string
     as?: string | undefined
     from?: string | undefined
+}
+export interface ExportAllBinding {
+    exportAllFrom: string
+    as?: string | undefined
 }
 export interface SyntheticModuleRecord {
     bindings?: Array<Binding>

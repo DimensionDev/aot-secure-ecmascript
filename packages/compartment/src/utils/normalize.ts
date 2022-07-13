@@ -7,10 +7,12 @@ import type {
     SyntheticModuleRecord,
     ModuleDescriptor_ModuleInstance,
     Binding,
-    ExportBinding,
+    ExportAllBinding,
     ImportBinding,
 } from '../types.js'
 import {
+    isExportBinding,
+    isImportAllBinding,
     isImportBinding,
     isModuleDescriptor_FullSpecReference,
     isModuleDescriptor_ModuleInstance,
@@ -87,33 +89,46 @@ export function normalizeBindings(binding: Binding[] | undefined): Binding[] {
     if (!Array.isArray(binding)) throw new TypeError('bindings must be an array.')
     const result: Binding[] = []
     for (const item of binding) {
-        const i = (item as ImportBinding).import
-        const e = (item as ExportBinding).export
-        if (typeof i !== 'undefined' && typeof e !== 'undefined') {
-            throw new TypeError('A ModuleBinding cannot have both "import" and "export".')
-        }
-        const { as, from } = item
-
-        if (typeof i !== 'undefined') {
-            if (from === undefined || from === null)
-                throw new TypeError('An ImportBinding must have a "from" property.')
-            result.push(
-                Object.freeze({
-                    import: normalizeString(i),
-                    as: normalizeStringOrUndefined(as),
-                    from: normalizeString(from),
-                }),
-            )
-        } else if (typeof e !== 'undefined') {
-            result.push(
-                Object.freeze({
-                    export: normalizeString(e),
-                    as: normalizeStringOrUndefined(as),
-                    from: normalizeStringOrUndefined(from),
-                }),
-            )
+        if ('importAllFrom' in item) {
+            if (!('as' in item)) throw new TypeError('ImportAllBinding must have an "as" field.')
+            if ('exportAllFrom' in item || 'import' in item || 'export' in item || 'from' in item)
+                throw new TypeError(
+                    'ImportAllBinding cannot have "exportAllFrom", "import", "export", or "from" fields.',
+                )
+            result.push({
+                importAllFrom: normalizeString(item.importAllFrom),
+                as: normalizeString(item.as),
+            })
+        } else if ('exportAllFrom' in item) {
+            if ('importAllFrom' in item || 'import' in item || 'export' in item || 'from' in item)
+                throw new TypeError(
+                    'ExportAllBinding cannot have "importAllFrom", "import", "export", or "from" fields.',
+                )
+            result.push({
+                exportAllFrom: normalizeString(item.exportAllFrom),
+                as: normalizeStringOrUndefined(item.as),
+            })
+        } else if ('import' in item) {
+            if (!('from' in item)) throw new TypeError('ImportBinding must have a "from" field.')
+            if ('exportAllFrom' in item || 'importAllFrom' in item || 'export' in item)
+                throw new TypeError('ImportBinding cannot have "exportAllFrom", "importAllFrom", or "export" fields.')
+            result.push({
+                import: normalizeString(item.import),
+                from: normalizeString(item.from),
+                as: normalizeStringOrUndefined(item.as),
+            })
+        } else if ('export' in item) {
+            if ('exportAllFrom' in item || 'importAllFrom' in item || 'import' in item)
+                throw new TypeError('ExportBinding cannot have "exportAllFrom", "importAllFrom", or "import" fields.')
+            result.push({
+                export: normalizeString(item.export),
+                from: normalizeString(item.from),
+                as: normalizeStringOrUndefined(item.as),
+            })
         } else {
-            throw new TypeError('A ModuleBinding must have either "import" or "export".')
+            throw new TypeError(
+                'binding must be one of ImportBinding, ExportBinding, ImportAllBinding or ExportAllBinding.',
+            )
         }
     }
     Object.freeze(result)
@@ -121,14 +136,16 @@ export function normalizeBindings(binding: Binding[] | undefined): Binding[] {
     const LexicallyDeclaredNames = new Set<string>()
     const ExportedNames = new Set<string>()
     for (const item of result) {
-        if (isImportBinding(item)) {
-            const bind = item.as || item.import
+        if (isImportBinding(item) || isImportAllBinding(item)) {
+            const bind = item.as || (item as ImportBinding).import
             if (LexicallyDeclaredNames.has(bind)) throw new TypeError(`Duplicate lexical binding for "${bind}"`)
             LexicallyDeclaredNames.add(bind)
-        } else if (item.from === undefined) {
+        } else if (isExportBinding(item)) {
             const bind = item.as || item.export
             if (ExportedNames.has(bind)) throw new TypeError(`Duplicate export binding for "${bind}"`)
             ExportedNames.add(bind)
+        } else {
+            const _: ExportAllBinding = item
         }
     }
     return result
