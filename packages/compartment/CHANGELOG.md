@@ -1,5 +1,23 @@
 # @masknet/compartment
 
+## 0.2.0
+
+### Minor Changes
+
+-   1d5a849: Add ModuleSource constructor
+-   9bda3a7: Implement new virtual module binding format
+-   f152912: Deprecate Compartment constructor before rewrite
+-   6398846: Add ExecutionContext constructor
+-   a606687: Implement live binding
+
+### Patch Changes
+
+-   9ab17fd: Add Module to ExecutionContext
+-   dafaa0e: Fix export \* as name from 'mod' not handled
+-   b836c8a: Add ModuleSource to ExecutionContext
+-   f152912: Add options bag to ExecutionContext
+-   fddd147: Add 3rd parameter to helper function createModuleCache to add extra binding for reexports
+
 ## 0.1.1
 
 ### Patch Changes
