@@ -1,15 +1,13 @@
 import { ExecutionContext } from './ExecutionContext.js'
 import { makeBorrowedGlobalThis, makeGlobalThis } from './utils/makeGlobalThis.js'
 import { StaticModuleRecord } from './StaticModuleRecord.js'
-import {
-    PROMISE_STATE,
-    type Binding,
-    type CompartmentInstance,
-    type CompartmentOptions,
-    type ModuleCache,
-    type ModuleCacheItem,
-    type ModuleDescriptor,
-    type SyntheticModuleRecordInitializeContext,
+import type {
+    Binding,
+    CompartmentInstance,
+    CompartmentOptions,
+    ModuleCacheItem,
+    ModuleDescriptor,
+    SyntheticModuleRecordInitializeContext,
 } from './types.js'
 import { normalizeModuleDescriptor } from './utils/normalize.js'
 import { internalError } from './utils/opaqueProxy.js'
@@ -27,10 +25,13 @@ import {
 } from './utils/shapeCheck.js'
 import { SystemJS } from './utils/system.js'
 import { createModuleSubclass } from './Module.js'
+import { PromiseCapability } from './utils/spec.js'
 
 /** @internal */
 export let brandCheck_Compartment: (compartment: Compartment) => boolean
 export let internalSlot_Compartment_globalThis_get: (compartment: Compartment) => Compartment['globalThis']
+
+/** @deprecated Need a rewrite based on Module & ExecutionContext. */
 export class Compartment implements CompartmentInstance {
     get globalThis() {
         return this.#globalThis
@@ -53,7 +54,7 @@ export class Compartment implements CompartmentInstance {
     #opts: CompartmentOptions
     #incubatorCompartment?: Compartment
     #globalThis: typeof globalThis
-    #moduleCache = new Map<string, ModuleCache>()
+    #moduleCache = new Map<string, PromiseCapability<ModuleCacheItem>>()
     #moduleGraph = new SystemJS()
     constructor(options: CompartmentOptions) {
         const normalizedOptions: CompartmentOptions = { resolveHook: defaultResolveHook }
@@ -113,11 +114,11 @@ export class Compartment implements CompartmentInstance {
     #createImportMeta(parentID: string): object {
         const mod = this.#moduleCache.get(parentID)
         if (!mod) internalError()
-        const [status, item] = mod
-        if (status === PROMISE_STATE.Pending) internalError()
-        if (status === PROMISE_STATE.Err) throw item
+        if (mod.Status.Type === 'Pending') internalError()
+        if (mod.Status.Type === 'Rejected') throw mod.Status.Reason
 
         const importMeta = Object.create(null)
+        const item = mod.Status.Value
         if (item.type === 'record' && item.module.needsImportMeta) {
             if (item.extraImportMeta) Object.assign(importMeta, item.extraImportMeta)
             if (this.#opts.importMetaHook) {
@@ -126,27 +127,17 @@ export class Compartment implements CompartmentInstance {
         }
         return importMeta
     }
-    async #loadModuleDescriptor(fullSpec: string): Promise<ModuleCacheItem> {
+    #loadModuleDescriptor(fullSpec: string): Promise<ModuleCacheItem> {
         if (this.#moduleCache.has(fullSpec)) {
-            const [status, item] = this.#moduleCache.get(fullSpec)!
-            if (status === PROMISE_STATE.Err) throw item
-            return item
+            return this.#moduleCache.get(fullSpec)!.Promise
         } else {
-            const promise = this.#loadModuleDescriptorOnce(fullSpec).then(
-                (item) => {
-                    cache[0] = PROMISE_STATE.Ok
-                    cache[1] = item
-                    return item
-                },
-                (error) => {
-                    cache[0] = PROMISE_STATE.Err
-                    cache[1] = error
-                    throw error
-                },
+            const capability = PromiseCapability<ModuleCacheItem>()
+            Promise.resolve(this.#loadModuleDescriptorOnce(fullSpec)).then(
+                capability.Resolve,
+                capability.Reject,
             )
-            const cache: ModuleCache = [PROMISE_STATE.Pending, promise]
-            this.#moduleCache.set(fullSpec, cache)
-            return promise
+            this.#moduleCache.set(fullSpec, capability)
+            return capability.Promise
         }
     }
 

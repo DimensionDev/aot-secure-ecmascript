@@ -98,19 +98,6 @@ export interface CompartmentInstance {
 // Internal implementation
 
 /** @internal */
-export type ModuleCache =
-    | [PROMISE_STATE.Ok, ModuleCacheItem]
-    | [PROMISE_STATE.Pending, Promise<ModuleCacheItem>]
-    | [PROMISE_STATE.Err, unknown]
-
-/** @internal */
 export type ModuleCacheItem =
     | { type: 'instance'; moduleInstance: ModuleNamespace }
     | { type: 'record'; module: SyntheticModuleRecord; extraImportMeta: object | null | undefined }
-
-/** @internal */
-export const enum PROMISE_STATE {
-    Ok = 0,
-    Pending = 1,
-    Err = 2,
-}
