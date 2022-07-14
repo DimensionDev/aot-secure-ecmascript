@@ -4,9 +4,13 @@ proxy.revoke()
 export const opaqueProxy = proxy.proxy
 /** @internal */
 export function internalError(): never {
-    throw new TypeError('Compartment encounters an internal error.')
+    throw new TypeError('Internal error.')
 }
 /** @internal */
 export function assert(val: any): asserts val {
-    if (!val) internalError()
+    if (!val) throw new TypeError('Internal error.')
+}
+/** @internal */
+export function unreachable(val: never): never {
+    throw new TypeError('Unreachable')
 }

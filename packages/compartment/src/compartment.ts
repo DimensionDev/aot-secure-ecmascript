@@ -10,7 +10,7 @@ import type {
     SyntheticModuleRecordInitializeContext,
 } from './types.js'
 import { normalizeModuleDescriptor } from './utils/normalize.js'
-import { internalError } from './utils/opaqueProxy.js'
+import { internalError, unreachable } from './utils/assert.js'
 import {
     hasFromField,
     isExportAllBinding,
@@ -165,10 +165,7 @@ export class Compartment implements CompartmentInstance {
             } else {
                 return { type: 'record', module: desc.record, extraImportMeta: desc.importMeta }
             }
-        } else {
-            const _: never = desc
-            internalError()
-        }
+        } else unreachable(desc)
     }
     async #instantiate(url: string, parentUrl: string | undefined): Promise<SystemJS.RegisterArray> {
         const fullSpec = typeof parentUrl === 'string' ? this.#opts.resolveHook(url, parentUrl) : url
@@ -207,10 +204,7 @@ export class Compartment implements CompartmentInstance {
                     }
                 },
             ]
-        } else {
-            let _: never = module
-            internalError()
-        }
+        } else unreachable(module)
     }
 }
 
@@ -263,10 +257,7 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
                                 },
                             },
                         ]
-                    } else {
-                        let _: never = binding
-                        internalError()
-                    }
+                    } else unreachable(binding)
                 })
                 .filter(Boolean),
         ),

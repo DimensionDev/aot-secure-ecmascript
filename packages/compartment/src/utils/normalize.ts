@@ -10,7 +10,10 @@ import type {
     ExportAllBinding,
     ImportBinding,
 } from '../types.js'
+import { unreachable } from './assert.js'
 import {
+    hasFromField,
+    isExportAllBinding,
     isExportBinding,
     isImportAllBinding,
     isImportBinding,
@@ -19,6 +22,7 @@ import {
     isModuleDescriptor_Source,
     isModuleDescriptor_StaticModuleRecord,
 } from './shapeCheck.js'
+import { all, allButDefault, namespace, type ModuleExportEntry, type ModuleImportEntry } from './spec.js'
 
 /** @internal */
 export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | null): ModuleDescriptor | undefined {
@@ -150,6 +154,106 @@ export function normalizeBindings(binding: Binding[] | undefined): Binding[] {
         }
     }
     return result
+}
+
+/** @internal */
+export function normalizeBindingsToSpecRecord(bindings: Binding[] | undefined) {
+    // bindings = normalizeBindings(bindings) || []
+    bindings ??= []
+    const requestedModules: string[] = []
+    for (const binding of bindings) {
+        if (isImportBinding(binding)) requestedModules.push(binding.from)
+        else if (isImportAllBinding(binding)) requestedModules.push(binding.importAllFrom)
+        else if (isExportBinding(binding)) {
+            if (hasFromField(binding)) requestedModules.push(binding.from)
+        } else if (isExportAllBinding(binding)) requestedModules.push(binding.exportAllFrom)
+        else unreachable(binding)
+    }
+    const importEntries: ModuleImportEntry[] = []
+    for (const binding of bindings) {
+        if (isImportBinding(binding)) {
+            requestedModules.push(binding.from)
+            importEntries.push({
+                ImportName: binding.import,
+                LocalName: binding.as ?? binding.import,
+                ModuleRequest: binding.from,
+            })
+        } else if (isImportAllBinding(binding)) {
+            requestedModules.push(binding.importAllFrom)
+            importEntries.push({
+                ImportName: namespace,
+                LocalName: binding.as,
+                ModuleRequest: binding.importAllFrom,
+            })
+        }
+    }
+    const importedBoundNames = importEntries.map((x) => x.LocalName)
+
+    const indirectExportEntries: ModuleExportEntry[] = []
+    const localExportEntries: ModuleExportEntry[] = []
+    const starExportEntries: ModuleExportEntry[] = []
+
+    for (const binding of bindings) {
+        if (isExportBinding(binding)) {
+            if (hasFromField(binding)) {
+                requestedModules.push(binding.from)
+                indirectExportEntries.push({
+                    ExportName: binding.as ?? binding.export,
+                    ImportName: binding.export,
+                    // LocalName: null,
+                    ModuleRequest: binding.from,
+                })
+            } else {
+                const ee: ModuleExportEntry = {
+                    ExportName: binding.as ?? binding.export,
+                    // LocalName: binding.export,
+                    ImportName: null,
+                    ModuleRequest: null,
+                }
+                if (!importedBoundNames.includes(binding.export)) {
+                    localExportEntries.push(ee)
+                } else {
+                    const ie = importEntries.find((x) => x.LocalName === binding.export)!
+                    if (ie.ImportName === namespace) {
+                        localExportEntries.push(ee)
+                    } else {
+                        indirectExportEntries.push({
+                            ModuleRequest: ie.ModuleRequest,
+                            ImportName: ie.ImportName,
+                            ExportName: ee.ExportName,
+                        })
+                    }
+                }
+            }
+        } else if (isExportAllBinding(binding)) {
+            requestedModules.push(binding.exportAllFrom)
+            if (typeof binding.as === 'string') {
+                // export * as name from 'mod'
+                starExportEntries.push({
+                    // LocalName: binding.as,
+                    ExportName: binding.as,
+                    ImportName: all,
+                    ModuleRequest: binding.exportAllFrom,
+                })
+            } else {
+                // export * from 'mod'
+                starExportEntries.push({
+                    // LocalName: null,
+                    ExportName: null,
+                    ImportName: allButDefault,
+                    ModuleRequest: binding.exportAllFrom,
+                })
+            }
+        }
+    }
+
+    return {
+        requestedModules: [...new Set(requestedModules)],
+        importEntries,
+        indirectExportEntries,
+        localExportEntries,
+        starExportEntries,
+    }
 }
 
 function normalizeString(x: any) {

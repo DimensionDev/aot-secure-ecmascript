@@ -1,15 +1,16 @@
 import type { ModuleSource } from './ModuleSource.js'
 import type { ModuleNamespace, SyntheticModuleRecord, SyntheticModuleRecordInitializeContext } from './types.js'
-import { all, allButDefault, ambiguous, empty, namespace, PromiseCapability } from './utils/spec.js'
-import { normalizeSyntheticModuleRecord } from './utils/normalize.js'
-import { assert, internalError, opaqueProxy } from './utils/opaqueProxy.js'
 import {
-    isImportBinding,
-    isImportAllBinding,
-    isExportAllBinding,
-    isExportBinding,
-    hasFromField,
-} from './utils/shapeCheck.js'
+    all,
+    ambiguous,
+    empty,
+    namespace,
+    PromiseCapability,
+    type ModuleExportEntry,
+    type ModuleImportEntry,
+} from './utils/spec.js'
+import { normalizeBindingsToSpecRecord, normalizeSyntheticModuleRecord } from './utils/normalize.js'
+import { assert, internalError, opaqueProxy } from './utils/assert.js'
 
 export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module | null>
 export let imports: (specifier: Module, options?: ImportCallOptions) => Promise<ModuleNamespace>
@@ -33,87 +34,13 @@ export class Module {
         this.#AssignedImportMeta = importMeta
         this.#ImportHook = importHook
 
-        const requestedModules: string[] = []
-        const importsEntries: ModuleImportEntry[] = (this.#ImportEntries = [])
-        for (const binding of module.bindings || []) {
-            if (isImportBinding(binding)) {
-                requestedModules.push(binding.from)
-                importsEntries.push({
-                    ImportName: binding.import,
-                    LocalName: binding.as ?? binding.import,
-                    ModuleRequest: binding.from,
-                })
-            } else if (isImportAllBinding(binding)) {
-                requestedModules.push(binding.importAllFrom)
-                importsEntries.push({
-                    ImportName: namespace,
-                    LocalName: binding.as,
-                    ModuleRequest: binding.importAllFrom,
-                })
-            }
-        }
-        const importedBoundNames = importsEntries.map((x) => x.LocalName)
-
-        const indirectExportEntries: ModuleExportEntry[] = (this.#IndirectExportEntries = [])
-        const localExportEntries: ModuleExportEntry[] = (this.#LocalExportEntries = [])
-        const starExportEntries: ModuleExportEntry[] = (this.#StarExportEntries = [])
-
-        for (const binding of module.bindings || []) {
-            if (isExportBinding(binding)) {
-                if (hasFromField(binding)) {
-                    requestedModules.push(binding.from)
-                    indirectExportEntries.push({
-                        ExportName: binding.as ?? binding.export,
-                        ImportName: binding.export,
-                        // LocalName: null,
-                        ModuleRequest: binding.from,
-                    })
-                } else {
-                    const ee: ModuleExportEntry = {
-                        ExportName: binding.as ?? binding.export,
-                        // LocalName: binding.export,
-                        ImportName: null,
-                        ModuleRequest: null,
-                    }
-                    if (!importedBoundNames.includes(binding.export)) {
-                        localExportEntries.push(ee)
-                    } else {
-                        const ie = importsEntries.find((x) => x.LocalName === binding.export)!
-                        if (ie.ImportName === namespace) {
-                            localExportEntries.push(ee)
-                        } else {
-                            indirectExportEntries.push({
-                                ModuleRequest: ie.ModuleRequest,
-                                ImportName: ie.ImportName,
-                                ExportName: ee.ExportName,
-                            })
-                        }
-                    }
-                }
-            } else if (isExportAllBinding(binding)) {
-                requestedModules.push(binding.exportAllFrom)
-                if (typeof binding.as === 'string') {
-                    // export * as name from 'mod'
-                    starExportEntries.push({
-                        // LocalName: binding.as,
-                        ExportName: binding.as,
-                        ImportName: all,
-                        ModuleRequest: binding.exportAllFrom,
-                    })
-                } else {
-                    // export * from 'mod'
-                    starExportEntries.push({
-                        // LocalName: null,
-                        ExportName: null,
-                        ImportName: allButDefault,
-                        ModuleRequest: binding.exportAllFrom,
-                    })
-                }
-            }
-        }
-
-        // Set is ordered.
-        this.#RequestedModules = [...new Set(requestedModules)]
+        const { importEntries, indirectExportEntries, localExportEntries, requestedModules, starExportEntries } =
+            normalizeBindingsToSpecRecord(module.bindings)
+        this.#ImportEntries = importEntries
+        this.#IndirectExportEntries = indirectExportEntries
+        this.#LocalExportEntries = localExportEntries
+        this.#RequestedModules = requestedModules
+        this.#StarExportEntries = starExportEntries
     }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
     // #Realm: unknown
@@ -752,18 +679,6 @@ export class Module {
             return SubModule
         }
     }
-}
-
-interface ModuleImportEntry {
-    ModuleRequest: string
-    ImportName: string | typeof namespace
-    LocalName: string
-}
-interface ModuleExportEntry {
-    ExportName: string | null
-    ModuleRequest: string | null
-    ImportName: string | typeof all | typeof allButDefault | null
-    // LocalName: string | null
 }
 
 const enum ModuleStatus {

@@ -1,5 +1,5 @@
 import type { Binding } from './index.js'
-import { internalError } from './utils/opaqueProxy.js'
+import { internalError } from './utils/assert.js'
 
 export class StaticModuleRecord {
     #bindings: Binding[]

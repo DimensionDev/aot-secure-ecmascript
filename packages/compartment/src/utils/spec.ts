@@ -42,3 +42,16 @@ export function PromiseCapability<T>(): PromiseCapability<T> {
     }
     return capability
 }
+/** @internal */
+export interface ModuleImportEntry {
+    ModuleRequest: string
+    ImportName: string | typeof namespace
+    LocalName: string
+}
+/** @internal */
+export interface ModuleExportEntry {
+    ExportName: string | null
+    ModuleRequest: string | null
+    ImportName: string | typeof all | typeof allButDefault | null
+    // LocalName: string | null
+}
