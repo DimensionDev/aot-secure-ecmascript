@@ -4,7 +4,8 @@
         "rootDir": "./src/",
         "outDir": "./dist/",
         "tsBuildInfoFile": "./dist/.tsbuildinfo",
-        "allowJs": true
+        "allowJs": true,
+        "lib": ["DOM", "ESNext"]
     },
     "include": ["./src"],
     "references": []
