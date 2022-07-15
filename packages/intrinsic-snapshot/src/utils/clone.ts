@@ -1,3 +1,5 @@
+import { ArrayMap, WeakMapGet, WeakMapHas, WeakMapSet } from "./intrinsic.js"
+
 const originalFromCloned = new WeakMap<object, object>()
 export interface CloneKnowledge {
     /**
@@ -48,7 +50,7 @@ export function clone(o: any, knowledge: CloneKnowledge): any {
         ? []
         : isFunction
         ? forwardingFunction(o, knowledge)
-                : {}
+        : {}
 
     // 4. Cache the clone result
     WeakMapSet(originalFromCloned, c, o)
@@ -103,10 +105,18 @@ function forwardingFunction(oldF: Function, knowledge: CloneKnowledge): Function
     const f = {
         [oldF.name]: function () {
             const args = ArrayMap(arguments, (value) => WeakMapGet(originalFromCloned, value) ?? value)
-            if (new.target) {
-                return clone(construct(oldF, args, WeakMapGet(originalFromCloned, new.target) ?? new.target), knowledge)
+
+            try {
+                if (new.target) {
+                    return clone(
+                        construct(oldF, args, WeakMapGet(originalFromCloned, new.target) ?? new.target),
+                        knowledge,
+                    )
+                }
+                return clone(apply(oldF, WeakMapGet(originalFromCloned, this) ?? this, args), knowledge)
+            } catch (error) {
+                throw clone(error, knowledge)
             }
-            return clone(apply(oldF, WeakMapGet(originalFromCloned, this) ?? this, args), knowledge)
         },
     }[oldF.name]
     return f!
@@ -119,14 +129,6 @@ const tryEval = <T>(f: () => T): T | undefined => {
     return undefined
 }
 
-const takeThis =
-    <A extends any[], R, T>(f: (this: T, ...args: A) => R): ((_this: T, ...args: A) => R) =>
-    (_this, ...args) =>
-        apply(f, _this, args)
-const WeakMapGet = takeThis(WeakMap.prototype.get)
-const WeakMapSet = takeThis(WeakMap.prototype.set)
-const WeakMapHas = takeThis(WeakMap.prototype.has)
-const ArrayMap = takeThis(Array.prototype.map)
 const { isArray } = Array
 const { apply, construct, getPrototypeOf, setPrototypeOf } = Reflect
 const { getOwnPropertyDescriptors, hasOwn, defineProperties } = Object
