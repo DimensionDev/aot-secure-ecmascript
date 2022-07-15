@@ -1,5 +1,5 @@
 {
-    "references": [{ "path": "./packages/compartment" }],
+    "references": [{ "path": "./packages/compartment" }, { "path": "./packages/intrinsic-snapshot" }],
     "compilerOptions": {
         // Classification follows https://www.typescriptlang.org/tsconfig
 
