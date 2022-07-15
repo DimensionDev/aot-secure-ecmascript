@@ -1,4 +1,4 @@
-import { ArrayMap, WeakMapGet, WeakMapHas, WeakMapSet } from "./intrinsic.js"
+import { ArrayMap, WeakMapGet, WeakMapHas, WeakMapSet } from './intrinsic.js'
 
 const originalFromCloned = new WeakMap<object, object>()
 export interface CloneKnowledge {
