@@ -15,9 +15,10 @@ export type {
 export { Compartment } from './compartment.js'
 export { StaticModuleRecord } from './StaticModuleRecord.js'
 export { ModuleSource } from './ModuleSource.js'
-export { Evaluators, type EvaluatorsConstructor } from './Evaluators.js'
+export { Evaluators } from './Evaluators.js'
 export { Module, type ImportHook, imports } from './Module.js'
 
 export { createModuleCache } from './utils/createModuleCache.js'
 export { createWebImportMeta } from './utils/importMeta.js'
 export { URLResolveHook } from './utils/resolver.js'
+export { makeGlobalThisPublic as makeGlobalThis } from './utils/makeGlobalThis.js'

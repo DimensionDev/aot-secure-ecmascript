@@ -1,4 +1,3 @@
-import { Evaluators } from './Evaluators.js'
 import { makeBorrowedGlobalThis, makeGlobalThis } from './utils/makeGlobalThis.js'
 import { StaticModuleRecord } from './StaticModuleRecord.js'
 import type {
@@ -97,12 +96,15 @@ export class Compartment implements CompartmentInstance {
                 : makeGlobalThis(
                       Object.prototype,
                       {
-                          Compartment: Subcompartment,
-                          Evaluators: Evaluators,
                           createModule: createModuleSubclass,
                       },
                       normalizedOptions.globals,
                   )
+            Object.defineProperty(this.#globalThis, 'Compartment', {
+                configurable: true,
+                writable: true,
+                value: Subcompartment,
+            })
         }
 
         this.#opts = normalizedOptions

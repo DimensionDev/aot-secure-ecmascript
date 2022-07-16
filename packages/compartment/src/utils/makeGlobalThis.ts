@@ -1,18 +1,16 @@
 import type { Compartment } from '../compartment.js'
-import type { Evaluators } from '../Evaluators.js'
-import type { Module } from '../Module.js'
+import { Evaluators } from '../Evaluators.js'
+import { createModuleSubclass, type Module } from '../Module.js'
 import { ModuleSource } from '../ModuleSource.js'
 
 /** @internal */
-export interface Evaluators {
-    Compartment: typeof Compartment
-    Evaluators: typeof Evaluators
+export interface Evaluator {
     createModule: (globalThis: object) => typeof Module
 }
 /** @internal */
 export function makeGlobalThis(
     prototype: object | null,
-    evaluators: Evaluators,
+    evaluators: Evaluator,
     globals: object | undefined | null,
 ): typeof globalThis {
     const global = Object.create(null)
@@ -27,8 +25,7 @@ export function makeGlobalThis(
 
     Object.defineProperties(global, {
         globalThis: { writable: true, configurable: true, value: global },
-        Compartment: { writable: true, configurable: true, value: evaluators.Compartment },
-        Evaluators: { writable: true, configurable: true, value: evaluators.Evaluators },
+        Evaluators: { writable: true, configurable: true, value: Evaluators },
         ModuleSource: { writable: true, configurable: true, value: ModuleSource },
         Module: { writable: true, configurable: true, value: evaluators.createModule(global) },
     })
@@ -36,6 +33,10 @@ export function makeGlobalThis(
     if (globals) Object.assign(global, globals)
 
     return Object.setPrototypeOf(global, prototype)
+}
+
+export function makeGlobalThisPublic() {
+    return makeGlobalThis(Object.prototype, { createModule: createModuleSubclass }, {})
 }
 
 /**

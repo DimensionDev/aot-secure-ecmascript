@@ -1,33 +1,26 @@
-import { Compartment } from './compartment.js'
-import { createModuleSubclass, type ImportHook } from './Module.js'
-import { makeGlobalThis } from './utils/makeGlobalThis.js'
+import { createModuleSubclass, Module, type ImportHook } from './Module.js'
 
-export interface EvaluatorsConstructor {
-    new (global: typeof globalThis, options?: EvaluatorsOptions): typeof globalThis & {
-        Evaluators: EvaluatorsConstructor
-        Compartment: typeof Compartment
+export class Evaluators {
+    constructor(options: { globalThis?: object; importHook?: ImportHook; importMeta?: object }) {
+        const { globalThis, importHook, importMeta } = options
+        if (globalThis !== null && globalThis !== undefined && typeof globalThis !== 'object') {
+            throw new TypeError('globalThis must be an object')
+        }
+        if (importHook !== null && importHook !== undefined && typeof importHook !== 'function') {
+            throw new TypeError('importHook must be a function')
+        }
+        if (importMeta !== null && importMeta !== undefined && typeof importMeta !== 'object') {
+            throw new TypeError('importMeta must be an object')
+        }
+        this.#globalThis = globalThis ?? { __proto__: null }
+        this.Module = createModuleSubclass(this.#globalThis, importHook, importMeta)
     }
-}
-export interface EvaluatorsOptions {
-    importHook?: ImportHook
-}
-
-// @ts-ignore
-export const Evaluators: EvaluatorsConstructor = class Evaluators {
-    constructor(global: typeof globalThis, options?: EvaluatorsOptions) {
-        if (options && typeof options.importHook !== 'function') throw new TypeError('ImportHook must be a function.')
-        // TODO: Module constructor should inherit the importHook if possible.
-        // TODO: Evaluators should inherit the importHook if possible.
-        return makeGlobalThis(
-            Object.prototype,
-            {
-                // Note: importHook does not passed to the Compartment because we will use Module as the foundation of Compartment.
-                Compartment,
-                Evaluators: _,
-                createModule: createModuleSubclass,
-            },
-            global,
-        )
+    #globalThis: object
+    Module: typeof Module
+    get globalThis() {
+        return this.#globalThis
     }
+    // We do not support `eval` and `Function`.
+    eval = eval
+    Function = Function
 }
-const _ = Evaluators

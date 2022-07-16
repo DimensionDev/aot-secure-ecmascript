@@ -15,7 +15,7 @@ import { assert, internalError, opaqueProxy } from './utils/assert.js'
 export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module | null>
 export let imports: (specifier: Module, options?: ImportCallOptions) => Promise<ModuleNamespace>
 /** @internal */
-export let createModuleSubclass: (globalThis: object) => typeof Module
+export let createModuleSubclass: (globalThis: object, importHook?: ImportHook, importMeta?: ImportMeta) => typeof Module
 export class Module {
     // The constructor is equivalent to ParseModule in SourceTextModuleRecord
     // https://tc39.es/ecma262/#sec-parsemodule
@@ -679,11 +679,11 @@ export class Module {
             await module.#Evaluate()
             return Module.#GetModuleNamespace(module)
         }
-        createModuleSubclass = (globalThis) => {
+        createModuleSubclass = (globalThis, upper_importHook, upper_importMeta) => {
             const Parent = Module
             const SubModule = class Module extends Parent {
                 constructor(source: ModuleSource | SyntheticModuleRecord, importHook: ImportHook, importMeta: object) {
-                    super(source, importHook, importMeta)
+                    super(source, importHook ?? upper_importHook, importMeta ?? upper_importMeta)
                     this.#GlobalThis = globalThis
                 }
             }
