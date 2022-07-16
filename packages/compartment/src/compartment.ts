@@ -1,4 +1,4 @@
-import { ExecutionContext } from './ExecutionContext.js'
+import { Evaluators } from './Evaluators.js'
 import { makeBorrowedGlobalThis, makeGlobalThis } from './utils/makeGlobalThis.js'
 import { StaticModuleRecord } from './StaticModuleRecord.js'
 import type {
@@ -31,7 +31,7 @@ import { PromiseCapability } from './utils/spec.js'
 export let brandCheck_Compartment: (compartment: Compartment) => boolean
 export let internalSlot_Compartment_globalThis_get: (compartment: Compartment) => Compartment['globalThis']
 
-/** @deprecated Need a rewrite based on Module & ExecutionContext. */
+/** @deprecated Need a rewrite based on Module & Evaluators. */
 export class Compartment implements CompartmentInstance {
     get globalThis() {
         return this.#globalThis
@@ -98,7 +98,7 @@ export class Compartment implements CompartmentInstance {
                       Object.prototype,
                       {
                           Compartment: Subcompartment,
-                          ExecutionContext: ExecutionContext,
+                          Evaluators: Evaluators,
                           createModule: createModuleSubclass,
                       },
                       normalizedOptions.globals,
