@@ -1,5 +1,14 @@
 # @masknet/compartment
 
+## 0.2.1
+
+### Patch Changes
+
+-   c44b77b: Implement new Evaluators API
+-   212a2be: Allow initialize function to be undefined
+-   3783fc3: Rename ExecutionContext to Evaluators
+-   0580f03: Set this when calling initialize of virtual module
+
 ## 0.2.0
 
 ### Minor Changes
