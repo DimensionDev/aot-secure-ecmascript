@@ -1,5 +1,5 @@
 import { brandCheck_Compartment } from '../compartment.js'
-import { StaticModuleRecord } from '../StaticModuleRecord.js'
+import { ModuleSource } from '../ModuleSource.js'
 import type {
     ModuleDescriptor,
     ModuleDescriptor_Source,
@@ -41,8 +41,8 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
             normalizedRecord = record
         } else if (typeof record !== 'object' || record === null) {
             throw new TypeError('ModuleDescriptor must be either a string, StaticModuleRecord or SyntheticModuleRecord')
-        } else if (record instanceof StaticModuleRecord) {
-            throw new TypeError('StaticModuleRecord is not supported')
+        } else if (record instanceof ModuleSource) {
+            throw new TypeError('ModuleSource is not supported')
         } else {
             normalizedRecord = normalizeSyntheticModuleRecord(record)
         }

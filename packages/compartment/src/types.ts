@@ -1,6 +1,6 @@
 // https://github.com/tc39/proposal-compartments/blob/775024d93830ee6464363b4b373d9353425a0776/README.md
 import type { Compartment } from './compartment.js'
-import type { StaticModuleRecord } from './StaticModuleRecord.js'
+import type { ModuleSource } from './ModuleSource.js'
 
 export type Binding = ImportBinding | ExportBinding | ImportAllBinding | ExportAllBinding
 /**
@@ -64,7 +64,7 @@ export interface ModuleDescriptor_Source {
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_StaticModuleRecord {
-    record: StaticModuleRecord | SyntheticModuleRecord | string
+    record: ModuleSource | SyntheticModuleRecord | string
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_FullSpecReference {

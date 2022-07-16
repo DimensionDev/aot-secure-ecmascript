@@ -1,5 +1,4 @@
 import { makeBorrowedGlobalThis, makeGlobalThis } from './utils/makeGlobalThis.js'
-import { StaticModuleRecord } from './StaticModuleRecord.js'
 import type {
     Binding,
     CompartmentInstance,
@@ -25,6 +24,7 @@ import {
 import { SystemJS } from './utils/system.js'
 import { createModuleSubclass } from './Module.js'
 import { PromiseCapability } from './utils/spec.js'
+import { ModuleSource } from './ModuleSource.js'
 
 /** @internal */
 export let brandCheck_Compartment: (compartment: Compartment) => boolean
@@ -162,8 +162,8 @@ export class Compartment implements CompartmentInstance {
                     throw new TypeError(`Cannot load the StaticModuleRecord "${fullSpec}" from the top compartment.`)
                 }
                 return this.#incubatorCompartment.#loadModuleDescriptor(desc.record)
-            } else if (desc.record instanceof StaticModuleRecord) {
-                throw new TypeError('StaticModuleRecord is not supported.')
+            } else if (desc.record instanceof ModuleSource) {
+                throw new TypeError('ModuleSource is not supported.')
             } else {
                 return { type: 'record', module: desc.record, extraImportMeta: desc.importMeta }
             }

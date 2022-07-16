@@ -13,7 +13,6 @@ export type {
     SyntheticModuleRecordInitializeContext,
 } from './types.js'
 export { Compartment } from './compartment.js'
-export { StaticModuleRecord } from './StaticModuleRecord.js'
 export { ModuleSource } from './ModuleSource.js'
 export { Evaluators } from './Evaluators.js'
 export { Module, type ImportHook, imports } from './Module.js'
