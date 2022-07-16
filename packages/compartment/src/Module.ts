@@ -26,6 +26,7 @@ export class Module {
         source = source as SyntheticModuleRecord
 
         const module = normalizeSyntheticModuleRecord(source)
+        this.#InitializeThisValue = source
         this.#Initialize = module.initialize
         this.#NeedsImport = module.needsImport
         this.#NeedsImportMeta = module.needsImportMeta
@@ -52,6 +53,8 @@ export class Module {
     //#endregion
 
     // #region SyntheticModuleRecord fields
+    // *this value* when calling #Initialize.
+    #InitializeThisValue: unknown
     #Initialize: SyntheticModuleRecord['initialize']
     #NeedsImportMeta: boolean | undefined
     #NeedsImport: boolean | undefined
@@ -279,17 +282,21 @@ export class Module {
                 return Module.#GetModuleNamespace(module)
             }
         }
-        const init = this.#Initialize
+
         assert(this.#Environment)
         const env = new Proxy(this.#Environment, moduleEnvExoticMethods)
+
         if (!this.#HasTLA) {
             assert(!promise)
-            init(env, this.#ContextObjectProxy)
+            Reflect.apply(this.#Initialize, this.#InitializeThisValue, [env, this.#ContextObjectProxy])
         } else {
             assert(promise)
-            Promise.resolve(init(env, this.#ContextObjectProxy)).then(promise.Resolve, promise.Reject)
+            Promise.resolve(
+                Reflect.apply(this.#Initialize, this.#InitializeThisValue, [env, this.#ContextObjectProxy]),
+            ).then(promise.Resolve, promise.Reject)
         }
         this.#Initialize = undefined!
+        this.#InitializeThisValue = undefined
     }
     // https://tc39.es/ecma262/#sec-moduledeclarationlinking
     #Link() {
