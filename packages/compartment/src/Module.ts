@@ -288,12 +288,16 @@ export class Module {
 
         if (!this.#HasTLA) {
             assert(!promise)
-            Reflect.apply(this.#Initialize, this.#InitializeThisValue, [env, this.#ContextObjectProxy])
+            if (this.#Initialize) {
+                Reflect.apply(this.#Initialize, this.#InitializeThisValue, [env, this.#ContextObjectProxy])
+            }
         } else {
             assert(promise)
-            Promise.resolve(
-                Reflect.apply(this.#Initialize, this.#InitializeThisValue, [env, this.#ContextObjectProxy]),
-            ).then(promise.Resolve, promise.Reject)
+            if (this.#Initialize) {
+                Promise.resolve(
+                    Reflect.apply(this.#Initialize, this.#InitializeThisValue, [env, this.#ContextObjectProxy]),
+                ).then(promise.Resolve, promise.Reject)
+            }
         }
         this.#Initialize = undefined!
         this.#InitializeThisValue = undefined

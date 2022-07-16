@@ -199,7 +199,7 @@ export class Compartment implements CompartmentInstance {
 
                     init(_export)
                     return {
-                        execute: () => initialize(moduleEnvironmentProxy, _context),
+                        execute: () => initialize?.(moduleEnvironmentProxy, _context),
                         setters,
                     }
                 },

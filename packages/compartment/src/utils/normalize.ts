@@ -69,7 +69,7 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
 /** @internal */
 export function normalizeSyntheticModuleRecord(module: SyntheticModuleRecord): SyntheticModuleRecord {
     const { initialize, bindings, needsImport, needsImportMeta, isAsync } = module
-    if (typeof initialize !== 'function') {
+    if (initialize ?? typeof initialize !== 'function') {
         throw new TypeError('SyntheticModuleRecord.initialize must be a function')
     }
     return {
