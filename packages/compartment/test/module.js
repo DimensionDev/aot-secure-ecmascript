@@ -3,7 +3,7 @@ import { Module, imports, Evaluators } from '../dist/index.js'
 async function importHook(spec, meta) {
     return null
 }
-/** @type {Record<string, import('../dist/index.js').SyntheticModuleRecord>} */
+/** @type {Record<string, import('../dist/index.js').VirtualModuleRecord>} */
 const modules = {
     a: {
         bindings: [{ export: 'x' }, { export: 'setX' }],

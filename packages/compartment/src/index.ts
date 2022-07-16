@@ -9,8 +9,8 @@ export type {
     ModuleDescriptor_FullSpecReference,
     ModuleDescriptor_StaticModuleRecord,
     ModuleNamespace,
-    SyntheticModuleRecord,
-    SyntheticModuleRecordInitializeContext,
+    VirtualModuleRecord,
+    VirtualModuleRecordInitializeContext,
 } from './types.js'
 export { Compartment } from './compartment.js'
 export { ModuleSource } from './ModuleSource.js'

@@ -5,7 +5,7 @@ import type {
     CompartmentOptions,
     ModuleCacheItem,
     ModuleDescriptor,
-    SyntheticModuleRecordInitializeContext,
+    VirtualModuleRecordInitializeContext,
 } from './types.js'
 import { normalizeModuleDescriptor } from './utils/normalize.js'
 import { internalError, unreachable } from './utils/assert.js'
@@ -194,7 +194,7 @@ export class Compartment implements CompartmentInstance {
             return [
                 imports,
                 (_export, _context) => {
-                    const context: SyntheticModuleRecordInitializeContext | undefined =
+                    const context: VirtualModuleRecordInitializeContext | undefined =
                         needsImport || needsImportMeta ? {} : undefined
                     if (needsImport) context!.import = _context.import
                     if (needsImportMeta) context!.importMeta = _context.meta

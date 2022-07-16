@@ -3,7 +3,7 @@ import type {
     ModuleDescriptor,
     ModuleDescriptor_FullSpecReference,
     ModuleNamespace,
-    SyntheticModuleRecord,
+    VirtualModuleRecord,
 } from '../types.js'
 
 export function createModuleCache() {
@@ -25,7 +25,7 @@ export function createModuleCache() {
             moduleMap[fullSpec] = { namespace }
         }
     }
-    function addModuleRecord(fullSpec: string, record: SyntheticModuleRecord, extraImportMeta?: object) {
+    function addModuleRecord(fullSpec: string, record: VirtualModuleRecord, extraImportMeta?: object) {
         moduleMap[fullSpec] = { record, importMeta: extraImportMeta }
     }
 

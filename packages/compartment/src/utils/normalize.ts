@@ -4,7 +4,7 @@ import type {
     ModuleDescriptor,
     ModuleDescriptor_Source,
     ModuleDescriptor_StaticModuleRecord,
-    SyntheticModuleRecord,
+    VirtualModuleRecord,
     ModuleDescriptor_ModuleInstance,
     Binding,
     ExportAllBinding,
@@ -40,11 +40,11 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
         if (typeof record === 'string') {
             normalizedRecord = record
         } else if (typeof record !== 'object' || record === null) {
-            throw new TypeError('ModuleDescriptor must be either a string, StaticModuleRecord or SyntheticModuleRecord')
+            throw new TypeError('ModuleDescriptor must be either a string, StaticModuleRecord or VirtualModuleRecord')
         } else if (record instanceof ModuleSource) {
             throw new TypeError('ModuleSource is not supported')
         } else {
-            normalizedRecord = normalizeSyntheticModuleRecord(record)
+            normalizedRecord = normalizeVirtualModuleRecord(record)
         }
         const copy: ModuleDescriptor_StaticModuleRecord = {
             record: normalizedRecord,
@@ -67,10 +67,10 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
 }
 
 /** @internal */
-export function normalizeSyntheticModuleRecord(module: SyntheticModuleRecord): SyntheticModuleRecord {
+export function normalizeVirtualModuleRecord(module: VirtualModuleRecord): VirtualModuleRecord {
     const { initialize, bindings, needsImport, needsImportMeta, isAsync } = module
     if (initialize !== undefined && initialize !== null && typeof initialize !== 'function') {
-        throw new TypeError('SyntheticModuleRecord.initialize must be a function')
+        throw new TypeError('VirtualModuleRecord.initialize must be a function')
     }
     return {
         initialize,

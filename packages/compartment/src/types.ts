@@ -35,16 +35,16 @@ export interface ExportAllBinding {
     exportAllFrom: string
     as?: string | undefined
 }
-export interface SyntheticModuleRecord {
+export interface VirtualModuleRecord {
     bindings?: Array<Binding>
-    initialize?(environment: object, context?: SyntheticModuleRecordInitializeContext): void | Promise<void>
+    initialize?(environment: object, context?: VirtualModuleRecordInitializeContext): void | Promise<void>
     needsImportMeta?: boolean | undefined
     needsImport?: boolean | undefined
     isAsync?: boolean | undefined
 }
 
 export type ModuleNamespace = Record<string, unknown>
-export interface SyntheticModuleRecordInitializeContext {
+export interface VirtualModuleRecordInitializeContext {
     importMeta?: object
     import?(spec: string, options?: ImportCallOptions): Promise<ModuleNamespace>
 }
@@ -64,7 +64,7 @@ export interface ModuleDescriptor_Source {
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_StaticModuleRecord {
-    record: ModuleSource | SyntheticModuleRecord | string
+    record: ModuleSource | VirtualModuleRecord | string
     importMeta?: object | undefined
 }
 export interface ModuleDescriptor_FullSpecReference {
@@ -100,4 +100,4 @@ export interface CompartmentInstance {
 /** @internal */
 export type ModuleCacheItem =
     | { type: 'instance'; moduleInstance: ModuleNamespace }
-    | { type: 'record'; module: SyntheticModuleRecord; extraImportMeta: object | null | undefined }
+    | { type: 'record'; module: VirtualModuleRecord; extraImportMeta: object | null | undefined }

@@ -1,5 +1,5 @@
 import type { ModuleSource } from './ModuleSource.js'
-import type { ModuleNamespace, SyntheticModuleRecord, SyntheticModuleRecordInitializeContext } from './types.js'
+import type { ModuleNamespace, VirtualModuleRecord, VirtualModuleRecordInitializeContext } from './types.js'
 import {
     all,
     ambiguous,
@@ -9,7 +9,7 @@ import {
     type ModuleExportEntry,
     type ModuleImportEntry,
 } from './utils/spec.js'
-import { normalizeBindingsToSpecRecord, normalizeSyntheticModuleRecord } from './utils/normalize.js'
+import { normalizeBindingsToSpecRecord, normalizeVirtualModuleRecord } from './utils/normalize.js'
 import { assert, internalError, opaqueProxy } from './utils/assert.js'
 
 export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module | null>
@@ -19,13 +19,13 @@ export let createModuleSubclass: (globalThis: object, importHook?: ImportHook, i
 export class Module {
     // The constructor is equivalent to ParseModule in SourceTextModuleRecord
     // https://tc39.es/ecma262/#sec-parsemodule
-    constructor(source: ModuleSource | SyntheticModuleRecord, importHook: ImportHook, importMeta: object) {
+    constructor(source: ModuleSource | VirtualModuleRecord, importHook: ImportHook, importMeta: object) {
         if (typeof importHook !== 'function') throw new TypeError('importHook must be a function')
         if (typeof importMeta !== 'object') throw new TypeError('importMeta must be an object')
         // impossible to create a ModuleSource instance
-        source = source as SyntheticModuleRecord
+        source = source as VirtualModuleRecord
 
-        const module = normalizeSyntheticModuleRecord(source)
+        const module = normalizeVirtualModuleRecord(source)
         this.#InitializeThisValue = source
         this.#Initialize = module.initialize
         this.#NeedsImport = module.needsImport
@@ -52,14 +52,14 @@ export class Module {
     // #HostDefined: unknown = undefined
     //#endregion
 
-    // #region SyntheticModuleRecord fields
+    // #region VirtualModuleRecord fields
     // *this value* when calling #Initialize.
     #InitializeThisValue: unknown
-    #Initialize: SyntheticModuleRecord['initialize']
+    #Initialize: VirtualModuleRecord['initialize']
     #NeedsImportMeta: boolean | undefined
     #NeedsImport: boolean | undefined
-    #ContextObject: SyntheticModuleRecordInitializeContext | undefined
-    #ContextObjectProxy: SyntheticModuleRecordInitializeContext | undefined
+    #ContextObject: VirtualModuleRecordInitializeContext | undefined
+    #ContextObjectProxy: VirtualModuleRecordInitializeContext | undefined
     #ImportHook: ImportHook
     #AssignedImportMeta: object
     /** the global environment this module binds to */
@@ -76,7 +76,7 @@ export class Module {
     #ExportCallback = new Set<(name: string) => void>()
     //#endregion
 
-    //#region SyntheticModuleRecord methods
+    //#region VirtualModuleRecord methods
     //#endregion
 
     //#region ModuleRecord methods https://tc39.es/ecma262/#table-abstract-methods-of-module-records
@@ -682,7 +682,7 @@ export class Module {
         createModuleSubclass = (globalThis, upper_importHook, upper_importMeta) => {
             const Parent = Module
             const SubModule = class Module extends Parent {
-                constructor(source: ModuleSource | SyntheticModuleRecord, importHook: ImportHook, importMeta: object) {
+                constructor(source: ModuleSource | VirtualModuleRecord, importHook: ImportHook, importMeta: object) {
                     super(source, importHook ?? upper_importHook, importMeta ?? upper_importMeta)
                     this.#GlobalThis = globalThis
                 }
