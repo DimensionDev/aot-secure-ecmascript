@@ -26,7 +26,7 @@ export class Module {
         source = source as VirtualModuleRecord
 
         const module = normalizeVirtualModuleRecord(source)
-        this.#InitializeThisValue = source
+        this.#Source = source
         this.#Initialize = module.initialize
         this.#NeedsImport = module.needsImport
         this.#NeedsImportMeta = module.needsImportMeta
@@ -43,6 +43,9 @@ export class Module {
         this.#RequestedModules = requestedModules
         this.#StarExportEntries = starExportEntries
     }
+    get source(): ModuleSource | VirtualModuleRecord {
+        return this.#Source
+    }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
     // #Realm: unknown
     /** first argument of initialize() */
@@ -54,7 +57,7 @@ export class Module {
 
     // #region VirtualModuleRecord fields
     // *this value* when calling #Initialize.
-    #InitializeThisValue: unknown
+    #Source: VirtualModuleRecord
     #Initialize: VirtualModuleRecord['initialize']
     #NeedsImportMeta: boolean | undefined
     #NeedsImport: boolean | undefined
@@ -289,18 +292,17 @@ export class Module {
         if (!this.#HasTLA) {
             assert(!promise)
             if (this.#Initialize) {
-                Reflect.apply(this.#Initialize, this.#InitializeThisValue, [env, this.#ContextObjectProxy])
+                Reflect.apply(this.#Initialize, this.#Source, [env, this.#ContextObjectProxy])
             }
         } else {
             assert(promise)
             if (this.#Initialize) {
                 Promise.resolve(
-                    Reflect.apply(this.#Initialize, this.#InitializeThisValue, [env, this.#ContextObjectProxy]),
+                    Reflect.apply(this.#Initialize, this.#Source, [env, this.#ContextObjectProxy]),
                 ).then(promise.Resolve, promise.Reject)
             }
         }
         this.#Initialize = undefined!
-        this.#InitializeThisValue = undefined
     }
     // https://tc39.es/ecma262/#sec-moduledeclarationlinking
     #Link() {
