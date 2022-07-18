@@ -280,9 +280,7 @@ export class Module {
             this.#ContextObject!.import = async (specifier: string, options?: ImportCallOptions) => {
                 const [module] = await Module.#HostResolveModules(this, [specifier])
                 assert(module)
-                module.#Link()
-                await module.#Evaluate()
-                return Module.#GetModuleNamespace(module)
+                return Module.#DynamicImportModule(module)
             }
         }
 
@@ -297,9 +295,10 @@ export class Module {
         } else {
             assert(promise)
             if (this.#Initialize) {
-                Promise.resolve(
-                    Reflect.apply(this.#Initialize, this.#Source, [env, this.#ContextObjectProxy]),
-                ).then(promise.Resolve, promise.Reject)
+                Promise.resolve(Reflect.apply(this.#Initialize, this.#Source, [env, this.#ContextObjectProxy])).then(
+                    promise.Resolve,
+                    promise.Reject,
+                )
             }
         }
         this.#Initialize = undefined!
@@ -633,7 +632,20 @@ export class Module {
     }
     //#endregion
 
-    //#region Our host hook
+    //#region Our functions / host hooks
+    static async #DynamicImportModule(module: Module) {
+        if (module.#Status === ModuleStatus.evaluated) return this.#GetModuleNamespace(module)
+        if (module.#Status === ModuleStatus.evaluatingAsync) {
+            assert(module.#TopLevelCapability)
+            await module.#TopLevelCapability.Promise
+            return Module.#GetModuleNamespace(module)
+        }
+
+        await this.#HostResolveModules(module, module.#RequestedModules)
+        module.#Link()
+        await module.#Evaluate()
+        return Module.#GetModuleNamespace(module)
+    }
     static #HostResolveModulesInner(module: Module, spec: string) {
         const capability = PromiseCapability<Module>()
         module.#ResolvedModules.set(spec, capability)
@@ -676,10 +688,7 @@ export class Module {
     //#endregion
     static {
         imports = async (module, options) => {
-            await this.#HostResolveModules(module, module.#RequestedModules)
-            module.#Link()
-            await module.#Evaluate()
-            return Module.#GetModuleNamespace(module)
+            return Module.#DynamicImportModule(module)
         }
         createModuleSubclass = (globalThis, upper_importHook, upper_importMeta) => {
             const Parent = Module
