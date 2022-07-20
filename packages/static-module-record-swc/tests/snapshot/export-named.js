@@ -22,7 +22,7 @@ export default {
             export: "x3"
         }
     ],
-    initialize: function(_) {
+    execute: function(_) {
         {
             var a = 1;
             _.b = _.a = a;

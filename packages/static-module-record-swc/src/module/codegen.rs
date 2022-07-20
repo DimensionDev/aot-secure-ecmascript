@@ -88,7 +88,7 @@ impl StaticModuleRecordTransformer {
         }
 
         props.push(key_value(
-            "initialize".into(),
+            "execute".into(),
             FnExpr {
                 ident: None,
                 function: init_fn,

@@ -7,7 +7,7 @@ async function importHook(spec, meta) {
 const modules = {
     a: {
         bindings: [{ export: 'x' }, { export: 'setX' }],
-        initialize(env, context) {
+        execute(env, context) {
             debugger
             env.x = 1
             env.setX = function (x) {

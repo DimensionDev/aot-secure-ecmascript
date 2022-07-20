@@ -1,6 +1,6 @@
 export default {
     isAsync: true,
-    initialize: async function(_) {
+    execute: async function(_) {
         await 1;
     }
 };

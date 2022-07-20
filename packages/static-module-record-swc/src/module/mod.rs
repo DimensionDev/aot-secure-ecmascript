@@ -13,14 +13,7 @@ use std::collections::HashSet;
 use swc_common::DUMMY_SP;
 use swc_plugin::ast::{Id, Ident};
 
-/// Convert code into
-/// ```js
-/// export default new StaticModuleRecord({
-///     bindings: ...,
-///     needsImportMeta: ...,
-///     [async?] initialize(env, importMeta, dynamicImport) {}
-/// })
-/// ```
+/// Convert code into VirtualModuleRecord
 pub struct StaticModuleRecordTransformer {
     uses_import_meta: bool,
     uses_top_level_await: bool,

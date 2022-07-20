@@ -13,7 +13,7 @@ export function createModuleCache() {
         if (bindings) {
             moduleMap[fullSpec] = {
                 record: {
-                    initialize(env: any) {
+                    execute(env: any) {
                         for (const [key, val] of Object.entries(namespace)) {
                             env[key] = val
                         }

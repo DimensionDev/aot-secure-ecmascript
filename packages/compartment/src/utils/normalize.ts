@@ -68,12 +68,12 @@ export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | n
 
 /** @internal */
 export function normalizeVirtualModuleRecord(module: VirtualModuleRecord): VirtualModuleRecord {
-    const { initialize, bindings, needsImport, needsImportMeta, isAsync } = module
-    if (initialize !== undefined && initialize !== null && typeof initialize !== 'function') {
-        throw new TypeError('VirtualModuleRecord.initialize must be a function')
+    const { execute, bindings, needsImport, needsImportMeta, isAsync } = module
+    if (execute !== undefined && execute !== null && typeof execute !== 'function') {
+        throw new TypeError('VirtualModuleRecord.execute must be a function')
     }
     return {
-        initialize,
+        execute,
         needsImportMeta: Boolean(needsImportMeta),
         needsImport: Boolean(needsImport),
         isAsync: Boolean(isAsync),

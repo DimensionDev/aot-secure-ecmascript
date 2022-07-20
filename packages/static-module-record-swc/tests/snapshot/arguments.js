@@ -1,5 +1,5 @@
 export default {
-    initialize: function(_) {
+    execute: function(_) {
         'use strict';
         {
             function x() {

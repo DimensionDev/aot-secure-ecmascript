@@ -43,7 +43,7 @@ export default {
             export: "x3"
         }
     ],
-    initialize: function(_) {
+    execute: function(_) {
         var a1;
         _.a1 = a1;
         var a2, a3;

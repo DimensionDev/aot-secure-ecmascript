@@ -5,7 +5,7 @@ __register("node:fs", {
             export: "writeFileSync"
         }
     ],
-    initialize: function(_) {
+    execute: function(_) {
         function writeFileSync() {}
         _.writeFileSync = writeFileSync;
     }

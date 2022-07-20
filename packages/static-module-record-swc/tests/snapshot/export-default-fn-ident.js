@@ -4,7 +4,7 @@ export default {
             export: "default"
         }
     ],
-    initialize: function(_) {
+    execute: function(_) {
         function x() {
             [
                 x = function name() {},

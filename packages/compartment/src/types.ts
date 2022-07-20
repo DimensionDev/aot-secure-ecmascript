@@ -37,14 +37,14 @@ export interface ExportAllBinding {
 }
 export interface VirtualModuleRecord {
     bindings?: Array<Binding>
-    initialize?(environment: object, context?: VirtualModuleRecordInitializeContext): void | Promise<void>
+    execute?(environment: object, context?: VirtualModuleRecordExecuteContext): void | Promise<void>
     needsImportMeta?: boolean | undefined
     needsImport?: boolean | undefined
     isAsync?: boolean | undefined
 }
 
 export type ModuleNamespace = Record<string, unknown>
-export interface VirtualModuleRecordInitializeContext {
+export interface VirtualModuleRecordExecuteContext {
     importMeta?: object
     import?(spec: string, options?: ImportCallOptions): Promise<ModuleNamespace>
 }

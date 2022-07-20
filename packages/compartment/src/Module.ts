@@ -1,5 +1,5 @@
 import type { ModuleSource } from './ModuleSource.js'
-import type { ModuleNamespace, VirtualModuleRecord, VirtualModuleRecordInitializeContext } from './types.js'
+import type { ModuleNamespace, VirtualModuleRecord, VirtualModuleRecordExecuteContext } from './types.js'
 import {
     all,
     ambiguous,
@@ -32,7 +32,7 @@ export class Module {
 
         const module = normalizeVirtualModuleRecord(source)
         this.#Source = source
-        this.#Initialize = module.initialize
+        this.#Execute = module.execute
         this.#NeedsImport = module.needsImport
         this.#NeedsImportMeta = module.needsImportMeta
         this.#HasTLA = !!module.isAsync
@@ -53,7 +53,7 @@ export class Module {
     }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
     // #Realm: unknown
-    /** first argument of initialize() */
+    /** first argument of execute() */
     #Environment: object | undefined
     /** result of await import(mod) */
     #Namespace: ModuleNamespace | undefined
@@ -61,13 +61,13 @@ export class Module {
     //#endregion
 
     // #region VirtualModuleRecord fields
-    // *this value* when calling #Initialize.
+    // *this value* when calling #Execute.
     #Source: VirtualModuleRecord
-    #Initialize: VirtualModuleRecord['initialize']
+    #Execute: VirtualModuleRecord['execute']
     #NeedsImportMeta: boolean | undefined
     #NeedsImport: boolean | undefined
-    #ContextObject: VirtualModuleRecordInitializeContext | undefined
-    #ContextObjectProxy: VirtualModuleRecordInitializeContext | undefined
+    #ContextObject: VirtualModuleRecordExecuteContext | undefined
+    #ContextObjectProxy: VirtualModuleRecordExecuteContext | undefined
     #ImportHook: ImportHook
     #AssignedImportMeta: object
     /** the global environment this module binds to */
@@ -294,19 +294,19 @@ export class Module {
 
         if (!this.#HasTLA) {
             assert(!promise)
-            if (this.#Initialize) {
-                Reflect.apply(this.#Initialize, this.#Source, [env, this.#ContextObjectProxy])
+            if (this.#Execute) {
+                Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObjectProxy])
             }
         } else {
             assert(promise)
-            if (this.#Initialize) {
-                Promise.resolve(Reflect.apply(this.#Initialize, this.#Source, [env, this.#ContextObjectProxy])).then(
+            if (this.#Execute) {
+                Promise.resolve(Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObjectProxy])).then(
                     promise.Resolve,
                     promise.Reject,
                 )
             }
         }
-        this.#Initialize = undefined!
+        this.#Execute = undefined!
     }
     // https://tc39.es/ecma262/#sec-moduledeclarationlinking
     #Link() {

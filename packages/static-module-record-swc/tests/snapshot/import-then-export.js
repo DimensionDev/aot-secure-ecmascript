@@ -8,5 +8,5 @@ export default {
             export: "b"
         }
     ],
-    initialize: function(_) {}
+    execute: function(_) {}
 };

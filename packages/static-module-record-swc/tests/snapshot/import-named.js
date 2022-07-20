@@ -15,7 +15,7 @@ export default {
             as: "c"
         }
     ],
-    initialize: function(_) {
+    execute: function(_) {
         _.console.log(_.a, _.b, _.c);
     }
 };

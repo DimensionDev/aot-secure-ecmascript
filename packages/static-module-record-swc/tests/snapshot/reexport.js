@@ -26,5 +26,5 @@ export default {
             from: 'mod3'
         }
     ],
-    initialize: function(_) {}
+    execute: function(_) {}
 };

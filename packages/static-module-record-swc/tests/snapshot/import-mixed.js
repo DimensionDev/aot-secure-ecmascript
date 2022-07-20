@@ -19,7 +19,7 @@ export default {
             as: "d"
         }
     ],
-    initialize: function(_) {
+    execute: function(_) {
         _.console.log(_.a, _.b, _.c, _.d);
     }
 };

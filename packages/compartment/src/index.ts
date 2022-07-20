@@ -10,7 +10,7 @@ export type {
     ModuleDescriptor_StaticModuleRecord,
     ModuleNamespace,
     VirtualModuleRecord,
-    VirtualModuleRecordInitializeContext,
+    VirtualModuleRecordExecuteContext,
 } from './types.js'
 export { Compartment } from './compartment.js'
 export { ModuleSource } from './ModuleSource.js'

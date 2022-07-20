@@ -5,7 +5,7 @@ import type {
     CompartmentOptions,
     ModuleCacheItem,
     ModuleDescriptor,
-    VirtualModuleRecordInitializeContext,
+    VirtualModuleRecordExecuteContext,
 } from './types.js'
 import { normalizeModuleDescriptor } from './utils/normalize.js'
 import { internalError, unreachable } from './utils/assert.js'
@@ -184,7 +184,7 @@ export class Compartment implements CompartmentInstance {
                 },
             ]
         } else if (module.type === 'record') {
-            const { initialize, bindings = [], needsImport, needsImportMeta } = module.module
+            const { execute, bindings = [], needsImport, needsImportMeta } = module.module
 
             const { imports, moduleEnvironmentProxy, setters, init } = makeModuleEnvironmentProxy(
                 bindings,
@@ -194,14 +194,14 @@ export class Compartment implements CompartmentInstance {
             return [
                 imports,
                 (_export, _context) => {
-                    const context: VirtualModuleRecordInitializeContext | undefined =
+                    const context: VirtualModuleRecordExecuteContext | undefined =
                         needsImport || needsImportMeta ? {} : undefined
                     if (needsImport) context!.import = _context.import
                     if (needsImportMeta) context!.importMeta = _context.meta
 
                     init(_export)
                     return {
-                        execute: () => initialize?.(moduleEnvironmentProxy, _context),
+                        execute: () => execute?.(moduleEnvironmentProxy, _context),
                         setters,
                     }
                 },
