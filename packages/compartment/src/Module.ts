@@ -16,10 +16,15 @@ export type ImportHook = (importSpecifier: string, importMeta: object) => Promis
 export let imports: (specifier: Module, options?: ImportCallOptions) => Promise<ModuleNamespace>
 /** @internal */
 export let createModuleSubclass: (globalThis: object, importHook?: ImportHook, importMeta?: ImportMeta) => typeof Module
+export interface ModuleConstructorOptions {
+    importHook?: ImportHook | undefined
+    importMeta?: object | undefined
+}
 export class Module {
     // The constructor is equivalent to ParseModule in SourceTextModuleRecord
     // https://tc39.es/ecma262/#sec-parsemodule
-    constructor(source: ModuleSource | VirtualModuleRecord, importHook: ImportHook, importMeta: object) {
+    constructor(source: ModuleSource | VirtualModuleRecord, options: ModuleConstructorOptions = {}) {
+        const { importHook, importMeta } = options
         if (typeof importHook !== 'function') throw new TypeError('importHook must be a function')
         if (typeof importMeta !== 'object') throw new TypeError('importMeta must be an object')
         // impossible to create a ModuleSource instance
@@ -693,8 +698,12 @@ export class Module {
         createModuleSubclass = (globalThis, upper_importHook, upper_importMeta) => {
             const Parent = Module
             const SubModule = class Module extends Parent {
-                constructor(source: ModuleSource | VirtualModuleRecord, importHook: ImportHook, importMeta: object) {
-                    super(source, importHook ?? upper_importHook, importMeta ?? upper_importMeta)
+                constructor(source: ModuleSource | VirtualModuleRecord, options: ModuleConstructorOptions = {}) {
+                    const { importHook, importMeta } = options
+                    super(source, {
+                        importHook: importHook ?? upper_importHook,
+                        importMeta: importMeta ?? upper_importMeta,
+                    })
                     this.#GlobalThis = globalThis
                 }
             }
