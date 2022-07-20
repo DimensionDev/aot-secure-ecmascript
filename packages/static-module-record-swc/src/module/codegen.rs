@@ -1,11 +1,11 @@
-use super::{config::Template, StaticModuleRecordTransformer};
+use super::{config::Template, VirtualModuleRecordTransformer};
 use crate::utils::*;
 use swc_common::{util::take::Take, DUMMY_SP};
 use swc_plugin::ast::*;
 
-impl StaticModuleRecordTransformer {
-    pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &StaticModuleRecordTransformer) -> Module {
-        let expr = self.new_static_module_record(stmt, transformer);
+impl VirtualModuleRecordTransformer {
+    pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &VirtualModuleRecordTransformer) -> Module {
+        let expr = self.virtual_module_record(stmt, transformer);
         Module {
             body: match &self.config.template {
                 Template::ExportDefault => export_default_expr(expr),
@@ -26,10 +26,10 @@ impl StaticModuleRecordTransformer {
             ..Module::dummy()
         }
     }
-    fn new_static_module_record(
+    fn virtual_module_record(
         &self,
         stmt: Vec<Stmt>,
-        transformer: &StaticModuleRecordTransformer,
+        transformer: &VirtualModuleRecordTransformer,
     ) -> Expr {
         let init_fn = Function {
             is_async: self.uses_top_level_await,

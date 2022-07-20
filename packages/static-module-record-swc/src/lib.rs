@@ -2,7 +2,7 @@
 
 use module::{
     config::{Config, TransformContext},
-    StaticModuleRecordTransformer,
+    VirtualModuleRecordTransformer,
 };
 use script::ErrorTransformer;
 use swc_common::DUMMY_SP;
@@ -25,13 +25,13 @@ pub fn process_transform(program: Program, metadata: TransformPluginProgramMetad
             Program::Script(script) => {
                 emit_error(
                     script.span,
-                    "StaticModuleRecord transformer must run in the Module mode.",
+                    "VirtualModuleRecord transformer must run in the Module mode.",
                 );
                 program.fold_with(&mut ErrorTransformer {
-                    msg: "StaticModuleRecord transformer must run in the Module mode.".to_string(),
+                    msg: "VirtualModuleRecord transformer must run in the Module mode.".to_string(),
                 })
             }
-            Program::Module(_) => program.fold_with(&mut StaticModuleRecordTransformer::new(
+            Program::Module(_) => program.fold_with(&mut VirtualModuleRecordTransformer::new(
                 config,
                 context.map(|x| x.file_name).ok(),
             )),

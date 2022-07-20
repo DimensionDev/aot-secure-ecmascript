@@ -2,7 +2,7 @@
 
 > WARNING: This package currently does not follow the [Semantic Versioning](https://semver.org/) because the original standard is still developing. Minor version might include breaking changes!
 
-A @swc/core plugin to convert an ES Module into a [StaticModuleRecord](https://github.com/tc39/proposal-compartments/blob/6a180313515f6faec2818dad229e6921109b50f5/README.md#sketch).
+A @swc/core plugin to convert an ES Module into a [VirtualModuleRecord](https://github.com/tc39/proposal-compartments/blob/6a180313515f6faec2818dad229e6921109b50f5/README.md#sketch).
 
 ## Usage
 

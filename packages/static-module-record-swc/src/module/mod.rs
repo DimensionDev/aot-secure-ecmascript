@@ -1,11 +1,11 @@
 /// Describes the import/export bindings of a JS module.
 mod binding_descriptor;
-/// Code generation for StaticModuleRecord.
+/// Code generation for VirtualModuleRecord.
 mod codegen;
 pub mod config;
 /// Scan the binding_descriptor inside a JS module.
 mod scanner;
-/// Transform bindings into StaticModuleRecord.
+/// Transform bindings into VirtualModuleRecord.
 mod transformer;
 
 use self::{binding_descriptor::*, config::Config};
@@ -14,7 +14,7 @@ use swc_common::DUMMY_SP;
 use swc_plugin::ast::{Id, Ident};
 
 /// Convert code into VirtualModuleRecord
-pub struct StaticModuleRecordTransformer {
+pub struct VirtualModuleRecordTransformer {
     uses_import_meta: bool,
     uses_top_level_await: bool,
     uses_dynamic_import: bool,
@@ -32,7 +32,7 @@ pub struct StaticModuleRecordTransformer {
     pub file_name: Option<String>,
 }
 
-impl StaticModuleRecordTransformer {
+impl VirtualModuleRecordTransformer {
     pub fn new(config: Config, file_name: Option<String>) -> Self {
         Self {
             uses_import_meta: false,

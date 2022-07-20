@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use super::{binding_descriptor::*, StaticModuleRecordTransformer};
+use super::{binding_descriptor::*, VirtualModuleRecordTransformer};
 use swc_common::DUMMY_SP;
 use swc_plugin::{
     ast::*,
@@ -260,7 +260,7 @@ impl ScannerResult {
     }
 }
 
-impl StaticModuleRecordTransformer {
+impl VirtualModuleRecordTransformer {
     pub fn scan(&mut self, module: &Module) {
         let mut scanner = ScannerResult {
             bindings: vec![],

@@ -3,10 +3,10 @@ use swc_plugin::{ast::*, utils::quote_ident};
 
 use super::{
     codegen::{assign_prop, prop_access},
-    StaticModuleRecordTransformer,
+    VirtualModuleRecordTransformer,
 };
 
-impl StaticModuleRecordTransformer {
+impl VirtualModuleRecordTransformer {
     pub fn fold_module_item_to_multiple(&mut self, item: ModuleItem) -> Vec<Stmt> {
         match item {
             ModuleItem::ModuleDecl(decl) => match decl {
@@ -267,7 +267,7 @@ impl StaticModuleRecordTransformer {
 }
 
 // https://rustdoc.swc.rs/swc_ecma_visit/trait.Fold.html
-impl Fold for StaticModuleRecordTransformer {
+impl Fold for VirtualModuleRecordTransformer {
     fn fold_function(&mut self, n: Function) -> Function {
         let old = self.may_include_implicit_arguments;
         self.may_include_implicit_arguments = true;

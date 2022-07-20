@@ -8,7 +8,7 @@ use swc_ecma_transforms::resolver;
 use swc_ecma_transforms_testing::{test, Tester};
 
 use crate::module::config::{Config, Template};
-use crate::StaticModuleRecordTransformer;
+use crate::VirtualModuleRecordTransformer;
 
 #[testing::fixture("tests/fixture/**/*.js")]
 fn test(input: PathBuf) {
@@ -21,7 +21,7 @@ fn test(input: PathBuf) {
         let actual = tester.apply_transform(
             chain!(
                 resolver(Mark::new(), Mark::new(), false),
-                StaticModuleRecordTransformer::new(config.unwrap_or_default(), Some(input_url))
+                VirtualModuleRecordTransformer::new(config.unwrap_or_default(), Some(input_url))
             ),
             "input.js",
             Syntax::Es(Default::default()),

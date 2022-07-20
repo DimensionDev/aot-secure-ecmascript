@@ -4,7 +4,7 @@
     "access": "public"
   },
   "version": "0.3.0",
-  "description": "@swc/core plugin to transform ES Module into StaticModuleRecord.",
+  "description": "@swc/core plugin to transform ES Module into Virtual Module Record.",
   "type": "module",
   "author": "Jack Works",
   "license": "MIT",
