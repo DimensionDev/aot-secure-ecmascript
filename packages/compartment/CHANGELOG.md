@@ -1,5 +1,16 @@
 # @masknet/compartment
 
+## 0.2.2
+
+### Patch Changes
+
+-   02eed40: rename SyntheticModuleRecord to VirtualModuleRecord
+-   1dcaf05: remove StaticModuleRecord constructor
+-   393fe2a: add source property to reflect the module source
+-   c3cc4cc: fix dynamic import the same record multiple times
+-   8eb9860: rename initialize in virtual module record to execute
+-   d9e88f8: change shape of Module constructor
+
 ## 0.2.1
 
 ### Patch Changes
