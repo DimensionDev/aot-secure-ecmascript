@@ -659,7 +659,9 @@ export class Module {
                 async (module) => {
                     if (module === null || module === undefined)
                         throw new SyntaxError(`Failed to resolve module '${spec}'`)
-                    if (!(#HasTLA in module)) throw new TypeError('ImportHook must return a Module instance')
+                    // Safari: private in
+                    module.#HasTLA
+                    // if (!(#HasTLA in module)) throw new TypeError('ImportHook must return a Module instance')
                     await this.#HostResolveModules(module, module.#RequestedModules)
                     return module
                 },
@@ -691,7 +693,8 @@ export class Module {
         return Promise.all(promises)
     }
     //#endregion
-    static {
+    // Safari: static init block
+    static _: any = (() => {
         imports = async (module, options) => {
             return Module.#DynamicImportModule(module)
         }
@@ -709,8 +712,9 @@ export class Module {
             }
             return SubModule
         }
-    }
+    })()
 }
+delete Module._
 
 const enum ModuleStatus {
     unlinked,

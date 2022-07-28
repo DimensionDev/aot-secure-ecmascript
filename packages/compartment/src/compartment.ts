@@ -46,10 +46,19 @@ export class Compartment implements CompartmentInstance {
     }
 
     // implementation
-    static {
-        brandCheck_Compartment = (compartment: Compartment) => #globalThis in compartment
+    // Safari: static init block
+    static _: any = (() => {
+        // Safari: private in
+        brandCheck_Compartment = (compartment: Compartment) => {
+            try {
+                compartment.#globalThis
+                return true
+            } catch {
+                return false
+            }
+        }
         internalSlot_Compartment_globalThis_get = (compartment: Compartment) => compartment.#globalThis
-    }
+    })()
     #opts: CompartmentOptions
     #incubatorCompartment?: Compartment
     #globalThis: typeof globalThis
@@ -209,6 +218,7 @@ export class Compartment implements CompartmentInstance {
         } else unreachable(module)
     }
 }
+delete Compartment._
 
 function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: object) {
     const systemImports: string[] = []
