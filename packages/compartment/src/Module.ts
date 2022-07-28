@@ -666,11 +666,7 @@ export class Module {
                     return module
                 },
                 (error) => {
-                    throw new SyntaxError(
-                        `Failed to import module '${spec}'`,
-                        // @ts-expect-error
-                        { cause: error },
-                    )
+                    throw new SyntaxError(`Failed to import module '${spec}'`, { cause: error })
                 },
             )
             .then(capability.Resolve, capability.Reject)
