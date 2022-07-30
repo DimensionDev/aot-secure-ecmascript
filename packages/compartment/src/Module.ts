@@ -12,7 +12,7 @@ import {
 import { normalizeBindingsToSpecRecord, normalizeVirtualModuleRecord } from './utils/normalize.js'
 import { assert, internalError, opaqueProxy } from './utils/assert.js'
 
-export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module | null>
+export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module | null> | Module | null
 export let imports: (specifier: Module, options?: ImportCallOptions) => Promise<ModuleNamespace>
 /** @internal */
 export let createModuleSubclass: (globalThis: object, importHook?: ImportHook, importMeta?: ImportMeta) => typeof Module
@@ -777,15 +777,38 @@ const moduleContextExoticMethods: ProxyHandler<any> = {
 }
 
 const moduleEnvExoticMethods: ProxyHandler<any> = {
-    getOwnPropertyDescriptor: internalError,
-    defineProperty: internalError,
-    deleteProperty: internalError,
-    getPrototypeOf: internalError,
-    has: internalError,
-    isExtensible: internalError,
-    ownKeys: internalError,
-    preventExtensions: internalError,
-    setPrototypeOf: internalError,
-    apply: internalError,
-    construct: internalError,
+    set(target, p, value) {
+        const ownDesc = Reflect.getOwnPropertyDescriptor(target, p)
+        if (ownDesc) {
+            // import binding
+            if (!ownDesc.writable) return false
+            if (!ownDesc.set) return false
+            // export binding
+            ownDesc.set(value)
+            return true
+        } else {
+            // global binding
+            const global = Object.getPrototypeOf(target)
+            if (!Object.hasOwn(global, p)) return false
+            return Reflect.set(global, p, value)
+        }
+    },
+    getOwnPropertyDescriptor: () => undefined,
+    defineProperty() {
+        // TODO:
+        internalError()
+    },
+    deleteProperty() {
+        return false
+    },
+    has() {
+        return false
+    },
+    ownKeys() {
+        return []
+    },
+    isExtensible: () => false,
+    preventExtensions: () => true,
+    getPrototypeOf: () => null,
+    setPrototypeOf: (_, v) => v === null,
 }

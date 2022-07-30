@@ -7,9 +7,6 @@
     "default": "./dist/index.js"
   },
   "scripts": {
-    "install-system.js": "node --experimental-fetch ./addSystemJS.mjs",
-    "play": "node ./test/index.js",
-    "build": "echo 'No build command'"
   },
   "dependencies": {},
   "devDependencies": {},
