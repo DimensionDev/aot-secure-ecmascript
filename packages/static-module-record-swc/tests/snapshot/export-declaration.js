@@ -102,12 +102,12 @@ export default {
         class T {
         }
         _.T = T;
-        let [x1, { key: x2 , ...x3 }] = _.expr;
+        let [x1, { key: x2 , ...x3 }] = (0, _.expr);
         _.x1 = x1;
         _.x2 = x2;
         _.x3 = x3;
         [
-            [x1, x2, x3] = _.expr2,
+            [x1, x2, x3] = (0, _.expr2),
             _.x1 = x1,
             _.x2 = x2,
             _.x3 = x3

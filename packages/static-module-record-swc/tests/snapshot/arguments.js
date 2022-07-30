@@ -5,7 +5,7 @@ export default {
             function x() {
                 arguments;
                 const x = {
-                    arguments: _.arguments
+                    arguments: (0, _.arguments)
                 };
             }
             function x1() {
@@ -18,11 +18,11 @@ export default {
             }
         }
         {
-            _.arguments;
-            const x = ()=>_.arguments;
+            (0, _.arguments);
+            const x = ()=>(0, _.arguments);
             const y = ()=>{
                 const x = {
-                    arguments: _.arguments
+                    arguments: (0, _.arguments)
                 };
             };
         }

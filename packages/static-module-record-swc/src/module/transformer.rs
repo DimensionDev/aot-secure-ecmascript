@@ -2,7 +2,7 @@ use swc_common::DUMMY_SP;
 use swc_plugin::{ast::*, utils::quote_ident};
 
 use super::{
-    codegen::{assign_prop, prop_access},
+    codegen::{assign_prop, prop_access, undefined_this_wrapper},
     VirtualModuleRecordTransformer,
 };
 
@@ -365,7 +365,7 @@ impl Fold for VirtualModuleRecordTransformer {
                 if self.local_ident.contains(&id.to_id()) || skip {
                     id.into()
                 } else {
-                    prop_access(self.module_env_record_ident.clone(), id)
+                    undefined_this_wrapper(prop_access(self.module_env_record_ident.clone(), id))
                 }
             }
             Expr::MetaProp(meta) if meta.kind == MetaPropKind::ImportMeta => {
@@ -390,10 +390,10 @@ impl Fold for VirtualModuleRecordTransformer {
             } else {
                 Prop::KeyValue(KeyValueProp {
                     key: PropName::Ident(id.clone()),
-                    value: Box::new(prop_access(
+                    value: Box::new(undefined_this_wrapper(prop_access(
                         self.module_env_record_ident.clone(),
                         id.clone(),
-                    )),
+                    ))),
                 })
             }
         } else {

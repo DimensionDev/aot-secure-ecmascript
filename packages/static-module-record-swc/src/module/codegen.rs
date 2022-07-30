@@ -154,6 +154,29 @@ pub fn prop_access(obj: Ident, prop: Ident) -> Expr {
     }
     .into()
 }
+
+pub fn undefined_this_wrapper(expr: Expr) -> Expr {
+    ParenExpr {
+        expr: Box::new(
+            SeqExpr {
+                exprs: vec![
+                    swc_plugin::ast::Expr::Lit(Lit::Num(Number {
+                        value: 0.0,
+                        raw: None,
+                        span: DUMMY_SP,
+                    }))
+                    .into(),
+                    Box::new(expr),
+                ],
+                span: DUMMY_SP,
+            }
+            .into(),
+        ),
+        span: DUMMY_SP,
+    }
+    .into()
+}
+
 pub fn assign_prop(obj: Ident, assign_to: MemberProp, expr: Box<Expr>) -> Expr {
     AssignExpr {
         left: PatOrExpr::Expr(Box::new(

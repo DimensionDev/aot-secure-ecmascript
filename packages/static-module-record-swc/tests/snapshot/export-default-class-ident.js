@@ -8,7 +8,7 @@ export default {
         class T {
         }
         _.default = T;
-        if (_.Math.random()) {
+        if ((0, _.Math).random()) {
             [
                 T = class T2 {
                 },

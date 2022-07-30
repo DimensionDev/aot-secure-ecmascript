@@ -1,12 +1,12 @@
 export default {
     execute: function(_) {
-        _.globalThis;
-        _.window;
+        (0, _.globalThis);
+        (0, _.window);
         function f(globalThis) {
             globalThis;
         }
         const x = {
-            a: _.a
+            a: (0, _.a)
         };
     }
 };

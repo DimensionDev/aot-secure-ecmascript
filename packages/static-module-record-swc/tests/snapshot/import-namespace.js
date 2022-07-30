@@ -11,6 +11,6 @@ export default {
         }
     ],
     execute: function(_) {
-        _.console.log(_.a, _.b);
+        (0, _.console).log((0, _.a), (0, _.b));
     }
 };
