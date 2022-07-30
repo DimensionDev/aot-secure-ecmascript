@@ -48,7 +48,7 @@ export class Module {
         this.#RequestedModules = requestedModules
         this.#StarExportEntries = starExportEntries
     }
-    get source(): ModuleSource | VirtualModuleRecord {
+    get source(): ModuleSource | VirtualModuleRecord | null {
         return this.#Source
     }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
@@ -690,6 +690,7 @@ export class Module {
     }
     //#endregion
     // Safari: static init block
+    /** @internal */
     static _: any = (() => {
         imports = async (module, options) => {
             return Module.#DynamicImportModule(module)

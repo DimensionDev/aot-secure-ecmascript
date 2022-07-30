@@ -1,4 +1,4 @@
-import { Evaluators, imports } from '../src/index.js'
+import { Evaluators, imports, Module } from '../src/index.js'
 import { describe, expect, it } from 'vitest'
 
 describe('Evaluators', () => {
