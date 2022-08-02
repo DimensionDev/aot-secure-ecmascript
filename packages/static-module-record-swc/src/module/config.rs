@@ -39,11 +39,3 @@ pub enum Template {
         cwd: String,
     },
 }
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TransformContext {
-    #[serde(rename = "filename")]
-    pub file_name: String,
-    // #[serde(rename = "envName")]
-    // pub env_name: String,
-}

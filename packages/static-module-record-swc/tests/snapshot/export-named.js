@@ -32,7 +32,6 @@ export default {
                     _.b = _.a = a
                 ][0];
             }
-            _.c = c;
         }
         {
             for(var f = 0; f < [].length; f++){
