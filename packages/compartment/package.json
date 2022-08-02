@@ -6,11 +6,10 @@
   "exports": {
     "default": "./dist/index.js"
   },
-  "scripts": {
+  "scripts": {},
+  "devDependencies": {
+    "@swc/core": "^1.2.222"
   },
-  "dependencies": {},
-  "devDependencies": {},
-  "peerDependencies": {},
   "files": [
     "dist",
     "src"

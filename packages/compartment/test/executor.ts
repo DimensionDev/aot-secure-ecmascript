@@ -1,4 +1,4 @@
-import { Evaluators, imports, Module } from '../src/index.js'
+import { Evaluators, imports } from '../dist/index.js'
 import { describe, expect, it } from 'vitest'
 
 describe('Evaluators', () => {
@@ -7,18 +7,15 @@ describe('Evaluators', () => {
         const env = new Evaluators({
             globalThis: global,
         })
+        const src = static module {
+            declare let a: number
+            a = 1
+        }
         await imports(
-            new env.Module(
-                {
-                    execute(env) {
-                        env.a = 1
-                    },
-                },
-                {
-                    importHook: async () => null,
-                    importMeta: {},
-                },
-            ),
+            new env.Module(src, {
+                importHook: async () => null,
+                importMeta: {},
+            }),
         )
         expect(global.a).toBe(1)
     })

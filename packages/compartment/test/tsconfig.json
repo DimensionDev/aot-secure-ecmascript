@@ -3,7 +3,10 @@
     "compilerOptions": {
         "rootDir": "./",
         "outDir": "../test-dist/",
-        "tsBuildInfoFile": "../test-dist/.tsbuildinfo"
+        "tsBuildInfoFile": "../test-dist/.tsbuildinfo",
+        "moduleBlock": "module-source",
+        "sourceMap": false,
+        "declarationMap": false
     },
     "include": ["./"],
     "references": [{ "path": "../tsconfig.json" }]
