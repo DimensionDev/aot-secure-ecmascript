@@ -1,5 +1,18 @@
 # @masknet/compartment
 
+## 0.2.2
+
+### Patch Changes
+
+-   1ba4f60: remove unsupported syntax in safari 14
+-   02eed40: rename SyntheticModuleRecord to VirtualModuleRecord
+-   f4913e0: fix env object cannot be set
+-   1dcaf05: remove StaticModuleRecord constructor
+-   393fe2a: add source property to reflect the module source
+-   c3cc4cc: fix dynamic import the same record multiple times
+-   8eb9860: rename initialize in virtual module record to execute
+-   d9e88f8: change shape of Module constructor
+
 ## 0.2.1
 
 ### Patch Changes

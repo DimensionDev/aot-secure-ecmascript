@@ -1,5 +1,15 @@
 # @masknet/static-module-record-swc
 
+## 0.3.1
+
+### Patch Changes
+
+-   4f10e99: fix assignment pattern not handled
+-   4f10e99: fix import-then-export not recognized
+-   4f10e99: remove unnecessary (0, \_.access) wrapper
+-   8eb9860: rename initialize in virtual module record to execute
+-   8bd2ec5: "this" of an imported value should be undefined.
+
 ## 0.3.0
 
 ### Minor Changes
