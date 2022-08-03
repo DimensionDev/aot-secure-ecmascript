@@ -10,8 +10,10 @@ mod transformer;
 
 use self::{binding_descriptor::*, config::Config};
 use std::collections::HashSet;
-use swc_common::DUMMY_SP;
-use swc_plugin::ast::{Id, Ident};
+use swc_plugin::{
+    ast::{Id, Ident},
+    utils::private_ident,
+};
 
 /// Convert code into VirtualModuleRecord
 pub struct VirtualModuleRecordTransformer {
@@ -42,8 +44,8 @@ impl VirtualModuleRecordTransformer {
             bindings: Vec::new(),
             local_modifiable_bindings: Vec::new(),
             local_ident: HashSet::new(),
-            module_env_record_ident: Ident::new("_".into(), DUMMY_SP),
-            import_context_ident: Ident::new("context".into(), DUMMY_SP),
+            module_env_record_ident: private_ident!("_"),
+            import_context_ident: private_ident!("context"),
             config,
             file_name,
         }

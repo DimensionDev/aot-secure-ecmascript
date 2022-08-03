@@ -8,3 +8,5 @@ function f(globalThis) {
 const x = {
     a // global lookup
 }
+
+a = 1

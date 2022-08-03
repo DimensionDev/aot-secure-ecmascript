@@ -6,7 +6,8 @@ export default {
             globalThis;
         }
         const x = {
-            a: (0, _.a)
+            a
         };
+        a = 1;
     }
 };

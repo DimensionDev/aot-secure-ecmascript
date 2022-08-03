@@ -19,7 +19,8 @@ export default {
         }
         {
             (0, _.arguments);
-            const x = ()=>(0, _.arguments);
+            const x2 = ()=>(0, _.arguments);
+            x2();
             const y = ()=>{
                 const x = {
                     arguments: (0, _.arguments)

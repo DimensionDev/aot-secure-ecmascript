@@ -19,6 +19,7 @@
 {
     arguments
     const x = () => arguments
+    x()
     const y = () => {
         const x = { arguments }
     }
