@@ -22,7 +22,7 @@ pub fn process_transform(program: Program, metadata: TransformPluginProgramMetad
     let config = serde_json::from_str::<Config>(
         &metadata
             .get_transform_plugin_config()
-            .unwrap_or("".to_string()),
+            .unwrap_or_else(|| "".to_string()),
     );
     let filename = metadata.get_context(&TransformPluginMetadataContextKind::Filename);
     match config {
@@ -36,9 +36,11 @@ pub fn process_transform(program: Program, metadata: TransformPluginProgramMetad
                     msg: "VirtualModuleRecord transformer must run in the Module mode.".to_string(),
                 })
             }
-            Program::Module(_) => {
-                program.fold_with(&mut VirtualModuleRecordTransformer::new(config, filename))
-            }
+            Program::Module(_) => program.fold_with(&mut VirtualModuleRecordTransformer::new(
+                config,
+                filename,
+                metadata.unresolved_mark,
+            )),
         },
         Err(err) => {
             emit_error(DUMMY_SP, &format!("{}", err));

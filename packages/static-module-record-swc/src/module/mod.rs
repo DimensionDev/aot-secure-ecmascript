@@ -8,10 +8,12 @@ mod scanner;
 /// Transform bindings into VirtualModuleRecord.
 mod transformer;
 
+use std::collections::HashMap;
+
 use self::{binding_descriptor::*, config::Config};
-use std::collections::HashSet;
+use swc_common::{Mark, SyntaxContext};
 use swc_plugin::{
-    ast::{Id, Ident},
+    ast::{Id, Ident, Str},
     utils::private_ident,
 };
 
@@ -22,8 +24,9 @@ pub struct VirtualModuleRecordTransformer {
     uses_dynamic_import: bool,
 
     bindings: Vec<Binding>,
-    local_modifiable_bindings: Vec<LocalModifiableBinding>,
-    local_ident: HashSet<Id>,
+    imported_ident: HashMap<Id, (ModuleBinding, Str)>,
+    local_resolved_bindings: Vec<LiveExportTracingBinding>,
+    unresolved: SyntaxContext,
 
     module_env_record_ident: Ident,
     import_context_ident: Ident,
@@ -35,19 +38,20 @@ pub struct VirtualModuleRecordTransformer {
 }
 
 impl VirtualModuleRecordTransformer {
-    pub fn new(config: Config, file_name: Option<String>) -> Self {
+    pub fn new(config: Config, file_name: Option<String>, unresolved_mark: Mark) -> Self {
         Self {
             uses_import_meta: false,
             uses_top_level_await: false,
             uses_dynamic_import: false,
             may_include_implicit_arguments: false,
             bindings: Vec::new(),
-            local_modifiable_bindings: Vec::new(),
-            local_ident: HashSet::new(),
+            local_resolved_bindings: Vec::new(),
             module_env_record_ident: private_ident!("_"),
             import_context_ident: private_ident!("context"),
             config,
             file_name,
+            unresolved: SyntaxContext::empty().apply_mark(unresolved_mark),
+            imported_ident: HashMap::new(),
         }
     }
 }

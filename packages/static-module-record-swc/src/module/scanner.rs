@@ -1,32 +1,71 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use super::{binding_descriptor::*, VirtualModuleRecordTransformer};
 use swc_common::DUMMY_SP;
 use swc_plugin::{
     ast::*,
-    utils::{contains_top_level_await, quote_ident},
+    utils::{contains_top_level_await, private_ident},
 };
 
-struct ScannerResult {
-    bindings: Vec<Binding>,
-    local_ident: HashSet<Id>,
-    non_accessible_binding_id: u32,
+struct ScannerFirstPass(HashMap<Id, (ModuleBinding, Str)>);
+impl Visit for ScannerFirstPass {
+    fn visit_import_decl(&mut self, n: &ImportDecl) {
+        if n.type_only {
+            return;
+        }
+        for specifier in n.specifiers.iter() {
+            match specifier {
+                ImportSpecifier::Named(named) => {
+                    self.0.insert(
+                        named.local.to_id(),
+                        (
+                            named
+                                .imported
+                                .clone()
+                                .unwrap_or_else(|| named.local.clone().into())
+                                .into(),
+                            n.src.clone(),
+                        ),
+                    );
+                }
+                ImportSpecifier::Default(default) => {
+                    self.0.insert(
+                        default.local.to_id(),
+                        (ModuleBinding::default_export(), n.src.clone()),
+                    );
+                }
+                ImportSpecifier::Namespace(namespace) => {
+                    self.0.insert(
+                        namespace.local.to_id(),
+                        (ModuleBinding::Namespace, n.src.clone()),
+                    );
+                }
+            }
+        }
+    }
 }
-impl Visit for ScannerResult {
+
+struct ScannerSecondPass {
+    bindings: Vec<Binding>,
+    phantom_import_binding_id: u32,
+    imported_ident: HashMap<Id, (ModuleBinding, Str)>,
+    live_export_tracing_bindings: Vec<LiveExportTracingBinding>,
+}
+impl Visit for ScannerSecondPass {
     /// Scan all import/export bindings inside a ModuleDecl
     fn visit_module_decl(&mut self, decl: &ModuleDecl) {
         match decl {
             ModuleDecl::Import(import) if !import.type_only => {
                 if import.specifiers.is_empty() {
-                    self.non_accessible_binding_id += 1;
+                    self.phantom_import_binding_id += 1;
                     self.bindings.push(
                         ImportBinding {
                             import: ModuleBinding::Namespace,
                             from: import.src.clone(),
-                            alias: Some(
-                                // provide an invalid ident (has a space in it) so it is not accessible from the source code
-                                quote_ident!(format!("import {}", self.non_accessible_binding_id)),
-                            ),
+                            alias: Some(private_ident!(format!(
+                                "import_{}",
+                                self.phantom_import_binding_id
+                            ))),
                         }
                         .into(),
                     )
@@ -37,14 +76,16 @@ impl Visit for ScannerResult {
                             if import.type_only {
                                 continue;
                             }
+                            let local_ident = spec.local.clone();
+                            let imported_ident = if let Some(imported) = &spec.imported {
+                                imported.clone()
+                            } else {
+                                ModuleExportName::Ident(spec.local.clone())
+                            };
                             self.bindings.push(
                                 ImportBinding {
-                                    import: (&spec.imported)
-                                        .as_ref()
-                                        .unwrap_or(&ModuleExportName::Ident(spec.local.clone()))
-                                        .clone()
-                                        .into(),
-                                    alias: Some(spec.local.clone()),
+                                    import: imported_ident.into(),
+                                    alias: Some(local_ident),
                                     from: import.src.clone(),
                                 }
                                 .into(),
@@ -71,16 +112,18 @@ impl Visit for ScannerResult {
             }
             ModuleDecl::ExportDecl(export) => match &export.decl {
                 Decl::Class(class) => {
-                    self.local_ident.insert(class.ident.to_id());
-                    self.bindings.push(ExportBinding::local(&class.ident))
+                    self.bindings.push(ExportBinding::local(&class.ident));
+                    self.live_export_tracing_bindings
+                        .push(LiveExportTracingBinding::simple(&class.ident));
                 }
                 Decl::Fn(f) => {
-                    self.local_ident.insert(f.ident.to_id());
-                    self.bindings.push(ExportBinding::local(&f.ident))
+                    self.bindings.push(ExportBinding::local(&f.ident));
+                    self.live_export_tracing_bindings
+                        .push(LiveExportTracingBinding::simple(&f.ident));
                 }
                 Decl::Var(var) => {
                     for decl in &var.decls {
-                        self.visit_pat_inner(&decl.name, true);
+                        self.visit_pat_inner(&decl.name);
                     }
                 }
                 // No TS support.
@@ -93,6 +136,7 @@ impl Visit for ScannerResult {
                 for spec in &export.specifiers {
                     match spec {
                         ExportSpecifier::Namespace(ns) => {
+                            assert!(export.src.is_some());
                             self.bindings.push(
                                 ExportBinding {
                                     export: ModuleBinding::Namespace,
@@ -103,6 +147,7 @@ impl Visit for ScannerResult {
                             );
                         }
                         ExportSpecifier::Default(spec) => {
+                            assert!(export.src.is_some());
                             self.bindings.push(
                                 ExportBinding {
                                     export: ModuleBinding::default_export(),
@@ -113,30 +158,73 @@ impl Visit for ScannerResult {
                             );
                         }
                         ExportSpecifier::Named(spec) => {
-                            self.bindings.push(
-                                ExportBinding {
-                                    export: (&spec.orig).clone().into(),
-                                    alias: (&spec.exported).clone(),
-                                    from: export.src.clone(),
+                            let mut bindings_pushed = false;
+                            if let ModuleExportName::Ident(ident) = &spec.orig {
+                                let id = self.imported_ident.get(&ident.to_id());
+                                if let Some((binding, from)) = id {
+                                    assert!(export.src.is_none());
+                                    self.bindings.push(
+                                        ExportBinding {
+                                            export: binding.clone(),
+                                            alias: Some(
+                                                spec.exported
+                                                    .clone()
+                                                    .unwrap_or_else(|| ident.clone().into()),
+                                            ),
+                                            from: Some(from.clone()),
+                                        }
+                                        .into(),
+                                    );
+                                    bindings_pushed = true;
                                 }
-                                .into(),
-                            );
+                            }
+                            if !bindings_pushed {
+                                self.bindings.push(
+                                    ExportBinding {
+                                        export: (&spec.orig).clone().into(),
+                                        alias: (&spec.exported).clone(),
+                                        from: export.src.clone(),
+                                    }
+                                    .into(),
+                                )
+                            }
+                            if export.src.is_none() {
+                                if let ModuleExportName::Ident(local_name) = &spec.orig {
+                                    if let Some(export_name) = &spec.exported {
+                                        self.live_export_tracing_bindings.push(
+                                            LiveExportTracingBinding::complex(
+                                                local_name,
+                                                export_name,
+                                            ),
+                                        );
+                                    } else {
+                                        self.live_export_tracing_bindings
+                                            .push(LiveExportTracingBinding::simple(local_name));
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
             ModuleDecl::ExportDefaultDecl(export) => {
-                let local_ident: Option<ModuleExportName> = match &export.decl {
-                    DefaultDecl::Class(class) => class.ident.clone().map(|x| x.into()),
-                    DefaultDecl::Fn(f) => f.ident.clone().map(|x| x.into()),
+                let local_ident = match &export.decl {
+                    DefaultDecl::Class(class) => &class.ident,
+                    DefaultDecl::Fn(f) => &f.ident,
                     DefaultDecl::TsInterfaceDecl(_) => unimplemented!(),
                 };
                 if let Some(local_ident) = local_ident {
+                    let default_ident = Ident::new("default".into(), DUMMY_SP);
+                    self.live_export_tracing_bindings
+                        .push(LiveExportTracingBinding {
+                            local_ident: local_ident.clone(),
+                            export: ModuleExportName::Ident(default_ident.clone()),
+                        });
                     self.bindings.push(
                         ExportBinding {
                             from: None,
-                            export: local_ident.into(),
-                            alias: Some(Ident::new("default".into(), DUMMY_SP).into()),
+                            export: local_ident.clone().into(),
+                            alias: Some(default_ident.into()),
                         }
                         .into(),
                     );
@@ -175,85 +263,38 @@ impl Visit for ScannerResult {
         };
         decl.visit_children_with(self);
     }
-    fn visit_pat(&mut self, n: &Pat) {
-        self.visit_pat_inner(n, false);
-        n.visit_children_with(self);
-    }
-    fn visit_class_decl(&mut self, n: &ClassDecl) {
-        self.local_ident.insert(n.ident.to_id());
-        n.visit_children_with(self);
-    }
-    fn visit_class_expr(&mut self, n: &ClassExpr) {
-        if let Some(ident) = &n.ident {
-            self.local_ident.insert(ident.to_id());
-        }
-        n.visit_children_with(self);
-    }
-    fn visit_fn_decl(&mut self, n: &FnDecl) {
-        self.local_ident.insert(n.ident.to_id());
-        n.visit_children_with(self);
-    }
-    fn visit_fn_expr(&mut self, n: &FnExpr) {
-        if let Some(ident) = &n.ident {
-            self.local_ident.insert(ident.to_id());
-        }
-        n.visit_children_with(self);
-    }
-    fn visit_var_declarator(&mut self, n: &VarDeclarator) {
-        self.visit_pat_inner(&n.name, false);
-        n.visit_children_with(self);
-    }
 }
 
-impl ScannerResult {
+impl ScannerSecondPass {
     /// Scan all bindings inside a BindingPattern
-    fn visit_pat_inner(&mut self, pat: &Pat, is_collect_bindings: bool) {
+    fn visit_pat_inner(&mut self, pat: &Pat) {
         match pat {
             Pat::Ident(id) => {
-                if is_collect_bindings {
-                    self.bindings.push(
-                        ExportBinding {
-                            from: None,
-                            export: id.id.clone().into(),
-                            alias: None,
-                        }
-                        .into(),
-                    );
-                }
-                self.local_ident.insert(id.to_id());
+                self.bindings.push(ExportBinding::simple(&id.id).into());
+                self.live_export_tracing_bindings
+                    .push(LiveExportTracingBinding::simple(&id.id));
             }
             Pat::Array(arr) => {
                 for elem in arr.elems.iter().flatten() {
-                    self.visit_pat_inner(elem, is_collect_bindings);
+                    self.visit_pat_inner(elem);
                 }
             }
-            Pat::Rest(rest) => self.visit_pat_inner(&rest.arg, is_collect_bindings),
+            Pat::Rest(rest) => self.visit_pat_inner(&rest.arg),
             Pat::Object(obj) => {
                 for item in &obj.props {
                     match item {
-                        ObjectPatProp::KeyValue(kv) => {
-                            self.visit_pat_inner(&kv.value, is_collect_bindings)
-                        }
+                        ObjectPatProp::KeyValue(kv) => self.visit_pat_inner(&kv.value),
                         ObjectPatProp::Assign(assign) => {
-                            if is_collect_bindings {
-                                self.bindings.push(
-                                    ExportBinding {
-                                        from: None,
-                                        export: (&assign.key).clone().into(),
-                                        alias: None,
-                                    }
-                                    .into(),
-                                );
-                            }
-                            self.local_ident.insert(assign.key.to_id());
+                            self.bindings
+                                .push(ExportBinding::simple(&assign.key).into());
+                            self.live_export_tracing_bindings
+                                .push(LiveExportTracingBinding::simple(&assign.key));
                         }
-                        ObjectPatProp::Rest(RestPat { arg, .. }) => {
-                            self.visit_pat_inner(arg, is_collect_bindings)
-                        }
+                        ObjectPatProp::Rest(RestPat { arg, .. }) => self.visit_pat_inner(arg),
                     }
                 }
             }
-            Pat::Assign(assign) => self.visit_pat_inner(&assign.left, is_collect_bindings),
+            Pat::Assign(assign) => self.visit_pat_inner(&assign.left),
             Pat::Invalid(_) => unreachable![],
             Pat::Expr(_) => {}
         }
@@ -262,16 +303,20 @@ impl ScannerResult {
 
 impl VirtualModuleRecordTransformer {
     pub fn scan(&mut self, module: &Module) {
-        let mut scanner = ScannerResult {
-            bindings: vec![],
-            local_ident: HashSet::new(),
-            non_accessible_binding_id: 0,
-        };
-        module.visit_with(&mut scanner);
+        let mut scanner_first_pass = ScannerFirstPass(HashMap::new());
+        module.visit_with(&mut scanner_first_pass);
 
-        self.bindings = scanner.bindings;
-        self.local_modifiable_bindings = local_modifiable_bindings(&self.bindings);
+        let mut scanner_second_pass = ScannerSecondPass {
+            imported_ident: scanner_first_pass.0,
+            bindings: vec![],
+            phantom_import_binding_id: 0,
+            live_export_tracing_bindings: vec![],
+        };
+        module.visit_with(&mut scanner_second_pass);
+
+        self.bindings = scanner_second_pass.bindings;
+        self.imported_ident = scanner_second_pass.imported_ident;
+        self.local_resolved_bindings = scanner_second_pass.live_export_tracing_bindings;
         self.uses_top_level_await = contains_top_level_await(module);
-        self.local_ident = scanner.local_ident;
     }
 }

@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use swc_common::DUMMY_SP;
 use swc_plugin::{ast::*, utils::quote_ident};
 
@@ -228,18 +230,17 @@ impl VirtualModuleRecordTransformer {
             }
             Pat::Assign(assign) => self.trace_live_export_pat(&assign.left, tracing),
             Pat::Invalid(_) => unreachable!(),
-            // Only for for-in / for-of loops.
-            // no need to handle this:
-            // for (a.b in expr);
-            // for (a().b of expr);
-            // we only need to trace live export.
-            Pat::Expr(_) => (),
+            Pat::Expr(expr) => {
+                if let Expr::Ident(ident) = expr.as_ref() {
+                    self.trace_live_export_ident(ident, tracing)
+                }
+            }
         }
     }
     fn trace_live_export_ident(&self, local_ident: &Ident, tracing: &mut Vec<Expr>) {
         let mut need_init_expr = false;
         let init_expr: Expr = local_ident.clone().into();
-        let assign = (&self.local_modifiable_bindings)
+        let assign = (&self.local_resolved_bindings)
             .iter()
             .filter(|x| x.local_ident.to_id() == local_ident.to_id())
             .fold(init_expr, |expr, x| {
@@ -264,6 +265,30 @@ impl VirtualModuleRecordTransformer {
             tracing.push(assign);
         }
     }
+    fn need_ident_fold(&self, id: &Ident) -> bool {
+        let is_arguments = self.may_include_implicit_arguments && id.sym == js_word!("arguments");
+        let is_imported = self.is_imported(id);
+        let is_unresolved = self.is_unresolved(id);
+        is_imported || (is_unresolved && !is_arguments)
+    }
+    fn fold_ident_inner(&self, id: &Ident, avoid_this: bool) -> Expr {
+        if self.need_ident_fold(id) {
+            let expr = prop_access(self.module_env_record_ident.clone(), id.clone());
+            if avoid_this {
+                undefined_this_wrapper(expr)
+            } else {
+                expr
+            }
+        } else {
+            id.clone().into()
+        }
+    }
+    fn is_unresolved(&self, id: &Ident) -> bool {
+        id.span.ctxt == self.unresolved
+    }
+    fn is_imported(&self, id: &Ident) -> bool {
+        self.imported_ident.contains_key(&id.to_id())
+    }
 }
 
 // https://rustdoc.swc.rs/swc_ecma_visit/trait.Fold.html
@@ -283,15 +308,23 @@ impl Fold for VirtualModuleRecordTransformer {
         n
     }
     fn fold_callee(&mut self, n: Callee) -> Callee {
-        if n.is_import() {
-            self.uses_dynamic_import = true;
-            Callee::Expr(Box::new(Expr::Member(MemberExpr {
-                obj: Box::new(self.import_context_ident.clone().into()),
-                prop: MemberProp::Ident(quote_ident!("import")),
-                span: DUMMY_SP,
-            })))
-        } else {
-            n.fold_children_with(self)
+        match &n {
+            Callee::Import(_) => {
+                self.uses_dynamic_import = true;
+                Callee::Expr(Box::new(Expr::Member(MemberExpr {
+                    obj: Box::new(self.import_context_ident.clone().into()),
+                    prop: MemberProp::Ident(quote_ident!("import")),
+                    span: DUMMY_SP,
+                })))
+            }
+            Callee::Expr(expr) => {
+                if let Expr::Ident(ident) = expr.deref() {
+                    Callee::Expr(Box::new(self.fold_ident_inner(ident, true)))
+                } else {
+                    n.fold_children_with(self)
+                }
+            }
+            _ => n.fold_children_with(self),
         }
     }
     fn fold_expr(&mut self, n: Expr) -> Expr {
@@ -300,10 +333,10 @@ impl Fold for VirtualModuleRecordTransformer {
                 if let Some(id) = (&expr.arg).as_ident() {
                     let mut tracing = vec![];
                     self.trace_live_export_ident(id, &mut tracing);
-                    if tracing.is_empty() {
+                    if tracing.is_empty() && !self.is_unresolved(id) {
                         expr.fold_children_with(self).into()
                     } else {
-                        tracing.insert(0, expr.into());
+                        tracing.insert(0, expr.fold_children_with(self).into());
                         SeqExpr {
                             exprs: tracing.into_iter().map(Box::new).collect(),
                             span: DUMMY_SP,
@@ -360,14 +393,7 @@ impl Fold for VirtualModuleRecordTransformer {
                     .into()
                 }
             }
-            Expr::Ident(id) => {
-                let skip = self.may_include_implicit_arguments && id.sym == js_word!("arguments");
-                if self.local_ident.contains(&id.to_id()) || skip {
-                    id.into()
-                } else {
-                    undefined_this_wrapper(prop_access(self.module_env_record_ident.clone(), id))
-                }
-            }
+            Expr::Ident(id) => self.fold_ident_inner(&id, false),
             Expr::MetaProp(meta) if meta.kind == MetaPropKind::ImportMeta => {
                 self.uses_import_meta = true;
                 Expr::Member(MemberExpr {
@@ -383,18 +409,25 @@ impl Fold for VirtualModuleRecordTransformer {
             _ => n.fold_children_with(self),
         }
     }
+    fn fold_tagged_tpl(&mut self, n: TaggedTpl) -> TaggedTpl {
+        if let Expr::Ident(ident) = n.tag.as_ref() {
+            TaggedTpl {
+                tag: Box::new(self.fold_ident_inner(ident, true)),
+                ..n.fold_children_with(self)
+            }
+        } else {
+            n.fold_children_with(self)
+        }
+    }
     fn fold_prop(&mut self, n: Prop) -> Prop {
         if let Prop::Shorthand(id) = &n {
-            if self.local_ident.contains(&id.to_id()) {
-                n
-            } else {
+            if self.need_ident_fold(id) {
                 Prop::KeyValue(KeyValueProp {
                     key: PropName::Ident(id.clone()),
-                    value: Box::new(undefined_this_wrapper(prop_access(
-                        self.module_env_record_ident.clone(),
-                        id.clone(),
-                    ))),
+                    value: Box::new(self.fold_ident_inner(id, false)),
                 })
+            } else {
+                n
             }
         } else {
             n.fold_children_with(self)
@@ -426,6 +459,27 @@ impl Fold for VirtualModuleRecordTransformer {
         stmt.into_iter()
             .flat_map(|x| self.fold_stmt_to_multiple(x))
             .collect()
+    }
+    fn fold_pat(&mut self, pat: Pat) -> Pat {
+        if let Pat::Ident(ident) = pat {
+            Pat::Expr(self.fold_ident_inner(&ident, false).into())
+        } else {
+            pat.fold_children_with(self)
+        }
+    }
+    fn fold_object_pat_prop(&mut self, n: ObjectPatProp) -> ObjectPatProp {
+        if let ObjectPatProp::Assign(n) = n {
+            if self.need_ident_fold(&n.key) {
+                ObjectPatProp::KeyValue(KeyValuePatProp {
+                    value: Box::new(Pat::Expr(Box::new(self.fold_ident_inner(&n.key, false)))),
+                    key: n.key.into(),
+                })
+            } else {
+                n.fold_children_with(self).into()
+            }
+        } else {
+            n.fold_children_with(self)
+        }
     }
 }
 

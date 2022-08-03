@@ -1,4 +1,4 @@
-use super::{config::Template, VirtualModuleRecordTransformer};
+use super::{binding_descriptor::Binding, config::Template, VirtualModuleRecordTransformer};
 use crate::utils::*;
 use swc_common::{util::take::Take, DUMMY_SP};
 use swc_plugin::ast::*;
@@ -54,19 +54,7 @@ impl VirtualModuleRecordTransformer {
         if !self.bindings.is_empty() {
             props.push(key_value(
                 "bindings".into(),
-                ArrayLit {
-                    span: DUMMY_SP,
-                    elems: (&self.bindings)
-                        .iter()
-                        .map(|binding| {
-                            Some(ExprOrSpread {
-                                expr: Box::new(binding.to_object_lit().into()),
-                                spread: None,
-                            })
-                        })
-                        .collect(),
-                }
-                .into(),
+                Binding::to_array_lit(&self.bindings).into(),
             ));
         }
 

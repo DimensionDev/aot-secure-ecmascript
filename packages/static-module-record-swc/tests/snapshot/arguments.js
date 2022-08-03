@@ -2,13 +2,13 @@ export default {
     execute: function(_) {
         'use strict';
         {
-            function x() {
+            function x1() {
                 arguments;
                 const x = {
-                    arguments: (0, _.arguments)
+                    arguments
                 };
             }
-            function x1() {
+            function x11() {
                 return ()=>arguments;
             }
             class T {
@@ -18,12 +18,12 @@ export default {
             }
         }
         {
-            (0, _.arguments);
-            const x2 = ()=>(0, _.arguments);
-            x2();
+            _.arguments;
+            const x = ()=>_.arguments;
+            x();
             const y = ()=>{
                 const x = {
-                    arguments: (0, _.arguments)
+                    arguments: _.arguments
                 };
             };
         }

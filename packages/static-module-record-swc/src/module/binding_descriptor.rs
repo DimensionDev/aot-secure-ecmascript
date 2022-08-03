@@ -22,10 +22,29 @@ pub struct ExportBinding {
     pub from: Option<Str>,
 }
 
+impl ExportBinding {
+    pub fn simple(ident: &Ident) -> Self {
+        Self {
+            export: (ident.clone()).into(),
+            alias: None,
+            from: None,
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Eq)]
 pub enum ModuleBinding {
     ModuleExportName(ModuleExportName),
     Namespace,
+}
+
+impl ModuleBinding {
+    pub fn ident(&self) -> Option<&Ident> {
+        match self {
+            ModuleBinding::ModuleExportName(ModuleExportName::Ident(ident)) => Some(ident),
+            _ => None,
+        }
+    }
 }
 
 fn module_export_name_to_str(binding: &ModuleExportName) -> String {
@@ -183,45 +202,40 @@ impl ExportBinding {
 }
 impl Binding {
     #[inline]
-    pub fn to_object_lit(&self) -> ObjectLit {
-        match self {
-            Binding::Import(import) => import.to_object_lit(),
-            Binding::Export(export) => export.to_object_lit(),
+    pub(crate) fn to_array_lit(bindings: &Vec<Binding>) -> ArrayLit {
+        let mut item: Vec<Option<ExprOrSpread>> = Vec::with_capacity(bindings.len());
+        for binding in bindings {
+            let lit = match binding {
+                Binding::Import(import) => import.to_object_lit(),
+                Binding::Export(export) => export.to_object_lit(),
+            };
+            item.push(Some(ExprOrSpread {
+                spread: None,
+                expr: Box::new(lit.into()),
+            }));
+        }
+        ArrayLit {
+            span: DUMMY_SP,
+            elems: item,
         }
     }
 }
 
-pub struct LocalModifiableBinding {
+pub struct LiveExportTracingBinding {
     pub local_ident: Ident,
     pub export: ModuleExportName,
 }
-pub fn local_modifiable_bindings(bindings: &[Binding]) -> Vec<LocalModifiableBinding> {
-    bindings
-        .iter()
-        .filter_map(|binding: &Binding| -> Option<LocalModifiableBinding> {
-            match binding {
-                Binding::Import(_) => None,
-                Binding::Export(export) => {
-                    if export.from.is_some() {
-                        None
-                    } else {
-                        match &export.export {
-                            ModuleBinding::ModuleExportName(name) => match name {
-                                ModuleExportName::Ident(id) => Some(LocalModifiableBinding {
-                                    local_ident: id.clone(),
-                                    export: export
-                                        .alias
-                                        .clone()
-                                        .unwrap_or_else(|| id.clone().into()),
-                                }),
-                                // export { "x" } from 'other'
-                                ModuleExportName::Str(_) => None,
-                            },
-                            ModuleBinding::Namespace => None,
-                        }
-                    }
-                }
-            }
-        })
-        .collect()
+impl LiveExportTracingBinding {
+    pub fn simple(id: &Ident) -> LiveExportTracingBinding {
+        LiveExportTracingBinding {
+            local_ident: id.clone(),
+            export: ModuleExportName::Ident(id.clone()),
+        }
+    }
+    pub fn complex(id: &Ident, export: &ModuleExportName) -> LiveExportTracingBinding {
+        LiveExportTracingBinding {
+            local_ident: id.clone(),
+            export: export.clone(),
+        }
+    }
 }

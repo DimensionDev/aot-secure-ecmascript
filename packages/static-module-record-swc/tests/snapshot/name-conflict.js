@@ -1,10 +1,10 @@
 export default {
     needsImportMeta: true,
     needsImport: true,
-    execute: function(_, context) {
-        var _1, context1;
-        (0, _.console).log(_1, context1);
-        context.importMeta;
-        context.import('');
+    execute: function(_1, context1) {
+        var _, context;
+        _1.console.log(_, context);
+        context1.importMeta;
+        context1.import('');
     }
 };

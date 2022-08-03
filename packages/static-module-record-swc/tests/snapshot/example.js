@@ -11,7 +11,7 @@ export default {
     isAsync: true,
     needsImportMeta: true,
     execute: async function(_, context) {
-        const url = new (0, _.URL)('./here.txt', context.importMeta.url);
+        const url = new _.URL('./here.txt', context.importMeta.url);
         _.url = url;
         await (0, _.writeFile)(url, 'Hello World');
     }

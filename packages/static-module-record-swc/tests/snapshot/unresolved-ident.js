@@ -1,13 +1,26 @@
 export default {
     execute: function(_) {
-        (0, _.globalThis);
-        (0, _.window);
+        _.globalThis;
         function f(globalThis) {
             globalThis;
         }
-        const x = {
-            a
+        const obj = {
+            a: _.a
         };
-        a = 1;
+        _.a = 1;
+        ({ a: _.a  } = {
+            a: 2
+        });
+        [_.a, _.b] = [
+            1,
+            2
+        ];
+        ({ ..._.a } = _.expr);
+        _.a *= 4;
+        _.a++;
+        function yy({ a =_.x  }) {}
+        (0, _.css)`
+    body {}
+`;
     }
 };

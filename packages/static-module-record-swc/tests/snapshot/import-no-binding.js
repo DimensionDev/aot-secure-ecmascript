@@ -2,7 +2,7 @@ export default {
     bindings: [
         {
             importAllFrom: 'mod',
-            as: "import 1"
+            as: "import_1"
         }
     ],
     execute: function(_) {}

@@ -17,6 +17,6 @@ export default {
         }
     ],
     execute: function(_) {
-        (0, _.console).log((0, _.x), (0, _.y), (0, _.z));
+        _.console.log(_.x, _.y, _.z);
     }
 };

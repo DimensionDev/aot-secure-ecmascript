@@ -23,7 +23,11 @@ fn test(input: PathBuf) {
         let actual = tester.apply_transform(
             chain!(
                 resolver(unresolved_mark, top_level_mark, false),
-                VirtualModuleRecordTransformer::new(config.unwrap_or_default(), Some(input_url)),
+                VirtualModuleRecordTransformer::new(
+                    config.unwrap_or_default(),
+                    Some(input_url),
+                    unresolved_mark
+                ),
                 hygiene()
             ),
             "input.js",
