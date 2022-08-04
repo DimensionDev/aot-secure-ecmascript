@@ -22,37 +22,38 @@ export default {
             export: "x3"
         }
     ],
-    execute: function(_) {
+    execute: function(__, context) {
+        var _ = context.globalThis;
         {
             var a = 1;
-            _.b = _.a = a;
+            __.b = __.a = a;
             function c() {
                 [
                     a = 2,
-                    _.b = _.a = a
+                    __.b = __.a = a
                 ][0];
             }
         }
         {
             for(var f = 0; f < [].length; f++){
-                _.f = f;
+                __.f = f;
             }
             for (f of []){
-                _.f = f;
+                __.f = f;
             }
             for(f in {}){
-                _.f = f;
+                __.f = f;
             }
         }
         let [x1, { key: x2 , ...x3 }] = _.expr;
-        _.x1 = x1;
-        _.x2 = x2;
-        _.x3 = x3;
+        __.x1 = x1;
+        __.x2 = x2;
+        __.x3 = x3;
         [
             [x1, x2, x3] = _.expr2,
-            _.x1 = x1,
-            _.x2 = x2,
-            _.x3 = x3
+            __.x1 = x1,
+            __.x2 = x2,
+            __.x3 = x3
         ][0];
     }
 };

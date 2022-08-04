@@ -1,7 +1,7 @@
 use super::{binding_descriptor::Binding, config::Template, VirtualModuleRecordTransformer};
 use crate::utils::*;
 use swc_common::{util::take::Take, DUMMY_SP};
-use swc_plugin::ast::*;
+use swc_plugin::{ast::*, utils::quote_ident};
 
 impl VirtualModuleRecordTransformer {
     pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &VirtualModuleRecordTransformer) -> Module {
@@ -28,17 +28,40 @@ impl VirtualModuleRecordTransformer {
     }
     fn virtual_module_record(
         &self,
-        stmt: Vec<Stmt>,
+        mut stmts: Vec<Stmt>,
         transformer: &VirtualModuleRecordTransformer,
     ) -> Expr {
+        if self.uses_global_lookup {
+            stmts.insert(
+                0,
+                Stmt::Decl(Decl::Var(VarDecl {
+                    span: DUMMY_SP,
+                    kind: VarDeclKind::Var,
+                    declare: false,
+                    decls: vec![VarDeclarator {
+                        span: DUMMY_SP,
+                        name: self.global_this_ident.clone().into(),
+                        init: Some(Box::new(
+                            prop_access(
+                                self.import_context_ident.clone().into(),
+                                quote_ident!("globalThis"),
+                            )
+                            .into(),
+                        )),
+                        definite: false,
+                    }],
+                })),
+            );
+        }
         let init_fn = Function {
             is_async: self.uses_top_level_await,
             body: Some(BlockStmt {
                 span: DUMMY_SP,
-                stmts: stmt,
+                stmts,
             }),
             params: {
-                let emit_import_context = self.uses_import_meta || self.uses_dynamic_import;
+                let emit_import_context =
+                    self.uses_import_meta || self.uses_dynamic_import || self.uses_global_lookup;
 
                 let mut result = vec![param(transformer.module_env_record_ident.clone())];
                 if emit_import_context {

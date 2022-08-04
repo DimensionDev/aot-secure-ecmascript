@@ -1,7 +1,8 @@
 export default {
     needsImportMeta: true,
     needsImport: true,
-    execute: function(_1, context1) {
+    execute: function(__, context1) {
+        var _1 = context1.globalThis;
         var _, context;
         _1.console.log(_, context);
         context1.importMeta;

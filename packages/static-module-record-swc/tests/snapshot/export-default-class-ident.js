@@ -4,15 +4,16 @@ export default {
             export: "default"
         }
     ],
-    execute: function(_) {
+    execute: function(__, context) {
+        var _ = context.globalThis;
         class T {
         }
-        _.default = T;
+        __.default = T;
         if (_.Math.random()) {
             [
                 T = class T2 {
                 },
-                _.default = T
+                __.default = T
             ][0];
         }
     }

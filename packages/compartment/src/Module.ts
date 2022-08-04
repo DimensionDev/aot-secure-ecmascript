@@ -67,7 +67,6 @@ export class Module<T extends object = any> {
     #NeedsImportMeta: boolean | undefined
     #NeedsImport: boolean | undefined
     #ContextObject: VirtualModuleRecordExecuteContext | undefined
-    #ContextObjectProxy: VirtualModuleRecordExecuteContext | undefined
     #ImportHook: ImportHook
     #AssignedImportMeta: object
     /** the global environment this module binds to */
@@ -212,11 +211,7 @@ export class Module<T extends object = any> {
         // Assert: All named exports from module are resolvable.
 
         const env = { __proto__: null }
-        if (this.#NeedsImport || this.#NeedsImportMeta) {
-            const [context, proxy] = createContextObject()
-            module.#ContextObject = context
-            module.#ContextObjectProxy = proxy
-        }
+        module.#ContextObject = createContextObject()
         module.#Environment = env
 
         for (const i of module.#ImportEntries) {
@@ -276,8 +271,8 @@ export class Module<T extends object = any> {
         Object.setPrototypeOf(env, opaqueProxy)
     }
     #ExecuteModule(promise?: PromiseCapability<void>) {
-        Object.setPrototypeOf(this.#Environment, this.#GlobalThis)
         // prepare context
+        this.#ContextObject!.globalThis = this.#GlobalThis as any
         if (this.#NeedsImportMeta) {
             this.#ContextObject!.importMeta = Object.assign({}, this.#AssignedImportMeta)
         }
@@ -295,12 +290,12 @@ export class Module<T extends object = any> {
         if (!this.#HasTLA) {
             assert(!promise)
             if (this.#Execute) {
-                Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObjectProxy])
+                Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObject])
             }
         } else {
             assert(promise)
             if (this.#Execute) {
-                Promise.resolve(Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObjectProxy])).then(
+                Promise.resolve(Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObject])).then(
                     promise.Resolve,
                     promise.Reject,
                 )
@@ -728,12 +723,13 @@ const enum ModuleStatus {
 }
 
 function createContextObject() {
-    const context = {}
+    const context: VirtualModuleRecordExecuteContext = {} as any
     Object.defineProperties(context, {
         import: { writable: true, enumerable: true, value: undefined },
         importMeta: { writable: true, enumerable: true, value: undefined },
+        globalThis: { writable: true, enumerable: true, value: undefined },
     })
-    return [context, new Proxy(context, moduleContextExoticMethods)]
+    return context
 }
 
 const moduleNamespaceExoticMethods: ProxyHandler<any> = {
@@ -760,25 +756,6 @@ const moduleNamespaceExoticMethods: ProxyHandler<any> = {
     },
     isExtensible() {
         return false
-    },
-}
-
-const moduleContextExoticMethods: ProxyHandler<any> = {
-    // we create ModuleContext in [[InitializeEnvironment]]
-    // and set import and importMeta property in [[ExecuteModule]]
-
-    // and ModuleContext is reachable in user code in [[InitializeEnvironment]] after we have two-stage initialization
-    // therefore we need to prevent developers to touch the descriptor of ModuleContext.
-    defineProperty(target, p, attributes) {
-        if (typeof p === 'symbol' || (p !== 'import' && p !== 'importMeta'))
-            return Reflect.defineProperty(target, p, attributes)
-
-        if (attributes.configurable === false) return false
-        if (attributes.enumerable === false) return false
-        if (attributes.writable === false) return false
-        if (attributes.get || attributes.set) return false
-        target[p] = attributes.value
-        return true
     },
 }
 

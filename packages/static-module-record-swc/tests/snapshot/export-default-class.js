@@ -4,8 +4,8 @@ export default {
             export: "default"
         }
     ],
-    execute: function(_) {
-        _.default = class {
+    execute: function(__) {
+        __.default = class {
         };
     }
 };

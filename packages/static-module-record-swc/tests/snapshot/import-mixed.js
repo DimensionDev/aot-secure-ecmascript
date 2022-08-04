@@ -19,7 +19,8 @@ export default {
             as: "d"
         }
     ],
-    execute: function(_) {
-        _.console.log(_.a, _.b, _.c, _.d);
+    execute: function(__, context) {
+        var _ = context.globalThis;
+        _.console.log(__.a, __.b, __.c, __.d);
     }
 };

@@ -1,5 +1,6 @@
 export default {
-    execute: function(_) {
+    execute: function(__, context) {
+        var _ = context.globalThis;
         _.undefined;
         _.Math;
         _.Function;

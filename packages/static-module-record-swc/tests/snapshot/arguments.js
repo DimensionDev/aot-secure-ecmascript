@@ -1,5 +1,6 @@
 export default {
-    execute: function(_) {
+    execute: function(__, context) {
+        var _ = context.globalThis;
         'use strict';
         {
             function x1() {

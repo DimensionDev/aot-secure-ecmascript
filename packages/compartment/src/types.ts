@@ -47,6 +47,7 @@ export type ModuleNamespace = Record<string, unknown>
 export interface VirtualModuleRecordExecuteContext {
     importMeta?: object
     import?(spec: string, options?: ImportCallOptions): Promise<ModuleNamespace>
+    globalThis: typeof globalThis
 }
 
 export interface StaticModuleRecordInstance {

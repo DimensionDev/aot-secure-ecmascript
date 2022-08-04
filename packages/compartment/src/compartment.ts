@@ -203,14 +203,13 @@ export class Compartment implements CompartmentInstance {
             return [
                 imports,
                 (_export, _context) => {
-                    const context: VirtualModuleRecordExecuteContext | undefined =
-                        needsImport || needsImportMeta ? {} : undefined
+                    const context: VirtualModuleRecordExecuteContext = { globalThis: this.#globalThis }
                     if (needsImport) context!.import = _context.import
                     if (needsImportMeta) context!.importMeta = _context.meta
 
                     init(_export)
                     return {
-                        execute: () => execute?.(moduleEnvironmentProxy, _context),
+                        execute: () => execute?.(moduleEnvironmentProxy, context),
                         setters,
                     }
                 },

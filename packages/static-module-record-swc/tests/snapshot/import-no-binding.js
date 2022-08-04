@@ -5,5 +5,5 @@ export default {
             as: "import_1"
         }
     ],
-    execute: function(_) {}
+    execute: function(__) {}
 };

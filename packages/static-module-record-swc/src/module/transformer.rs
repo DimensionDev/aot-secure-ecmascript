@@ -271,17 +271,28 @@ impl VirtualModuleRecordTransformer {
         let is_unresolved = self.is_unresolved(id);
         is_imported || (is_unresolved && !is_arguments)
     }
-    fn fold_ident_inner(&self, id: &Ident, avoid_this: bool) -> Expr {
-        if self.need_ident_fold(id) {
-            let expr = prop_access(self.module_env_record_ident.clone(), id.clone());
+    fn fold_ident_inner(&mut self, id: &Ident, avoid_this: bool) -> Expr {
+        if self.is_imported(id) {
+            Some(prop_access(
+                self.module_env_record_ident.clone(),
+                id.clone(),
+            ))
+        } else if self.is_unresolved(id)
+            && !(self.may_include_implicit_arguments && id.sym == js_word!("arguments"))
+        {
+            self.uses_global_lookup = true;
+            Some(prop_access(self.global_this_ident.clone(), id.clone()))
+        } else {
+            None
+        }
+        .map(|expr| {
             if avoid_this {
                 undefined_this_wrapper(expr)
             } else {
                 expr
             }
-        } else {
-            id.clone().into()
-        }
+        })
+        .unwrap_or_else(|| id.clone().into())
     }
     fn is_unresolved(&self, id: &Ident) -> bool {
         id.span.ctxt == self.unresolved

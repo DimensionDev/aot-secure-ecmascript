@@ -22,6 +22,7 @@ pub struct VirtualModuleRecordTransformer {
     uses_import_meta: bool,
     uses_top_level_await: bool,
     uses_dynamic_import: bool,
+    uses_global_lookup: bool,
 
     bindings: Vec<Binding>,
     imported_ident: HashMap<Id, (ModuleBinding, Str)>,
@@ -30,6 +31,7 @@ pub struct VirtualModuleRecordTransformer {
 
     module_env_record_ident: Ident,
     import_context_ident: Ident,
+    global_this_ident: Ident,
 
     may_include_implicit_arguments: bool,
 
@@ -43,11 +45,13 @@ impl VirtualModuleRecordTransformer {
             uses_import_meta: false,
             uses_top_level_await: false,
             uses_dynamic_import: false,
+            uses_global_lookup: false,
             may_include_implicit_arguments: false,
             bindings: Vec::new(),
             local_resolved_bindings: Vec::new(),
-            module_env_record_ident: private_ident!("_"),
+            module_env_record_ident: private_ident!("__"),
             import_context_ident: private_ident!("context"),
+            global_this_ident: private_ident!("_"),
             config,
             file_name,
             unresolved: SyntaxContext::empty().apply_mark(unresolved_mark),

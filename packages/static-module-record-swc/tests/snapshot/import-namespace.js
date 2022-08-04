@@ -10,7 +10,8 @@ export default {
             as: "b"
         }
     ],
-    execute: function(_) {
-        _.console.log(_.a, _.b);
+    execute: function(__, context) {
+        var _ = context.globalThis;
+        _.console.log(__.a, __.b);
     }
 };

@@ -4,7 +4,7 @@ export default {
             export: "default"
         }
     ],
-    execute: function(_) {
-        _.default = function() {};
+    execute: function(__) {
+        __.default = function() {};
     }
 };

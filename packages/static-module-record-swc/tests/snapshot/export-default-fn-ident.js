@@ -4,13 +4,13 @@ export default {
             export: "default"
         }
     ],
-    execute: function(_) {
+    execute: function(__) {
         function x() {
             [
                 x = function name() {},
-                _.default = x
+                __.default = x
             ][0];
         }
-        _.default = x;
+        __.default = x;
     }
 };

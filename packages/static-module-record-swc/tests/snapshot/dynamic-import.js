@@ -1,6 +1,6 @@
 export default {
     needsImport: true,
-    execute: function(_, context) {
+    execute: function(__, context) {
         context.import('x');
     }
 };

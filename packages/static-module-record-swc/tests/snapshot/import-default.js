@@ -16,7 +16,8 @@ export default {
             as: "z"
         }
     ],
-    execute: function(_) {
-        _.console.log(_.x, _.y, _.z);
+    execute: function(__, context) {
+        var _ = context.globalThis;
+        _.console.log(__.x, __.y, __.z);
     }
 };

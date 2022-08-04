@@ -1,3 +1,3 @@
 export default {
-    execute: function(_) {}
+    execute: function(__) {}
 };
