@@ -27,3 +27,15 @@ it('can inherit the import.meta', async () => {
     const { url } = await imports(new Module(src))
     expect(url).toBe("hello")
 })
+
+it('returns the given globalThis', () => {
+    const localThis = {}
+    const { globalThis } = new Evaluators({ globalThis: localThis })
+    expect(globalThis).toBe(localThis)
+})
+
+it('checks the argument', () => {
+    expect(() => new Evaluators({ globalThis: 1 as any })).toThrow(TypeError)
+    expect(() => new Evaluators({ importHook: 1 as any })).toThrow(TypeError)
+    expect(() => new Evaluators({ importMeta: 1 as any })).toThrow(TypeError)
+})
