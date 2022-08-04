@@ -20,10 +20,10 @@ export interface ModuleConstructorOptions {
     importHook?: ImportHook | undefined
     importMeta?: object | undefined
 }
-export class Module {
+export class Module<T extends object = any> {
     // The constructor is equivalent to ParseModule in SourceTextModuleRecord
     // https://tc39.es/ecma262/#sec-parsemodule
-    constructor(source: ModuleSource | VirtualModuleRecord, options: ModuleConstructorOptions = {}) {
+    constructor(source: ModuleSource<T> | VirtualModuleRecord, options: ModuleConstructorOptions = {}) {
         const { importHook, importMeta } = options
         if (typeof importHook !== 'function') throw new TypeError('importHook must be a function')
         if (typeof importMeta !== 'object') throw new TypeError('importMeta must be an object')
@@ -697,8 +697,8 @@ export class Module {
         }
         createModuleSubclass = (globalThis, upper_importHook, upper_importMeta) => {
             const Parent = Module
-            const SubModule = class Module extends Parent {
-                constructor(source: ModuleSource | VirtualModuleRecord, options: ModuleConstructorOptions = {}) {
+            const SubModule = class Module<T extends object = any> extends Parent<T> {
+                constructor(source: ModuleSource<T> | VirtualModuleRecord, options: ModuleConstructorOptions = {}) {
                     const { importHook, importMeta } = options
                     super(source, {
                         importHook: importHook ?? upper_importHook,
@@ -707,10 +707,15 @@ export class Module {
                     this.#GlobalThis = globalThis
                 }
             }
+            Reflect.defineProperty(SubModule.prototype, Symbol.toStringTag, { configurable: true, value: 'Module' })
             return SubModule
         }
     })()
 }
+Reflect.defineProperty(Module.prototype, Symbol.toStringTag, {
+    configurable: true,
+    value: 'Module',
+})
 delete Module._
 
 const enum ModuleStatus {
