@@ -41,13 +41,10 @@ impl VirtualModuleRecordTransformer {
                     decls: vec![VarDeclarator {
                         span: DUMMY_SP,
                         name: self.global_this_ident.clone().into(),
-                        init: Some(Box::new(
-                            prop_access(
-                                self.import_context_ident.clone().into(),
-                                quote_ident!("globalThis"),
-                            )
-                            .into(),
-                        )),
+                        init: Some(Box::new(prop_access(
+                            self.import_context_ident.clone(),
+                            quote_ident!("globalThis"),
+                        ))),
                         definite: false,
                     }],
                 })),

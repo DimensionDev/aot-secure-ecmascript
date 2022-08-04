@@ -12,5 +12,5 @@ export class ModuleSource<T extends object = any> {
 }
 Reflect.defineProperty(ModuleSource.prototype, Symbol.toStringTag, {
     configurable: true,
-    value: "ModuleSource",
+    value: 'ModuleSource',
 })
