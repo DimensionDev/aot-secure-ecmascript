@@ -265,6 +265,7 @@ function makeModuleEnvironmentProxy(bindings: readonly Binding[], globalThis: ob
                                 set: (v) => {
                                     value = v
                                     systemExport(exportName, v)
+                                    return true
                                 },
                             },
                         ]

@@ -13,7 +13,7 @@ import { normalizeBindingsToSpecRecord, normalizeVirtualModuleRecord } from './u
 import { assert, internalError, opaqueProxy } from './utils/assert.js'
 
 export type ImportHook = (importSpecifier: string, importMeta: object) => PromiseLike<Module | null> | Module | null
-export let imports: (specifier: Module, options?: ImportCallOptions) => Promise<ModuleNamespace>
+export let imports: <T extends object = any>(specifier: Module<T>, options?: ImportCallOptions) => Promise<T>
 /** @internal */
 export let createModuleSubclass: (globalThis: object, importHook?: ImportHook, importMeta?: ImportMeta) => typeof Module
 export interface ModuleConstructorOptions {
@@ -256,6 +256,7 @@ export class Module<T extends object = any> {
                 set: (value) => {
                     this.#LocalExportValues.set(ExportName, value)
                     this.#ExportCallback.forEach((f) => f(ExportName))
+                    return true
                 },
             })
         }
@@ -688,7 +689,7 @@ export class Module<T extends object = any> {
     /** @internal */
     static _: any = (() => {
         imports = async (module, options) => {
-            return Module.#DynamicImportModule(module)
+            return Module.#DynamicImportModule(module) as any
         }
         createModuleSubclass = (globalThis, upper_importHook, upper_importMeta) => {
             const Parent = Module
@@ -760,22 +761,6 @@ const moduleNamespaceExoticMethods: ProxyHandler<any> = {
 }
 
 const moduleEnvExoticMethods: ProxyHandler<any> = {
-    set(target, p, value) {
-        const ownDesc = Reflect.getOwnPropertyDescriptor(target, p)
-        if (ownDesc) {
-            // import binding
-            if (!ownDesc.writable) return false
-            if (!ownDesc.set) return false
-            // export binding
-            ownDesc.set(value)
-            return true
-        } else {
-            // global binding
-            const global = Object.getPrototypeOf(target)
-            if (!Object.hasOwn(global, p)) return false
-            return Reflect.set(global, p, value)
-        }
-    },
     getOwnPropertyDescriptor: () => undefined,
     defineProperty() {
         // TODO:

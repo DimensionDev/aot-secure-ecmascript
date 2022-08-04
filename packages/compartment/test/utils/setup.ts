@@ -7,6 +7,7 @@ Reflect.set(globalThis, 'ModuleSource', function ModuleSource(sourceText: string
     const result = transformSync(sourceText, {
         isModule: true,
         jsc: {
+            target: "es2022",
             experimental: {
                 plugins: [
                     [
