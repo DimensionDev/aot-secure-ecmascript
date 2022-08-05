@@ -109,7 +109,7 @@ function forwardingFunction(oldF: Function, knowledge: CloneKnowledge): Function
             try {
                 if (new.target) {
                     return clone(
-                        construct(oldF, args, WeakMapGet(originalFromCloned, new.target) ?? new.target),
+                        construct(oldF, args, (WeakMapGet(originalFromCloned, new.target) as Function) ?? new.target),
                         knowledge,
                     )
                 }
