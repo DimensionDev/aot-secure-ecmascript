@@ -1,5 +1,11 @@
 # @masknet/static-module-record-swc
 
+## 0.3.2
+
+### Patch Changes
+
+-   7da5cdb: move globalThis out of environment record
+
 ## 0.3.1
 
 ### Patch Changes

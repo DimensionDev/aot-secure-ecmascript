@@ -1,5 +1,14 @@
 # @masknet/compartment
 
+## 0.2.3
+
+### Patch Changes
+
+-   762d129: add generic to Module and ModuleSource
+-   00f2da8: fix: module env record throws on the setter
+-   7da5cdb: move globalThis out of environment record
+-   762d129: add Symbol.toString tag to Module and ModuleSource
+
 ## 0.2.2
 
 ### Patch Changes
