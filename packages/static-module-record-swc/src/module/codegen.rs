@@ -1,9 +1,9 @@
 use super::{binding_descriptor::Binding, config::Template, VirtualModuleRecordTransformer};
 use crate::utils::*;
 use swc_core::ast::*;
-use swc_core::utils::*;
-use swc_core::common::*;
 use swc_core::common::util::take::Take;
+use swc_core::common::*;
+use swc_core::utils::*;
 
 impl VirtualModuleRecordTransformer {
     pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &VirtualModuleRecordTransformer) -> Module {

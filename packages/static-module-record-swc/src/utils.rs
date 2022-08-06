@@ -1,6 +1,6 @@
 use swc_core::ast::*;
 use swc_core::atoms::JsWord;
-use swc_core::common::{errors, DUMMY_SP, Span, MultiSpan};
+use swc_core::common::{errors, MultiSpan, Span, DUMMY_SP};
 
 pub fn key_value(key: JsWord, expr: Expr) -> PropOrSpread {
     PropOrSpread::Prop(Box::new(
@@ -32,9 +32,7 @@ pub fn str_lit(value: JsWord) -> Expr {
 pub fn emit_error(span: Span, msg: &str) {
     let mut m_span = MultiSpan::new();
     m_span.push_span_label(span, "here".into());
-    errors::HANDLER.with(|reporter| {
-        reporter.emit(&m_span, msg, errors::Level::Error)
-    });
+    errors::HANDLER.with(|reporter| reporter.emit(&m_span, msg, errors::Level::Error));
 }
 
 pub fn relative(file_name: &String, base: &String) -> String {

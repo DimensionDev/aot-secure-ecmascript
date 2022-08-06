@@ -1,10 +1,10 @@
 use std::env::current_dir;
 use std::fs::{read_to_string, write};
 use std::{path::PathBuf, rc::Rc};
+use swc_core::common::{chain, comments::SingleThreadedComments, Mark};
 use swc_ecma_parser::Syntax;
 use swc_ecma_transforms::{hygiene, resolver};
 use swc_ecma_transforms_testing::{test, Tester};
-use swc_core::common::{chain, Mark, comments::SingleThreadedComments};
 
 use crate::module::config::{Config, Template};
 use crate::VirtualModuleRecordTransformer;

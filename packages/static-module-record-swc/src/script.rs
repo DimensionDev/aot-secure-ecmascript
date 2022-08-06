@@ -1,6 +1,6 @@
 use swc_core::ast::*;
-use swc_core::visit::*;
 use swc_core::common::DUMMY_SP;
+use swc_core::visit::*;
 
 use crate::utils::str_lit;
 
