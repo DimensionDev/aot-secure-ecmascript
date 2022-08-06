@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
 use super::{binding_descriptor::*, VirtualModuleRecordTransformer};
-use swc_common::DUMMY_SP;
-use swc_plugin::{
-    ast::*,
-    utils::{contains_top_level_await, private_ident},
-};
+use swc_core::ast::*;
+use swc_core::visit::*;
+use swc_core::utils::{contains_top_level_await, private_ident};
+use swc_core::common::DUMMY_SP;
 
 struct ScannerFirstPass(HashMap<Id, (ModuleBinding, Str)>);
 impl Visit for ScannerFirstPass {

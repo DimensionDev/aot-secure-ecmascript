@@ -11,11 +11,9 @@ mod transformer;
 use std::collections::HashMap;
 
 use self::{binding_descriptor::*, config::Config};
-use swc_common::{Mark, SyntaxContext};
-use swc_plugin::{
-    ast::{Id, Ident, Str},
-    utils::private_ident,
-};
+use swc_core::common::{Mark, SyntaxContext};
+use swc_core::utils::private_ident;
+use swc_core::ast::*;
 
 /// Convert code into VirtualModuleRecord
 pub struct VirtualModuleRecordTransformer {

@@ -1,5 +1,6 @@
-use swc_common::DUMMY_SP;
-use swc_plugin::ast::*;
+use swc_core::ast::*;
+use swc_core::visit::*;
+use swc_core::common::DUMMY_SP;
 
 use crate::utils::str_lit;
 

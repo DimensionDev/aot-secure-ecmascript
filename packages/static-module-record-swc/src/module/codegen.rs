@@ -1,7 +1,9 @@
 use super::{binding_descriptor::Binding, config::Template, VirtualModuleRecordTransformer};
 use crate::utils::*;
-use swc_common::{util::take::Take, DUMMY_SP};
-use swc_plugin::{ast::*, utils::quote_ident};
+use swc_core::ast::*;
+use swc_core::utils::*;
+use swc_core::common::*;
+use swc_core::common::util::take::Take;
 
 impl VirtualModuleRecordTransformer {
     pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &VirtualModuleRecordTransformer) -> Module {
@@ -168,7 +170,7 @@ pub fn undefined_this_wrapper(expr: Expr) -> Expr {
         expr: Box::new(
             SeqExpr {
                 exprs: vec![
-                    swc_plugin::ast::Expr::Lit(Lit::Num(Number {
+                    Expr::Lit(Lit::Num(Number {
                         value: 0.0,
                         raw: None,
                         span: DUMMY_SP,

@@ -1,6 +1,7 @@
 use crate::utils::*;
-use swc_common::DUMMY_SP;
-use swc_plugin::{ast::*, utils::quote_ident};
+use swc_core::ast::*;
+use swc_core::common::DUMMY_SP;
+use swc_core::utils::*;
 
 #[derive(Clone, PartialEq, Eq)]
 pub enum Binding {

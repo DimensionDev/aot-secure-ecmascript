@@ -2,9 +2,10 @@
 
 use module::{config::Config, VirtualModuleRecordTransformer};
 use script::ErrorTransformer;
-use swc_common::DUMMY_SP;
-use swc_plugin::{
-    ast::*,
+use swc_core::ast::*;
+use swc_core::visit::*;
+use swc_core::common::DUMMY_SP;
+use swc_core::plugin::{
     metadata::{TransformPluginMetadataContextKind, TransformPluginProgramMetadata},
     plugin_transform,
 };
