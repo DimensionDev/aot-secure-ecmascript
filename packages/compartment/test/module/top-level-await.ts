@@ -12,15 +12,14 @@ it('can initialize top-level-await module correctly', async () => {
         await sleep(5)
         export const value = 1
     }
-    const meta1 = {}, meta2 = {}
     const { Module } = new Evaluators({
         importHook: async (spec) => spec === 'src2' ? mod2 : null,
         globalThis: {
             sleep: (time: number) => new Promise((resolve) => setTimeout(resolve, time)),
         }
     })
-    const mod1 = new Module(src1, { importMeta: meta1 })
-    const mod2: Module = new Module(src2, { importMeta: meta2 })
+    const mod1 = new Module(src1, 'src1')
+    const mod2: Module = new Module(src2, 'src2')
 
     const { a } = await imports(mod1)
     expect(a).toBe(1)

@@ -1,5 +1,7 @@
 // https://github.com/tc39/proposal-compartments/blob/775024d93830ee6464363b4b373d9353425a0776/README.md
 
+import type { Module } from './Module.js'
+
 export type Binding = ImportBinding | ExportBinding | ImportAllBinding | ExportAllBinding
 /**
  * ```
@@ -51,10 +53,5 @@ export interface VirtualModuleRecordExecuteContext {
 export interface StaticModuleRecordInstance {
     get bindings(): readonly Binding[]
 }
-
-// Internal implementation
-
-/** @internal */
-export type ModuleCacheItem =
-    | { type: 'instance'; moduleInstance: ModuleNamespace }
-    | { type: 'record'; module: VirtualModuleRecord; extraImportMeta: object | null | undefined }
+export type ImportHook = (importSpecifier: string, referrer: Referrer) => PromiseLike<Module | null> | Module | null
+export type Referrer = symbol | string | number | bigint

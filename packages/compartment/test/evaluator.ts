@@ -12,7 +12,7 @@ it('can virtualize the global object', async () => {
         declare let a: number
         a = 1
     }
-    await imports(new Module(src))
+    await imports(new Module(src, ''))
     expect(global.a).toBe(1)
 })
 
@@ -24,7 +24,7 @@ it('can inherit the import.meta', async () => {
     const src = static module {
         export const url = import.meta.url
     }
-    const { url } = await imports(new Module(src))
+    const { url } = await imports(new Module(src, ''))
     expect(url).toBe("hello")
 })
 

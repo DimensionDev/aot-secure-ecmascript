@@ -1,7 +1,13 @@
-import { createModuleSubclass, Module, type ImportHook } from './Module.js'
+import { createModuleSubclass, Module } from './Module.js'
+import type { ImportHook } from './types.js'
 
+export interface EvaluatorsOptions {
+    globalThis?: object
+    importHook?: ImportHook
+    importMeta?: object
+}
 export class Evaluators {
-    constructor(options: { globalThis?: object; importHook?: ImportHook; importMeta?: object }) {
+    constructor(options: EvaluatorsOptions) {
         const { globalThis, importHook, importMeta } = options
         if (globalThis !== null && globalThis !== undefined && typeof globalThis !== 'object') {
             throw new TypeError('globalThis must be an object')
@@ -17,6 +23,8 @@ export class Evaluators {
     }
     #globalThis: object
     Module: typeof Module
+    // Evaluators: typeof Evaluators
+    // imports: typeof imports
     get globalThis() {
         return this.#globalThis
     }
