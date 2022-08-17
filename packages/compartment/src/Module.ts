@@ -708,6 +708,7 @@ export class Module<T extends object = any> {
         }
     })()
 }
+// TODO: add /*#__PURE__*/ to those things
 Reflect.defineProperty(Module.prototype, Symbol.toStringTag, {
     configurable: true,
     value: 'Module',

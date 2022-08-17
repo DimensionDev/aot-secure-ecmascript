@@ -1,4 +1,3 @@
-import type { Compartment } from '../compartment.js'
 import { Evaluators } from '../Evaluators.js'
 import { createModuleSubclass, type Module } from '../Module.js'
 import { ModuleSource } from '../ModuleSource.js'
@@ -37,23 +36,6 @@ export function makeGlobalThis(
 
 export function makeGlobalThisPublic() {
     return makeGlobalThis(Object.prototype, { createModule: createModuleSubclass }, {})
-}
-
-/**
- * @internal
- * @deprecated
- */
-export function makeBorrowedGlobalThis(compartment: typeof Compartment, globalThis: object) {
-    const global = Object.create(null)
-
-    Object.defineProperty(global, 'Compartment', {
-        value: compartment,
-        configurable: true,
-        writable: true,
-    })
-
-    Object.setPrototypeOf(global, globalThis)
-    return global
 }
 
 // https://tc39.es/ecma262/multipage/global-object.html#sec-global-object

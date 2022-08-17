@@ -1,18 +1,18 @@
 /** @internal */
-export const empty = Symbol('empty')
+export const empty = /*#__PURE__*/ Symbol('empty')
 /** @internal */
 export type empty = typeof empty
 /** @internal */
-export const namespace = Symbol('namespace')
+export const namespace = /*#__PURE__*/ Symbol('namespace')
 /** @internal */
-export const ambiguous = Symbol('ambiguous')
+export const ambiguous = /*#__PURE__*/ Symbol('ambiguous')
 /** @internal */
-export const all = Symbol('all')
+export const all = /*#__PURE__*/ Symbol('all')
 /** @internal */
-export const allButDefault = Symbol('all-but-default')
+export const allButDefault = /*#__PURE__*/ Symbol('all-but-default')
 
 /** @internal */
-export type PromiseCapability<T> = {
+export interface PromiseCapability<T> {
     readonly Promise: Promise<T>
     readonly Reject: (reason: unknown) => void
     readonly Resolve: (val: T) => void

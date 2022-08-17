@@ -1,41 +1,4 @@
-import type {
-    ModuleDescriptor_FullSpecReference,
-    ModuleDescriptor_Source,
-    ModuleDescriptor_ModuleInstance,
-    ModuleDescriptor_StaticModuleRecord,
-    ModuleDescriptor,
-    Binding,
-    ImportBinding,
-    ExportBinding,
-    ImportAllBinding,
-    ExportAllBinding,
-} from '../types.js'
-
-/** @internal */
-export function isModuleDescriptor_FullSpecReference(
-    descriptor: ModuleDescriptor,
-): descriptor is ModuleDescriptor_FullSpecReference {
-    return 'instance' in descriptor
-}
-
-/** @internal */
-export function isModuleDescriptor_Source(descriptor: ModuleDescriptor): descriptor is ModuleDescriptor_Source {
-    return 'source' in descriptor
-}
-
-/** @internal */
-export function isModuleDescriptor_StaticModuleRecord(
-    descriptor: ModuleDescriptor,
-): descriptor is ModuleDescriptor_StaticModuleRecord {
-    return 'record' in descriptor
-}
-
-/** @internal */
-export function isModuleDescriptor_ModuleInstance(
-    descriptor: ModuleDescriptor,
-): descriptor is ModuleDescriptor_ModuleInstance {
-    return 'namespace' in descriptor
-}
+import type { Binding, ImportBinding, ExportBinding, ImportAllBinding, ExportAllBinding } from '../types.js'
 
 /** @internal */
 export function isImportBinding(binding: Binding): binding is ImportBinding {

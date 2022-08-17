@@ -1,70 +1,7 @@
-import { brandCheck_Compartment } from '../compartment.js'
-import { ModuleSource } from '../ModuleSource.js'
-import type {
-    ModuleDescriptor,
-    ModuleDescriptor_Source,
-    ModuleDescriptor_StaticModuleRecord,
-    VirtualModuleRecord,
-    ModuleDescriptor_ModuleInstance,
-    Binding,
-    ExportAllBinding,
-    ImportBinding,
-} from '../types.js'
+import type { VirtualModuleRecord, Binding, ExportAllBinding, ImportBinding } from '../types.js'
 import { unreachable } from './assert.js'
-import {
-    hasFromField,
-    isExportAllBinding,
-    isExportBinding,
-    isImportAllBinding,
-    isImportBinding,
-    isModuleDescriptor_FullSpecReference,
-    isModuleDescriptor_ModuleInstance,
-    isModuleDescriptor_Source,
-    isModuleDescriptor_StaticModuleRecord,
-} from './shapeCheck.js'
+import { hasFromField, isExportAllBinding, isExportBinding, isImportAllBinding, isImportBinding } from './shapeCheck.js'
 import { all, allButDefault, namespace, type ModuleExportEntry, type ModuleImportEntry } from './spec.js'
-
-/** @internal */
-export function normalizeModuleDescriptor(desc: ModuleDescriptor | undefined | null): ModuleDescriptor | undefined {
-    if (!desc) return undefined
-    if (isModuleDescriptor_Source(desc)) {
-        const { source, importMeta } = desc
-        const copy: ModuleDescriptor_Source = {
-            source: normalizeString(source),
-            importMeta: normalizeImportMeta(importMeta),
-        }
-        return copy
-    } else if (isModuleDescriptor_StaticModuleRecord(desc)) {
-        const { record, importMeta } = desc
-        let normalizedRecord: ModuleDescriptor_StaticModuleRecord['record']
-        if (typeof record === 'string') {
-            normalizedRecord = record
-        } else if (typeof record !== 'object' || record === null) {
-            throw new TypeError('ModuleDescriptor must be either a string, StaticModuleRecord or VirtualModuleRecord')
-        } else if (record instanceof ModuleSource) {
-            throw new TypeError('ModuleSource is not supported')
-        } else {
-            normalizedRecord = normalizeVirtualModuleRecord(record)
-        }
-        const copy: ModuleDescriptor_StaticModuleRecord = {
-            record: normalizedRecord,
-            importMeta: normalizeImportMeta(importMeta),
-        }
-        return copy
-    } else if (isModuleDescriptor_FullSpecReference(desc)) {
-        const { instance, compartment } = desc
-        if (compartment && !brandCheck_Compartment(compartment)) {
-            throw new TypeError('moduleDescriptor.compartment is not a Compartment')
-        }
-        const copy: ModuleDescriptor = { instance: `${instance}`, compartment }
-        return copy
-    } else if (isModuleDescriptor_ModuleInstance(desc)) {
-        const copy: ModuleDescriptor_ModuleInstance = { namespace: Object.assign({ __proto__: null }, desc.namespace) }
-        return copy
-    } else {
-        throw new TypeError('moduleDescriptor is not a valid descriptor.')
-    }
-}
 
 /** @internal */
 export function normalizeVirtualModuleRecord(module: VirtualModuleRecord): VirtualModuleRecord {
