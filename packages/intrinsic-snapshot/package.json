@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
+  "sideEffects": false,
   "exports": {
     "default": "./dist/index.js"
   },
