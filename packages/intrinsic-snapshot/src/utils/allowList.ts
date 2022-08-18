@@ -1,12 +1,12 @@
 /** Those intrinsic are not suggested to be cloned. */
-export const undeniable: readonly unknown[] = /*#__PURE__*/ buildUndeniable()
+export const undeniable: readonly object[] = /*#__PURE__*/ buildUndeniable()
 /**
  * The object and functions in the list are safe to share after lockdown() and no-eval.
  */
-export const safeToShareAfterLockdownAndNoEval: readonly unknown[] = /*#__PURE__*/ buildSafeToShareList()
+export const safeToShareAfterLockdownAndNoEval: readonly object[] = /*#__PURE__*/ buildSafeToShareList()
 
 function buildUndeniable() {
-    const undeniable: readonly unknown[] = [
+    const undeniable: readonly object[] = [
         //
         Object.prototype,
         Function.prototype,
@@ -19,7 +19,7 @@ function buildUndeniable() {
 
 // https://github.com/endojs/endo/blob/master/packages/ses/src/whitelist.js
 function buildSafeToShareList() {
-    const intrinsic = new Set<unknown>([
+    const intrinsic = new Set<object>([
         isFinite,
         isNaN,
         parseFloat,
