@@ -1,5 +1,12 @@
 # @masknet/compartment
 
+## 0.3.0
+
+### Minor Changes
+
+-   8cdc134: update api signature of Module
+-   99f8965: remove Compartment, createModuleCache, createWebImportMeta, URLResolveHook
+
 ## 0.2.3
 
 ### Patch Changes
