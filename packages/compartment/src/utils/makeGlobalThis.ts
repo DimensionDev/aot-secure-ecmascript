@@ -1,7 +1,7 @@
 import { Evaluators } from '../Evaluators.js'
 import { ModuleSource } from '../ModuleSource.js'
 
-export function makeGlobalThis(prototype: object | null): typeof globalThis {
+export function makeGlobalThis(prototype: object | null = Object.prototype): typeof globalThis {
     const global = Object.create(null)
 
     Object.defineProperties(
