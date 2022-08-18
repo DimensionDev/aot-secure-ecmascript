@@ -10,7 +10,7 @@ export class ModuleSource<T extends object = any> {
         throw new EvalError(`Refused to evaluate a string as JavaScript.`)
     }
 }
-// TODO: add /*#__PURE__*/ to it.
+
 Reflect.defineProperty(ModuleSource.prototype, Symbol.toStringTag, {
     configurable: true,
     value: 'ModuleSource',

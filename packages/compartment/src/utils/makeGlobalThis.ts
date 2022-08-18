@@ -1,17 +1,7 @@
 import { Evaluators } from '../Evaluators.js'
-import { createModuleSubclass, type Module } from '../Module.js'
 import { ModuleSource } from '../ModuleSource.js'
 
-/** @internal */
-export interface Evaluator {
-    createModule: (globalThis: object) => typeof Module
-}
-/** @internal */
-export function makeGlobalThis(
-    prototype: object | null,
-    evaluators: Evaluator,
-    globals: object | undefined | null,
-): typeof globalThis {
+export function makeGlobalThis(prototype: object | null): typeof globalThis {
     const global = Object.create(null)
 
     Object.defineProperties(
@@ -26,16 +16,10 @@ export function makeGlobalThis(
         globalThis: { writable: true, configurable: true, value: global },
         Evaluators: { writable: true, configurable: true, value: Evaluators },
         ModuleSource: { writable: true, configurable: true, value: ModuleSource },
-        Module: { writable: true, configurable: true, value: evaluators.createModule(global) },
+        Module: { writable: true, configurable: true, value: new Evaluators({ globalThis: global }) },
     })
 
-    if (globals) Object.assign(global, globals)
-
     return Object.setPrototypeOf(global, prototype)
-}
-
-export function makeGlobalThisPublic() {
-    return makeGlobalThis(Object.prototype, { createModule: createModuleSubclass }, {})
 }
 
 // https://tc39.es/ecma262/multipage/global-object.html#sec-global-object

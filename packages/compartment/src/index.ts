@@ -8,11 +8,11 @@ export type {
     VirtualModuleRecordExecuteContext,
     ModuleNamespace,
     ImportHook,
-    Referrer,
+    Referral,
     StaticModuleRecordInstance,
 } from './types.js'
 export { ModuleSource } from './ModuleSource.js'
 export { Evaluators } from './Evaluators.js'
 export { Module, imports } from './Module.js'
 
-export { makeGlobalThisPublic as makeGlobalThis } from './utils/makeGlobalThis.js'
+export { makeGlobalThis } from './utils/makeGlobalThis.js'

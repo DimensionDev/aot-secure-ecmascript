@@ -2,7 +2,7 @@ import type { ModuleSource } from './ModuleSource.js'
 import type {
     ImportHook,
     ModuleNamespace,
-    Referrer,
+    Referral,
     VirtualModuleRecord,
     VirtualModuleRecordExecuteContext,
 } from './types.js'
@@ -17,35 +17,41 @@ import {
 } from './utils/spec.js'
 import { normalizeBindingsToSpecRecord, normalizeVirtualModuleRecord } from './utils/normalize.js'
 import { assert, internalError, opaqueProxy } from './utils/assert.js'
+import { defaultImportHook } from './Evaluators.js'
 
 export let imports: <T extends object = any>(specifier: Module<T>, options?: ImportCallOptions) => Promise<T>
 /** @internal */
-export let createModuleSubclass: (globalThis: object, importHook?: ImportHook, importMeta?: ImportMeta) => typeof Module
+export let setGlobalThis: (module: Module, global: object) => void
 
 export class Module<T extends object = any> {
     // The constructor is equivalent to ParseModule in SourceTextModuleRecord
     // https://tc39.es/ecma262/#sec-parsemodule
     constructor(
-        source: ModuleSource<T> | VirtualModuleRecord,
-        referrer: Referrer,
-        importHook?: ImportHook | null | undefined,
-        assignedImportMeta?: object,
+        moduleSource: ModuleSource<T> | VirtualModuleRecord,
+        referral: Referral,
+        // it actually NOT an optional argument when it is the top-level Module.
+        importHook: ImportHook = defaultImportHook,
+        importMeta?: object,
     ) {
+        if (typeof moduleSource !== 'object') throw new TypeError('moduleSource must be an object')
         if (typeof importHook !== 'function') throw new TypeError('importHook must be a function')
-        if (assignedImportMeta !== undefined && typeof assignedImportMeta !== 'object')
-            throw new TypeError('importMeta must be an object')
-        // impossible to create a ModuleSource instance
-        source = source as VirtualModuleRecord
 
-        const module = normalizeVirtualModuleRecord(source)
-        this.#Source = source
-        this.#Referrer = referrer
+        let assignedImportMeta: null | object
+        if (importMeta === undefined) assignedImportMeta = null
+        else if (typeof importMeta !== 'object') throw new TypeError('importMeta must be an object')
+        else assignedImportMeta = importMeta
+
+        // impossible to create a ModuleSource instance
+        const module = normalizeVirtualModuleRecord(moduleSource as VirtualModuleRecord)
+
+        this.#Source = moduleSource
+        this.#Referral = referral
         this.#Execute = module.execute
         this.#NeedsImport = module.needsImport
         this.#NeedsImportMeta = module.needsImportMeta
         this.#HasTLA = !!module.isAsync
 
-        this.#AssignedImportMeta = assignedImportMeta ?? null
+        this.#AssignedImportMeta = importMeta ?? null
         this.#ImportHook = importHook
 
         const { importEntries, indirectExportEntries, localExportEntries, requestedModules, starExportEntries } =
@@ -70,7 +76,7 @@ export class Module<T extends object = any> {
 
     // #region VirtualModuleRecord fields
     // *this value* when calling #Execute.
-    #Referrer: Referrer
+    #Referral: Referral
     #Source: VirtualModuleRecord
     #Execute: VirtualModuleRecord['execute']
     #NeedsImportMeta: boolean | undefined
@@ -659,7 +665,7 @@ export class Module<T extends object = any> {
     static #HostResolveModulesInner(module: Module, spec: string) {
         const capability = PromiseCapability<Module>()
         module.#ResolvedModules.set(spec, capability)
-        Promise.resolve(module.#ImportHook(spec, module.#Referrer))
+        Promise.resolve(module.#ImportHook(spec, module.#Referral))
             .then(
                 async (module) => {
                     if (module === null || module === undefined)
@@ -694,36 +700,18 @@ export class Module<T extends object = any> {
         return Promise.all(promises)
     }
     //#endregion
-    // Safari: static init block
     /** @internal */
-    static _: any = (() => {
+    static {
         imports = async (module, options) => {
             return Module.#DynamicImportModule(module) as any
         }
-        createModuleSubclass = (globalThis, upper_importHook, upper_importMeta) => {
-            const Parent = Module
-            const SubModule = class Module<T extends object = any> extends Parent<T> {
-                constructor(
-                    source: ModuleSource<T> | VirtualModuleRecord,
-                    referrer: Referrer,
-                    importHook: ImportHook | null | undefined,
-                    assignedImportMeta: object,
-                ) {
-                    super(source, referrer, importHook ?? upper_importHook, assignedImportMeta ?? upper_importMeta)
-                    this.#GlobalThis = globalThis
-                }
-            }
-            Reflect.defineProperty(SubModule.prototype, Symbol.toStringTag, { configurable: true, value: 'Module' })
-            return SubModule
-        }
-    })()
+        setGlobalThis = (module, global) => (module.#GlobalThis = global)
+    }
 }
-// TODO: add /*#__PURE__*/ to those things
 Reflect.defineProperty(Module.prototype, Symbol.toStringTag, {
     configurable: true,
     value: 'Module',
 })
-delete Module._
 
 const enum ModuleStatus {
     unlinked,

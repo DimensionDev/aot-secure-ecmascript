@@ -53,5 +53,5 @@ export interface VirtualModuleRecordExecuteContext {
 export interface StaticModuleRecordInstance {
     get bindings(): readonly Binding[]
 }
-export type ImportHook = (importSpecifier: string, referrer: Referrer) => PromiseLike<Module | null> | Module | null
-export type Referrer = symbol | string | number | bigint
+export type ImportHook = (importSpecifier: string, referrer: Referral) => PromiseLike<Module | null> | Module | null
+export type Referral = symbol | string | number | bigint
