@@ -1,1 +1,4 @@
-<script src="./packages/compartment/test/module.js" type="module"></script>
+<script type="module">
+    import { clone } from './packages/intrinsic-snapshot/dist/index.js'
+    window.clone = clone
+</script>

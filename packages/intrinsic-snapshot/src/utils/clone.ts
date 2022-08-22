@@ -22,6 +22,10 @@ export interface CloneKnowledge {
      * This allows an exotic object to be cloned.
      */
     emptyObjectOverride: WeakMap<object, object>
+    /**
+     * Attach a #original field on the cloned object for debug usage.
+     */
+    debugField?: boolean
 }
 
 /**
@@ -51,6 +55,8 @@ export function clone(o: any, knowledge: CloneKnowledge): any {
         : isFunction
         ? forwardingFunction(o, knowledge)
         : {}
+    // Attach a #original private field
+    if (knowledge.debugField) new DebuggerPrivateField(c, o)
 
     // 4. Cache the clone result
     WeakMapSet(originalFromCloned, c, o)
@@ -125,3 +131,14 @@ function forwardingFunction(oldF: Function, knowledge: CloneKnowledge): Function
 const { isArray } = Array
 const { apply, construct, getPrototypeOf, setPrototypeOf } = Reflect
 const { getOwnPropertyDescriptors, hasOwn, defineProperties } = Object
+
+function identity(value: object) {
+    return value
+}
+class DebuggerPrivateField extends (identity as any) {
+    constructor(value: object, originalValue: object) {
+        super(value)
+        this.#original = originalValue
+    }
+    #original: object
+}
