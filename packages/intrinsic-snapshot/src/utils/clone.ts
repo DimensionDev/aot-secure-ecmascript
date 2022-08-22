@@ -28,8 +28,8 @@ export interface CloneKnowledge {
  * Clone a value.
  */
 export function clone(o: any, knowledge: CloneKnowledge): any {
-    // Note: we do not support document.all because it has a very special behavior.
-    if (o === $documentAll) return undefined
+    // Note: this means o is document.all
+    if (typeof o === 'undefined' && o !== undefined) return undefined
 
     // 1. If o is a primitive, return o.
     if (typeof o !== 'object' && typeof o !== 'function') return o
@@ -122,14 +122,6 @@ function forwardingFunction(oldF: Function, knowledge: CloneKnowledge): Function
     return f!
 }
 
-const tryEval = <T>(f: () => T): T | undefined => {
-    try {
-        return f()
-    } catch {}
-    return undefined
-}
-
 const { isArray } = Array
 const { apply, construct, getPrototypeOf, setPrototypeOf } = Reflect
 const { getOwnPropertyDescriptors, hasOwn, defineProperties } = Object
-const $documentAll = tryEval(() => document.all)
