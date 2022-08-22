@@ -112,7 +112,7 @@ function buildSafeToShareList() {
     ])
 
     for (const items of [...intrinsic]) {
-        intrinsic.add(Object.getPrototypeOf(items))
+        items && intrinsic.add(Object.getPrototypeOf(items))
     }
 
     return Object.freeze([...intrinsic].filter(Boolean))
