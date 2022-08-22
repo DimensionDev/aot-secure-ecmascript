@@ -15,12 +15,11 @@ This project has the following security assumptions (based on our usage):
 ## Roadmap
 
 -   ✅ `@masknet/static-module-record-swc`: A [swc][2] plugin to transform ES Module into [VirtualModuleRecord][1].
--   ⌛ `@masknet/compartment`: An eval-less implementation of [Compartment][1].
+-   ✅ `@masknet/compartment`: An eval-less implementation of [Compartment][1].
 -   ⌛ `@masknet/web-endowments`: Provide common Web APIs, with `AbortSignal` support to cancel out all side
     effects within a compartment, and provide attenuations (e.g. limits accessible databases of `indexedDB`, or limit
     accessible domains in `fetch`).
--   ❓`@masknet/membrane`: A membrane library.
--   ⌛`@masknet/intrinsic-snapshot`: Make a snapshot of all intrinsic (including host APIs).
+-   ⌛`@masknet/membrane`: A membrane library.
 
 [1]: https://github.com/tc39/proposal-compartments#sketch
 [2]: https://github.com/swc-project/swc
