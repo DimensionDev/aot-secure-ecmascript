@@ -1,4 +1,10 @@
 <script type="module">
-    import { clone } from './packages/intrinsic-snapshot/dist/index.js'
-    window.clone = clone
+    import * as mod from './packages/intrinsic-snapshot/dist/index.js'
+
+    const k = mod.createCloneKnowledge()
+    const g = {}
+    k.emptyObjectOverride.set(globalThis, g)
+    mod.clone(globalThis, k)
+
+    Object.assign(globalThis, mod, { k, g })
 </script>
