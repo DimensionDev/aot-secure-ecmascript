@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.1
+
+### Patch Changes
+
+-   9429d89: add default prototype of makeGlobalThis
+
 ## 0.3.0
 
 ### Minor Changes
