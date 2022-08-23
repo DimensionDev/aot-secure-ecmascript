@@ -2,7 +2,8 @@
     "references": [
         { "path": "./packages/compartment" },
         { "path": "./packages/compartment/test" },
-        { "path": "./packages/intrinsic-snapshot" }
+        { "path": "./packages/intrinsic-snapshot" },
+        { "path": "./packages/membrane" }
     ],
     "compilerOptions": {
         // Classification follows https://www.typescriptlang.org/tsconfig

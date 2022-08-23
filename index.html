@@ -1,2 +1,16 @@
+<script type="importmap">
+    {
+        "imports": {
+            "@locker/near-membrane-base": "./packages/membrane/node_modules/@locker/near-membrane-base/dist/index.js"
+        }
+    }
+</script>
 <script type="module">
+    import createVM from './packages/membrane/dist/index.js'
+    import { makeGlobalThis } from './packages/compartment/dist/index.js'
+    globalThis.vmGlobal = makeGlobalThis()
+    globalThis.vm = createVM(globalThis, vmGlobal, {
+        rethrowOptimization: true,
+        endowments: { fetch: Object.getOwnPropertyDescriptor(globalThis, 'fetch') },
+    })
 </script>

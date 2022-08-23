@@ -29,6 +29,15 @@ importers:
   packages/intrinsic-snapshot:
     specifiers: {}
 
+  packages/membrane:
+    specifiers:
+      '@locker/near-membrane-base': 0.11.1
+      '@swc/core': 1.2.223
+    dependencies:
+      '@locker/near-membrane-base': 0.11.1
+    devDependencies:
+      '@swc/core': 1.2.223
+
   packages/static-module-record-swc:
     specifiers: {}
 
@@ -275,6 +284,10 @@ packages:
       '@jridgewell/resolve-uri': 3.1.0
       '@jridgewell/sourcemap-codec': 1.4.14
     dev: true
+
+  /@locker/near-membrane-base/0.11.1:
+    resolution: {integrity: sha512-G3/6j5wAgWfKm9Cp8yA6xkhr4+0Ldm85MneMjieQxJZdldQdeH/agb3f7Pw0pQB61eUpFHPBCzrpvhQ5pTvIYw==}
+    dev: false
 
   /@manypkg/find-root/1.1.0:
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}

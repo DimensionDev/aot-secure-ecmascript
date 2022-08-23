@@ -1,0 +1,19 @@
+{
+  "name": "@masknet/membrane",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    "default": "./dist/index.js"
+  },
+  "dependencies": {
+    "@locker/near-membrane-base": "0.11.1"
+  },
+  "devDependencies": {
+    "@swc/core": "1.2.223"
+  },
+  "files": [
+    "dist",
+    "src"
+  ]
+}
