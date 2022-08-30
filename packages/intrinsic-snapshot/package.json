@@ -15,6 +15,7 @@
   "peerDependencies": {},
   "files": [
     "dist",
+    "!dist/.tsbuildinfo",
     "src"
   ]
 }

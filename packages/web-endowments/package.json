@@ -12,6 +12,7 @@
   "devDependencies": {},
   "files": [
     "dist",
+    "!dist/.tsbuildinfo",
     "src"
   ]
 }
