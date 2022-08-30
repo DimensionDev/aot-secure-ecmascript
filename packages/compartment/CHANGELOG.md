@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.2
+
+### Patch Changes
+
+-   be8c572: add types field
+
 ## 0.3.1
 
 ### Patch Changes

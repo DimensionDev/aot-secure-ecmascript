@@ -1,6 +1,6 @@
 {
   "name": "@masknet/web-endowments",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -8,10 +8,8 @@
     "types": "./dist/index.d.ts",
     "default": "./dist/index.js"
   },
-  "dependencies": {
-  },
-  "devDependencies": {
-  },
+  "dependencies": {},
+  "devDependencies": {},
   "files": [
     "dist",
     "src"
