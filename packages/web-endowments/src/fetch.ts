@@ -1,6 +1,7 @@
 export interface FetchOptions {
     fetch?: typeof fetch
     signal?: AbortSignal
+    normalizeURL?(url: string): string
     /**
      * Virtualize a url
      * @param url URL to be rewrite
@@ -14,7 +15,15 @@ export interface FetchOptions {
     canConnect?(url: string): boolean | PromiseLike<boolean>
 }
 export function createFetch(options: FetchOptions) {
-    const { fetch: _fetch = fetch, signal, rewriteURL, replaceRequest, replaceResponse, canConnect } = options
+    const {
+        fetch: _fetch = fetch,
+        signal,
+        rewriteURL,
+        replaceRequest,
+        replaceResponse,
+        canConnect,
+        normalizeURL,
+    } = options
 
     return async function fetch(input: RequestInfo, init?: RequestInit) {
         let request = new Request(input, {
@@ -22,8 +31,8 @@ export function createFetch(options: FetchOptions) {
             signal: getMergedSignal(init?.signal, signal) || null,
         })
 
+        if (normalizeURL) request = new Request(normalizeURL(request.url), request)
         if (canConnect && !(await canConnect(request.url))) throw new TypeError('Failed to fetch')
-
         if (rewriteURL) request = new Request(rewriteURL(request.url, 'out'), request)
         if (replaceRequest) request = await replaceRequest(request)
 
