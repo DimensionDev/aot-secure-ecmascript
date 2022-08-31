@@ -233,7 +233,7 @@ export class Module<T extends object = any> {
             const importedModule = Module.#HostResolveImportedModule(module, i.ModuleRequest)
             if (i.ImportName === namespace) {
                 const namespaceObject = Module.#GetModuleNamespace(importedModule)
-                Object.defineProperty(env, i.LocalName, { value: namespaceObject })
+                Object.defineProperty(env, i.LocalName, { value: namespaceObject, enumerable: true })
             } else {
                 const resolution = importedModule.#ResolveExport(i.ImportName)
                 if (resolution === null || resolution === ambiguous) {
@@ -241,13 +241,14 @@ export class Module<T extends object = any> {
                 }
                 if (resolution.bindingName === namespace) {
                     const namespaceObject = Module.#GetModuleNamespace(resolution.module)
-                    Object.defineProperty(env, i.LocalName, { value: namespaceObject })
+                    Object.defineProperty(env, i.LocalName, { value: namespaceObject, enumerable: true })
                 } else {
                     const { bindingName, module } = resolution
                     const f = () =>
                         Object.defineProperty(env, i.LocalName, {
                             value: module.#LocalExportValues.get(bindingName),
                             configurable: true,
+                            enumerable: true,
                         })
                     resolution.module.#ExportCallback.add(f)
 
@@ -259,6 +260,7 @@ export class Module<T extends object = any> {
                                 throw new ReferenceError(`Cannot access '${i.LocalName}' before initialization`)
                             },
                             configurable: true,
+                            enumerable: true,
                         })
                     }
                 }
@@ -273,6 +275,9 @@ export class Module<T extends object = any> {
                     this.#ExportCallback.forEach((f) => f(ExportName))
                     return true
                 },
+                // Note: export property should not be enumerable?
+                // but it will crash Chrome devtools.See: https://bugs.chromium.org/p/chromium/issues/detail?id=1358114
+                enumerable: true,
             })
         }
 
