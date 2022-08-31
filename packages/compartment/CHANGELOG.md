@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.3
+
+### Patch Changes
+
+-   72460dc: fix env object will cause chrome devtools crash
+
 ## 0.3.2
 
 ### Patch Changes
