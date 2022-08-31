@@ -1,5 +1,11 @@
 # @masknet/static-module-record-swc
 
+## 0.3.4
+
+### Patch Changes
+
+-   3e77997: follow swc abi change
+
 ## 0.3.3
 
 ### Patch Changes
