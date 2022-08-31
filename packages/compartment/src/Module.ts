@@ -95,7 +95,11 @@ export class Module<T extends object = any> {
     /** Where local export stored */
     #LocalExportValues = new Map<string, unknown>()
     /** Callback to update live exports */
-    #ExportCallback = new Set<(name: string) => void>()
+    #ExportCallback = new Map<string, Set<(newValue: any) => void>>()
+    #AddLiveExportCallback(name: string, callback: (newValue: any) => void) {
+        if (!this.#ExportCallback.has(name)) this.#ExportCallback.set(name, new Set())
+        this.#ExportCallback.get(name)!.add(callback)
+    }
     //#endregion
 
     //#region VirtualModuleRecord methods
@@ -229,57 +233,69 @@ export class Module<T extends object = any> {
         module.#ContextObject = createContextObject()
         module.#Environment = env
 
+        const propertiesToBeDefined: PropertyDescriptorMap = {
+            __proto__: null!,
+        }
         for (const i of module.#ImportEntries) {
             const importedModule = Module.#HostResolveImportedModule(module, i.ModuleRequest)
+            // import * as ns from '..'
             if (i.ImportName === namespace) {
                 const namespaceObject = Module.#GetModuleNamespace(importedModule)
-                Object.defineProperty(env, i.LocalName, { value: namespaceObject, enumerable: true })
+                propertiesToBeDefined[i.LocalName] = { value: namespaceObject, enumerable: true }
             } else {
                 const resolution = importedModule.#ResolveExport(i.ImportName)
-                if (resolution === null || resolution === ambiguous) {
+                if (resolution === null)
                     throw new SyntaxError(`${i.ModuleRequest} does not provide export ${i.ImportName}`)
-                }
+                if (resolution === ambiguous)
+                    throw new SyntaxError(`${i.ModuleRequest} does not provide an unambiguous export ${i.ImportName}`)
+                // import { x } from '...' where x is a "export * as ns from '...'"
                 if (resolution.bindingName === namespace) {
                     const namespaceObject = Module.#GetModuleNamespace(resolution.module)
-                    Object.defineProperty(env, i.LocalName, { value: namespaceObject, enumerable: true })
+                    propertiesToBeDefined[i.LocalName] = { value: namespaceObject, enumerable: true }
                 } else {
-                    const { bindingName, module } = resolution
-                    const f = () =>
+                    resolution.module.#AddLiveExportCallback(i.LocalName, (newValue) => {
                         Object.defineProperty(env, i.LocalName, {
-                            value: module.#LocalExportValues.get(bindingName),
+                            value: newValue,
                             configurable: true,
                             enumerable: true,
                         })
-                    resolution.module.#ExportCallback.add(f)
+                    })
 
-                    if (resolution.module.#LocalExportValues.has(bindingName)) {
-                        f()
+                    if (resolution.module.#LocalExportValues.has(resolution.bindingName)) {
+                        propertiesToBeDefined[i.LocalName] = {
+                            configurable: true,
+                            enumerable: true,
+                            value: resolution.module.#LocalExportValues.get(resolution.bindingName),
+                        }
                     } else {
-                        Object.defineProperty(env, i.LocalName, {
+                        propertiesToBeDefined[i.LocalName] = {
                             get() {
                                 throw new ReferenceError(`Cannot access '${i.LocalName}' before initialization`)
                             },
                             configurable: true,
                             enumerable: true,
-                        })
+                        }
                     }
                 }
             }
         }
+
         for (const { ModuleRequest, ExportName, ImportName } of module.#LocalExportEntries) {
             assert(ModuleRequest === null && typeof ExportName === 'string' && ImportName === null)
-            Object.defineProperty(env, ExportName, {
+            propertiesToBeDefined[ExportName] = {
                 get: () => this.#LocalExportValues.get(ExportName),
                 set: (value) => {
                     this.#LocalExportValues.set(ExportName, value)
-                    this.#ExportCallback.forEach((f) => f(ExportName))
+                    this.#ExportCallback.get(ExportName)?.forEach((callback) => callback(value))
                     return true
                 },
                 // Note: export property should not be enumerable?
                 // but it will crash Chrome devtools.See: https://bugs.chromium.org/p/chromium/issues/detail?id=1358114
                 enumerable: true,
-            })
+            }
         }
+
+        Object.defineProperties(env, propertiesToBeDefined)
 
         for (const exports of module.#GetExportedNames()) {
             if (module.#ResolveExport(exports) === ambiguous) {
@@ -608,48 +624,55 @@ export class Module<T extends object = any> {
     }
 
     static #GetModuleNamespace(module: Module): ModuleNamespace {
-        assert(module.#Status !== ModuleStatus.unlinked)
         if (module.#Namespace) return module.#Namespace
+        assert(module.#Status !== ModuleStatus.unlinked)
         const exportedNames = module.#GetExportedNames()
-        const unambiguousNames = []
+
+        const namespaceObject: ModuleNamespace = { __proto__: null }
+        const propertiesToBeDefined: PropertyDescriptorMap = {
+            __proto__: null!,
+            [Symbol.toStringTag]: { value: 'Module' },
+        }
+        const namespaceProxy = new Proxy(namespaceObject, moduleNamespaceExoticMethods)
+        // set it earlier in case of circular dependency
+        module.#Namespace = namespaceProxy
+
         for (const name of exportedNames) {
             const resolution = module.#ResolveExport(name)
-            if (typeof resolution === 'object' && resolution !== null) {
-                unambiguousNames.push(name)
-            }
-        }
+            if (resolution === ambiguous || resolution === null) continue
 
-        const namespace: ModuleNamespace = { __proto__: null }
-        Object.defineProperty(namespace, Symbol.toStringTag, { value: 'Module' })
-        for (const name of exportedNames) {
-            if (module.#LocalExportValues.has(name)) {
-                Object.defineProperty(namespace, name, {
-                    enumerable: true,
-                    writable: true,
-                    value: module.#LocalExportValues.get(name),
-                })
+            const { bindingName, module: targetModule } = resolution
+            if (bindingName === namespace) {
+                propertiesToBeDefined[name] = { enumerable: true, value: Module.#GetModuleNamespace(targetModule) }
             } else {
-                Object.defineProperty(namespace, name, {
-                    get() {
-                        throw new ReferenceError(`Cannot access '${name}' before initialization`)
-                    },
-                    // Note: this should not be configurable, but it's a trade-off for DX.
-                    configurable: true,
-                    enumerable: true,
+                if (targetModule.#LocalExportValues.has(bindingName)) {
+                    propertiesToBeDefined[name] = {
+                        enumerable: true,
+                        // Note: this should not be configurable, but it's a trade-off for DX.
+                        configurable: true,
+                        value: targetModule.#LocalExportValues.get(bindingName)!,
+                    }
+                } else {
+                    propertiesToBeDefined[name] = {
+                        get() {
+                            throw new ReferenceError(`Cannot access '${name}' before initialization`)
+                        },
+                        // Note: this should not be configurable, but it's a trade-off for DX.
+                        configurable: true,
+                        enumerable: true,
+                    }
+                }
+                module.#AddLiveExportCallback(name, (newValue) => {
+                    Object.defineProperty(namespaceObject, name, {
+                        enumerable: true,
+                        writable: true,
+                        value: newValue,
+                    })
                 })
             }
         }
-        module.#ExportCallback.add((name) => {
-            Object.defineProperty(namespace, name, {
-                enumerable: true,
-                writable: true,
-                value: module.#LocalExportValues.get(name),
-            })
-        })
-
-        const proxy = new Proxy(namespace, moduleNamespaceExoticMethods)
-        module.#Namespace = proxy
-        return proxy
+        Object.defineProperties(namespaceObject, propertiesToBeDefined)
+        return namespaceProxy
     }
     //#endregion
 

@@ -1,5 +1,5 @@
 import type { VirtualModuleRecord, Binding, ExportAllBinding, ImportBinding } from '../types.js'
-import { unreachable } from './assert.js'
+import { assert, unreachable } from './assert.js'
 import { hasFromField, isExportAllBinding, isExportBinding, isImportAllBinding, isImportBinding } from './shapeCheck.js'
 import { all, allButDefault, namespace, type ModuleExportEntry, type ModuleImportEntry } from './spec.js'
 
@@ -109,14 +109,12 @@ export function normalizeBindingsToSpecRecord(bindings: Binding[] | undefined) {
     const importEntries: ModuleImportEntry[] = []
     for (const binding of bindings) {
         if (isImportBinding(binding)) {
-            requestedModules.push(binding.from)
             importEntries.push({
                 ImportName: binding.import,
                 LocalName: binding.as ?? binding.import,
                 ModuleRequest: binding.from,
             })
         } else if (isImportAllBinding(binding)) {
-            requestedModules.push(binding.importAllFrom)
             importEntries.push({
                 ImportName: namespace,
                 LocalName: binding.as,
@@ -124,61 +122,46 @@ export function normalizeBindingsToSpecRecord(bindings: Binding[] | undefined) {
             })
         }
     }
-    const importedBoundNames = importEntries.map((x) => x.LocalName)
-
     const indirectExportEntries: ModuleExportEntry[] = []
     const localExportEntries: ModuleExportEntry[] = []
     const starExportEntries: ModuleExportEntry[] = []
 
     for (const binding of bindings) {
-        if (isExportBinding(binding)) {
-            if (hasFromField(binding)) {
-                requestedModules.push(binding.from)
+        // step 10.a: if ee.ModuleRequest is null, then append ee to localExportEntries
+        // export { ... }
+        if (isExportBinding(binding) && !hasFromField(binding)) {
+            localExportEntries.push({
+                ExportName: binding.as ?? binding.export,
+                ImportName: null,
+                ModuleRequest: null,
+            })
+        }
+        // step 10.b: else if ee.ImportName is all-but-default, then append ee to starExportEntries
+        // export * from '...'
+        else if (isExportAllBinding(binding) && binding.as === undefined) {
+            starExportEntries.push({
+                // LocalName: null,
+                ExportName: null,
+                ImportName: allButDefault,
+                ModuleRequest: binding.exportAllFrom,
+            })
+        }
+        // step 10.c: else, append ee to indirectExportEntries
+        // export * as T from '...'
+        // export { T } from '...'
+        else {
+            if (isExportAllBinding(binding)) {
+                assert(binding.as !== undefined)
                 indirectExportEntries.push({
-                    ExportName: binding.as ?? binding.export,
-                    ImportName: binding.export,
-                    // LocalName: null,
-                    ModuleRequest: binding.from,
-                })
-            } else {
-                const ee: ModuleExportEntry = {
-                    ExportName: binding.as ?? binding.export,
-                    // LocalName: binding.export,
-                    ImportName: null,
-                    ModuleRequest: null,
-                }
-                if (!importedBoundNames.includes(binding.export)) {
-                    localExportEntries.push(ee)
-                } else {
-                    const ie = importEntries.find((x) => x.LocalName === binding.export)!
-                    if (ie.ImportName === namespace) {
-                        localExportEntries.push(ee)
-                    } else {
-                        indirectExportEntries.push({
-                            ModuleRequest: ie.ModuleRequest,
-                            ImportName: ie.ImportName,
-                            ExportName: ee.ExportName,
-                        })
-                    }
-                }
-            }
-        } else if (isExportAllBinding(binding)) {
-            requestedModules.push(binding.exportAllFrom)
-            if (typeof binding.as === 'string') {
-                // export * as name from 'mod'
-                starExportEntries.push({
-                    // LocalName: binding.as,
                     ExportName: binding.as,
                     ImportName: all,
                     ModuleRequest: binding.exportAllFrom,
                 })
-            } else {
-                // export * from 'mod'
-                starExportEntries.push({
-                    // LocalName: null,
-                    ExportName: null,
-                    ImportName: allButDefault,
-                    ModuleRequest: binding.exportAllFrom,
+            } else if (isExportBinding(binding)) {
+                indirectExportEntries.push({
+                    ExportName: binding.as ?? binding.export,
+                    ImportName: binding.export,
+                    ModuleRequest: binding.from,
                 })
             }
         }
