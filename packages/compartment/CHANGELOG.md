@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.4
+
+### Patch Changes
+
+-   8ce3aff: fix: namespace object does not reflect to live export
+
 ## 0.3.3
 
 ### Patch Changes
