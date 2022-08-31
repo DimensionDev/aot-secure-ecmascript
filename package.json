@@ -7,7 +7,7 @@
   "scripts": {
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "publish": "pnpm run build && pnpm run -r build && npx changeset tag && npx changeset publish",
+    "publish": "pnpm run build && pnpm run -r build && npx changeset publish",
     "build": "tsc -b ./tsconfig.json",
     "build:watch": "tsc -b ./tsconfig.json --watch"
   },
