@@ -4,11 +4,17 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     "types": "./dist/index.d.ts",
-    "default": "./dist/index.js"
+    "default": [
+      "./dist/bundle.js",
+      "./dist/index.js"
+    ]
   },
-  "scripts": {},
+  "scripts": {
+    "build": "rollup -c"
+  },
   "devDependencies": {
     "@swc/core": "^1.2.245"
   },
