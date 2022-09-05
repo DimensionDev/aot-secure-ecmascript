@@ -4,6 +4,14 @@
 export default {
     bindings: [
         {
+            import: 'debugTargetBookkeeping',
+            from: '',
+        },
+        {
+            import: 'attachDebuggerTarget',
+            from: '',
+        },
+        {
             export: 'default',
         },
     ],
@@ -174,9 +182,6 @@ export default {
             let installedPropertyDescriptorMethodWrappersFlag = false
             function alwaysFalse() {
                 return false
-            }
-            function identity(value) {
-                return value
             }
             const installErrorPrepareStackTrace = LOCKER_UNMINIFIED_FLAG
                 ? () => {
@@ -429,7 +434,6 @@ export default {
             } // eslint-disable-next-line @typescript-eslint/no-shadow, no-shadow
             function toSafeWeakMap(weakMap) {
                 ReflectSetPrototypeOf(weakMap, null)
-                weakMap.constructor = WeakMapCtor
                 weakMap.delete = WeakMapProtoDelete
                 weakMap.has = WeakMapProtoHas
                 weakMap.set = WeakMapProtoSet
@@ -438,8 +442,11 @@ export default {
                 return weakMap
             }
             return function createHooksCallback(color, foreignCallableHooksCallback, options) {
+                if (IS_IN_SHADOW_REALM) {
+                    options = _.undefined
+                }
                 const {
-                    distortionCallback = identity,
+                    distortionCallback,
                     instrumentation, // eslint-disable-next-line prefer-object-spread
                 } = ObjectAssign(
                     {
@@ -613,7 +620,7 @@ export default {
                     }
                 }
                 function createApplyOrConstructTrapForZeroOrMoreArgs(proxyTrapEnum) {
-                    const isApplyTrap = proxyTrapEnum & 1 /* Apply */
+                    const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}()`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
                         ? arityToApplyTrapNameRegistry
@@ -675,7 +682,7 @@ export default {
                     }
                 }
                 function createApplyOrConstructTrapForOneOrMoreArgs(proxyTrapEnum) {
-                    const isApplyTrap = proxyTrapEnum & 1 /* Apply */
+                    const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(1)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
                         ? arityToApplyTrapNameRegistry
@@ -744,7 +751,7 @@ export default {
                     }
                 }
                 function createApplyOrConstructTrapForTwoOrMoreArgs(proxyTrapEnum) {
-                    const isApplyTrap = proxyTrapEnum & 1 /* Apply */
+                    const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(2)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
                         ? arityToApplyTrapNameRegistry
@@ -819,7 +826,7 @@ export default {
                     }
                 }
                 function createApplyOrConstructTrapForThreeOrMoreArgs(proxyTrapEnum) {
-                    const isApplyTrap = proxyTrapEnum & 1 /* Apply */
+                    const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(3)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
                         ? arityToApplyTrapNameRegistry
@@ -900,7 +907,7 @@ export default {
                     }
                 }
                 function createApplyOrConstructTrapForFourOrMoreArgs(proxyTrapEnum) {
-                    const isApplyTrap = proxyTrapEnum & 1 /* Apply */
+                    const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(4)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
                         ? arityToApplyTrapNameRegistry
@@ -987,7 +994,7 @@ export default {
                     }
                 }
                 function createApplyOrConstructTrapForFiveOrMoreArgs(proxyTrapEnum) {
-                    const isApplyTrap = proxyTrapEnum & 1 /* Apply */
+                    const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(5)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
                         ? arityToApplyTrapNameRegistry
@@ -1080,7 +1087,7 @@ export default {
                     }
                 }
                 function createApplyOrConstructTrapForAnyNumberOfArgs(proxyTrapEnum) {
-                    const isApplyTrap = proxyTrapEnum & 1 /* Apply */
+                    const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const nativeMethodName = isApplyTrap ? 'apply' : 'construct'
                     const foreignCallableApplyOrConstruct = isApplyTrap
                         ? foreignCallableApply
@@ -1204,6 +1211,7 @@ export default {
                         // assert: selectedTarget is undefined
                         selectedTarget = originalTarget
                     }
+                    __.debugTargetBookkeeping?.(pointer, originalTarget)
                     return pointer
                 }
                 const getLazyPropertyDescriptorStateByTarget = IS_IN_SHADOW_REALM
@@ -1230,23 +1238,28 @@ export default {
                     if (proxyPointer) {
                         return proxyPointer
                     }
-                    const distortedTarget = IS_IN_SHADOW_REALM ? originalTarget : distortionCallback(originalTarget) // If a distortion entry is found, it must be a valid proxy target.
-                    if (distortedTarget !== originalTarget && typeof distortedTarget !== typeof originalTarget) {
-                        throw new TypeErrorCtor(`Invalid distortion ${toSafeTemplateStringValue(originalTarget)}.`)
+                    let distortionTarget
+                    if (distortionCallback) {
+                        distortionTarget = distortionCallback(originalTarget) // If a distortion entry is found, it must be a valid proxy target.
+                        if (distortionTarget !== originalTarget && typeof distortionTarget !== typeof originalTarget) {
+                            throw new TypeErrorCtor(`Invalid distortion ${toSafeTemplateStringValue(originalTarget)}.`)
+                        }
+                    } else {
+                        distortionTarget = originalTarget
                     }
                     let isPossiblyRevoked = true
                     let targetFunctionArity = 0
                     let targetFunctionName = ''
                     let targetTypedArrayLength = 0
-                    let targetTraits = 16 /* IsObject */
-                    if (typeof distortedTarget === 'function') {
+                    let targetTraits = 16 /* TargetTraits.IsObject */
+                    if (typeof distortionTarget === 'function') {
                         isPossiblyRevoked = false
                         targetFunctionArity = 0
-                        targetTraits = 4 /* IsFunction */
+                        targetTraits = 4 /* TargetTraits.IsFunction */
                         try {
                             // Detect arrow functions.
-                            if (!('prototype' in distortedTarget)) {
-                                targetTraits |= 8 /* IsArrowFunction */
+                            if (!('prototype' in distortionTarget)) {
+                                targetTraits |= 8 /* TargetTraits.IsArrowFunction */
                             }
                             const safeLengthDesc = ReflectGetOwnPropertyDescriptor(originalTarget, 'length')
                             if (safeLengthDesc) {
@@ -1263,12 +1276,12 @@ export default {
                         } catch (_unused16) {
                             isPossiblyRevoked = true
                         }
-                    } else if (ArrayBufferIsView(distortedTarget)) {
+                    } else if (ArrayBufferIsView(distortionTarget)) {
                         isPossiblyRevoked = false
-                        targetTraits = 2 /* IsArrayBufferView */
+                        targetTraits = 2 /* TargetTraits.IsArrayBufferView */
                         try {
-                            targetTypedArrayLength = ReflectApply(TypedArrayProtoLengthGetter, distortedTarget, [])
-                            targetTraits |= 32 /* IsTypedArray */ // eslint-disable-next-line no-empty
+                            targetTypedArrayLength = ReflectApply(TypedArrayProtoLengthGetter, distortionTarget, [])
+                            targetTraits |= 32 /* TargetTraits.IsTypedArray */ // eslint-disable-next-line no-empty
                         } catch (_unused17) {
                             // Could be a DataView object or a revoked proxy.
                             isPossiblyRevoked = true
@@ -1276,15 +1289,15 @@ export default {
                     }
                     if (isPossiblyRevoked) {
                         try {
-                            if (isArrayOrThrowForRevoked(distortedTarget)) {
-                                targetTraits = 1 /* IsArray */
+                            if (isArrayOrThrowForRevoked(distortionTarget)) {
+                                targetTraits = 1 /* TargetTraits.IsArray */
                             }
                         } catch (_unused18) {
-                            targetTraits = 64 /* Revoked */
+                            targetTraits = 64 /* TargetTraits.Revoked */
                         }
                     }
                     proxyPointer = foreignCallablePusher(
-                        createPointer(distortedTarget),
+                        createPointer(distortionTarget),
                         targetTraits,
                         targetFunctionArity,
                         targetFunctionName,
@@ -1774,8 +1787,8 @@ export default {
                         foreignTargetTypedArrayLength,
                     ) {
                         let shadowTarget
-                        const isForeignTargetArray = foreignTargetTraits & 1 /* IsArray */
-                        const isForeignTargetFunction = foreignTargetTraits & 4 /* IsFunction */
+                        const isForeignTargetArray = foreignTargetTraits & 1 /* TargetTraits.IsArray */
+                        const isForeignTargetFunction = foreignTargetTraits & 4 /* TargetTraits.IsFunction */
                         if (isForeignTargetFunction) {
                             // This shadow target is never invoked. It's needed to avoid
                             // proxy trap invariants. Because it's not invoked the code
@@ -1789,6 +1802,7 @@ export default {
                             shadowTarget = {}
                         }
                         const { proxy, revoke } = ProxyRevocable(shadowTarget, this)
+                        __.attachDebuggerTarget?.(proxy, foreignTargetPointer)
                         this.foreignTargetPointer = foreignTargetPointer
                         this.foreignTargetTraits = foreignTargetTraits
                         this.foreignTargetTypedArrayLength = foreignTargetTypedArrayLength // Define in the BoundaryProxyHandler constructor so it is bound
@@ -1980,7 +1994,7 @@ export default {
                         ObjectFreeze(this)
                     }
                     static passthruDefinePropertyTrap(_shadowTarget, key, unsafePartialDesc) {
-                        lastProxyTrapCalled = 4 /* DefineProperty */
+                        lastProxyTrapCalled = 4 /* ProxyHandlerTraps.DefineProperty */
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity('Reflect.defineProperty')
@@ -2045,7 +2059,7 @@ export default {
                         return result
                     }
                     static passthruDeletePropertyTrap(_shadowTarget, key) {
-                        lastProxyTrapCalled = 8 /* DeleteProperty */
+                        lastProxyTrapCalled = 8 /* ProxyHandlerTraps.DeleteProperty */
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity('Reflect.deleteProperty')
@@ -2069,7 +2083,7 @@ export default {
                         return result
                     }
                     static passthruGetPrototypeOfTrap(_shadowTarget) {
-                        lastProxyTrapCalled = 64 /* GetPrototypeOf */
+                        lastProxyTrapCalled = 64 /* ProxyHandlerTraps.GetPrototypeOf */
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity('Reflect.getPrototypeOf')
@@ -2101,7 +2115,7 @@ export default {
                         return proto
                     }
                     static passthruIsExtensibleTrap(_shadowTarget) {
-                        lastProxyTrapCalled = 256 /* IsExtensible */
+                        lastProxyTrapCalled = 256 /* ProxyHandlerTraps.IsExtensible */
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity('Reflect.isExtensible')
@@ -2136,7 +2150,7 @@ export default {
                         return result
                     }
                     static passthruOwnKeysTrap(_shadowTarget) {
-                        lastProxyTrapCalled = 512 /* OwnKeys */
+                        lastProxyTrapCalled = 512 /* ProxyHandlerTraps.OwnKeys */
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity('Reflect.ownKeys')
@@ -2162,7 +2176,7 @@ export default {
                         return ownKeys || []
                     }
                     static passthruGetOwnPropertyDescriptorTrap(_shadowTarget, key) {
-                        lastProxyTrapCalled = 32 /* GetOwnPropertyDescriptor */
+                        lastProxyTrapCalled = 32 /* ProxyHandlerTraps.GetOwnPropertyDescriptor */
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity('Reflect.getOwnPropertyDescriptor')
@@ -2213,7 +2227,7 @@ export default {
                         return safeDesc
                     }
                     static passthruPreventExtensionsTrap(_shadowTarget) {
-                        lastProxyTrapCalled = 1024 /* PreventExtensions */
+                        lastProxyTrapCalled = 1024 /* ProxyHandlerTraps.PreventExtensions */
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity('Reflect.preventExtensions')
@@ -2221,7 +2235,7 @@ export default {
                         const { foreignTargetPointer: foreignTargetPointer1, shadowTarget: shadowTarget1 } = this
                         let result = true
                         if (ReflectIsExtensible(shadowTarget1)) {
-                            let resultEnum = 0 /* None */
+                            let resultEnum = 0 /* PreventExtensionsResult.None */
                             try {
                                 resultEnum = foreignCallablePreventExtensions(foreignTargetPointer1)
                             } catch (error) {
@@ -2251,7 +2265,7 @@ export default {
                         return result
                     }
                     static passthruSetPrototypeOfTrap(_shadowTarget, proto) {
-                        lastProxyTrapCalled = 4096 /* SetPrototypeOf */
+                        lastProxyTrapCalled = 4096 /* ProxyHandlerTraps.SetPrototypeOf */
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity('Reflect.setPrototypeOf')
@@ -2276,7 +2290,7 @@ export default {
                         return result
                     }
                     static passthruSetTrap(_shadowTarget, key, value, receiver) {
-                        lastProxyTrapCalled = 2048 /* Set */
+                        lastProxyTrapCalled = 2048 /* ProxyHandlerTraps.Set */
                         const { foreignTargetPointer: foreignTargetPointer1, proxy, shadowTarget: shadowTarget1 } = this // Intentionally ignoring `document.all`.
                         // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
@@ -2559,7 +2573,7 @@ export default {
                           // BoundaryProxyHandler.has trap has been called immediately
                           // before and the symbol does not exist.
                           nearMembraneSymbolFlag && (nearMembraneSymbolFlag = lastProxyTrapCalled === 128)
-                          lastProxyTrapCalled = 16 /* Get */
+                          lastProxyTrapCalled = 16 /* ProxyHandlerTraps.Get */
                           if (nearMembraneSymbolFlag) {
                               // Exit without performing a [[Get]] for near-membrane
                               // symbols because we know when the nearMembraneSymbolFlag
@@ -2624,7 +2638,7 @@ export default {
                     : noop
                 BoundaryProxyHandler.passthruHasTrap = !IS_IN_SHADOW_REALM
                     ? function (_shadowTarget, key) {
-                          lastProxyTrapCalled = 128 /* Has */
+                          lastProxyTrapCalled = 128 /* ProxyHandlerTraps.Has */
                           let activity
                           if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                               activity = startActivity('Reflect.has')
@@ -3136,12 +3150,12 @@ export default {
                         targetPointer()
                         const target = selectedTarget
                         selectedTarget = _.undefined
-                        let result = 2 /* False */
+                        let result = 2 /* PreventExtensionsResult.False */
                         try {
                             if (ReflectPreventExtensions(target)) {
-                                result = 4 /* True */
+                                result = 4 /* PreventExtensionsResult.True */
                             } else if (ReflectIsExtensible(target)) {
-                                result |= 1 /* Extensible */
+                                result |= 1 /* PreventExtensionsResult.Extensible */
                             }
                         } catch (error) {
                             throw pushErrorAcrossBoundary(error)
@@ -3255,21 +3269,21 @@ export default {
                               try {
                                   if (!ReflectIsExtensible(target)) {
                                       if (ObjectIsFrozen(target)) {
-                                          return 4 & 2 & 1 /* IsNotExtensible */
+                                          return 4 & 2 & 1 /* TargetIntegrityTraits.IsNotExtensible */
                                       }
                                       if (ObjectIsSealed(target)) {
-                                          return 2 & 1 /* IsNotExtensible */
+                                          return 2 & 1 /* TargetIntegrityTraits.IsNotExtensible */
                                       }
-                                      return 1 /* IsNotExtensible */
+                                      return 1 /* TargetIntegrityTraits.IsNotExtensible */
                                   }
                               } catch (_unused30) {
                                   try {
                                       isArrayOrThrowForRevoked(target)
                                   } catch (_unused31) {
-                                      return 8 /* Revoked */
+                                      return 8 /* TargetIntegrityTraits.Revoked */
                                   }
                               }
-                              return 0 /* None */
+                              return 0 /* TargetIntegrityTraits.None */
                           }
                         : () => 0,
                     (targetPointer) => {

@@ -2,10 +2,21 @@ import { createMembraneMarshall } from '@locker/near-membrane-base'
 import { writeFile } from 'node:fs/promises'
 import { transform } from '@swc/core'
 import { createRequire } from 'node:module'
+import { format } from 'prettier'
+
 const require = createRequire(import.meta.url)
 
 const { code } = await transform(
-    'export default ' + createMembraneMarshall.toString().replace(`localEval(sourceText)`, `sourceText()`),
+    `import { debugTargetBookkeeping, attachDebuggerTarget } from ''
+export default ${createMembraneMarshall
+        .toString()
+        .replace(`localEval(sourceText)`, `sourceText()`)
+        .replace(/return pointer/, `debugTargetBookkeeping?.(pointer, originalTarget); return pointer`)
+        .replace(
+            `this.foreignTargetPointer = foreignTargetPointer`,
+            `attachDebuggerTarget?.(proxy, foreignTargetPointer); this.foreignTargetPointer = foreignTargetPointer`,
+        )}
+`,
     {
         jsc: {
             target: 'es2022',
@@ -27,5 +38,14 @@ await writeFile(
     `// @ts-nocheck
 // This file is built from '@locker/near-membrane-base'.createMembraneMarshall.
 // DO NOT edit it manually.
-${code}`,
+` +
+        format(code, {
+            trailingComma: 'all',
+            printWidth: 120,
+            semi: false,
+            singleQuote: true,
+            bracketSameLine: true,
+            tabWidth: 4,
+            parser: 'babel',
+        }),
 )

@@ -11,6 +11,6 @@
     globalThis.vmGlobal = makeGlobalThis()
     globalThis.vm = createVM(globalThis, vmGlobal, {
         rethrowOptimization: true,
-        endowments: { fetch: Object.getOwnPropertyDescriptor(globalThis, 'fetch') },
+        endowments: { console: Object.getOwnPropertyDescriptor(globalThis, 'console') },
     })
 </script>

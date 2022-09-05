@@ -14,6 +14,9 @@
   "devDependencies": {
     "@swc/core": "1.2.245"
   },
+  "scripts": {
+    "build": "node ./build.mjs"
+  },
   "files": [
     "dist",
     "!dist/.tsbuildinfo",

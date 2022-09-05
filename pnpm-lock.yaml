@@ -49,6 +49,9 @@ importers:
   packages/static-module-record-swc:
     specifiers: {}
 
+  packages/web-endowments:
+    specifiers: {}
+
 packages:
 
   /@babel/code-frame/7.18.6:
@@ -303,7 +306,6 @@ packages:
 
   /@locker/near-membrane-base/0.11.2:
     resolution: {integrity: sha512-p74Btf3iqTt3DRKWz3E1pGHKE5eiUWg+gI0dNOQs7Wgb/tJX/IuYciksfZSLOgivczXzLbeF6nUxrV7tV8ZOQg==}
-    dev: false
 
   /@manypkg/find-root/1.1.0:
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
