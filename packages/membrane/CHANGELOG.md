@@ -1,5 +1,11 @@
 # @masknet/membrane
 
+## 0.1.2
+
+### Patch Changes
+
+-   6cc8a56: improve dx by attach original target to the proxy
+
 ## 0.1.1
 
 ### Patch Changes
