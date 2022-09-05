@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.5
+
+### Patch Changes
+
+-   6de38a5: add bundle
+
 ## 0.3.4
 
 ### Patch Changes
