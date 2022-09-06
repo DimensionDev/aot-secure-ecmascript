@@ -315,8 +315,10 @@ export class Module<T extends object = any> {
         }
         if (this.#NeedsImport) {
             this.#ContextObject!.import = async (specifier: string, options?: ImportCallOptions) => {
-                const [module] = await Module.#HostResolveModules(this, [specifier])
-                assert(module)
+                await Module.#HostResolveModules(this, [specifier])
+                const cap = this.#ResolvedModules.get(specifier)
+                assert(cap?.Status.Type === 'Fulfilled')
+                const module = cap.Status.Value
                 return Module.#DynamicImportModule(module)
             }
         }
@@ -701,7 +703,9 @@ export class Module<T extends object = any> {
                     // Safari: private in
                     module.#HasTLA
                     // if (!(#HasTLA in module)) throw new TypeError('ImportHook must return a Module instance')
-                    await this.#HostResolveModules(module, module.#RequestedModules)
+                    // Note: do not await here, otherwise it will deadlock under self-import.
+                    // But can we make sure the top promise resolved when and only when all of it's transitive dependency resolved?
+                    this.#HostResolveModules(module, module.#RequestedModules)
                     return module
                 },
                 (error) => {
@@ -712,20 +716,31 @@ export class Module<T extends object = any> {
         return capability.Promise
     }
     // call importHook recursively to get all module referenced.
-    static async #HostResolveModules(module: Module, requestModules: string[]) {
-        const promises = requestModules.map(async (spec) => {
-            const cache = module.#ResolvedModules.get(spec)
-            if (!cache) {
-                return this.#HostResolveModulesInner(module, spec)
-            } else if (cache.Status.Type === 'Pending') {
-                return cache.Status.Promise
-            } else if (cache.Status.Type === 'Fulfilled') {
-                return cache.Status.Value
-            } else {
-                throw cache.Status.Reason
+    static #HostResolveModules(module: Module, requestModules: string[]) {
+        if (requestModules.length === 0) return Promise.resolve()
+        const overallCapability = PromiseCapability<void>()
+
+        function check(): void {
+            if (overallCapability.Status.Type !== 'Pending') return
+            for (const m of module.#ResolvedModules.values()) {
+                if (m.Status.Type === 'Rejected') return overallCapability.Reject(m.Status.Reason)
+                if (m.Status.Type === 'Pending') return void overallCapability.Promise.then(check, overallCapability.Reject)
             }
-        })
-        return Promise.all(promises)
+            overallCapability.Resolve()
+        }
+        for (const spec of requestModules) {
+            const capability = module.#ResolvedModules.get(spec)
+            if (!capability) {
+                this.#HostResolveModulesInner(module, spec).then(check, overallCapability.Reject)
+            } else if (capability.Status.Type === 'Fulfilled') {
+                check()
+            } else if (capability.Status.Type === 'Pending') {
+                capability.Promise.then(check, overallCapability.Reject)
+            } else {
+                overallCapability.Reject(capability.Status.Reason)
+            }
+        }
+        return overallCapability.Promise
     }
     //#endregion
     /** @internal */
