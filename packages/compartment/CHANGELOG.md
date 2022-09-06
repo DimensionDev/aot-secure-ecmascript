@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.8
+
+### Patch Changes
+
+-   d708b09: fix: live export does not setup correctly
+
 ## 0.3.7
 
 ### Patch Changes
