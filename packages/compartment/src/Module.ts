@@ -664,7 +664,7 @@ export class Module<T extends object = any> {
                         enumerable: true,
                     }
                 }
-                module.#AddLiveExportCallback(name, (newValue) => {
+                targetModule.#AddLiveExportCallback(name, (newValue) => {
                     Object.defineProperty(namespaceObject, name, {
                         enumerable: true,
                         writable: true,
