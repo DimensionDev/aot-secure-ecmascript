@@ -1,5 +1,11 @@
 # @masknet/membrane
 
+## 0.1.3
+
+### Patch Changes
+
+-   7b32451: fix blue connector run as ShadowRealm mode
+
 ## 0.1.2
 
 ### Patch Changes
