@@ -724,7 +724,8 @@ export class Module<T extends object = any> {
             if (overallCapability.Status.Type !== 'Pending') return
             for (const m of module.#ResolvedModules.values()) {
                 if (m.Status.Type === 'Rejected') return overallCapability.Reject(m.Status.Reason)
-                if (m.Status.Type === 'Pending') return void overallCapability.Promise.then(check, overallCapability.Reject)
+                if (m.Status.Type === 'Pending')
+                    return void overallCapability.Promise.then(check, overallCapability.Reject)
             }
             overallCapability.Resolve()
         }
