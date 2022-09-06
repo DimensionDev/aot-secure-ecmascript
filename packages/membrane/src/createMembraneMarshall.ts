@@ -12,6 +12,10 @@ export default {
             from: '',
         },
         {
+            import: 'proxyTargetToLazyPropertyDescriptorStateMap',
+            from: '',
+        },
+        {
             export: 'default',
         },
     ],
@@ -77,13 +81,13 @@ export default {
                     ? OriginalObjectHasOwn
                     : (object, key) => ReflectApply(ObjectProtoHasOwnProperty, object, [key])
             const IS_IN_SHADOW_REALM = typeof globalObject !== 'object' || globalObject === null
-            const LOCKER_DEBUG_MODE_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerDebugMode') : _.undefined
+            const LOCKER_DEBUG_MODE_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerDebugMode') : undefined
             const LOCKER_IDENTIFIER_MARKER = '$LWS'
-            const LOCKER_LIVE_VALUE_MARKER_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerLiveValue') : _.undefined
+            const LOCKER_LIVE_VALUE_MARKER_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerLiveValue') : undefined
             const LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL = !IS_IN_SHADOW_REALM
                 ? SymbolFor('@@lockerNearMembraneSerializedValue')
-                : _.undefined
-            const LOCKER_NEAR_MEMBRANE_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerNearMembrane') : _.undefined
+                : undefined
+            const LOCKER_NEAR_MEMBRANE_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerNearMembrane') : undefined
             const LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL = SymbolFor('@@lockerNearMembraneUndefinedValue') // The default stack trace limit in Chrome is 10.
             // Set to 20 to account for stack trace filtering.
             const LOCKER_STACK_TRACE_LIMIT = 20 // This package is bundled by third-parties that have their own build time
@@ -96,7 +100,7 @@ export default {
             const LOCKER_UNMINIFIED_FLAG = `${() => /* $LWS */ 1}`.includes('*') // Indicate whether debug support is available.
             const LOCKER_DEBUGGABLE_FLAG = LOCKER_UNMINIFIED_FLAG && !IS_IN_SHADOW_REALM // BigInt is not supported in Safari 13.1.
             // https://caniuse.com/bigint
-            const FLAGS_REG_EXP = IS_IN_SHADOW_REALM ? /\w*$/ : _.undefined // Minification safe reference to the private `BoundaryProxyHandler`
+            const FLAGS_REG_EXP = IS_IN_SHADOW_REALM ? /\w*$/ : undefined // Minification safe reference to the private `BoundaryProxyHandler`
             // 'serializedValue' property name.
             let MINIFICATION_SAFE_SERIALIZED_VALUE_PROPERTY_NAME // Minification safe references to the private `BoundaryProxyHandler`
             // 'apply' and 'construct' trap variant's property names.
@@ -111,8 +115,8 @@ export default {
             const { isView: ArrayBufferIsView } = ArrayBufferCtor
             const ArrayBufferProtoByteLengthGetter = !IS_IN_SHADOW_REALM
                 ? ReflectApply(ObjectProtoLookupGetter, ArrayBufferCtor.prototype, ['byteLength'])
-                : _.undefined
-            const BigIntProtoValueOf = SUPPORTS_BIG_INT ? _.BigInt.prototype.valueOf : _.undefined
+                : undefined
+            const BigIntProtoValueOf = SUPPORTS_BIG_INT ? _.BigInt.prototype.valueOf : undefined
             const { valueOf: BooleanProtoValueOf } = _.Boolean.prototype
             const { toString: ErrorProtoToString } = ErrorCtor.prototype
             const { bind: FunctionProtoBind, toString: FunctionProtoToString } = _.Function.prototype
@@ -130,7 +134,7 @@ export default {
                           const string = ReflectApply(RegExProtoToString, this, [])
                           return ReflectApply(RegExpProtoExec, FLAGS_REG_EXP, [string])[0]
                       }
-                : _.undefined
+                : undefined
             const RegExpProtoSourceGetter = ReflectApply(ObjectProtoLookupGetter, RegExpProto, ['source'])
             const {
                 replace: StringProtoReplace,
@@ -151,9 +155,9 @@ export default {
                 [SymbolToStringTag]: WeakMapProtoSymbolToStringTag,
             } = WeakMapProto
             const consoleObject =
-                !IS_IN_SHADOW_REALM && typeof _.console === 'object' && _.console !== null ? _.console : _.undefined
+                !IS_IN_SHADOW_REALM && typeof _.console === 'object' && _.console !== null ? _.console : undefined
             const consoleInfo = consoleObject == null ? void 0 : consoleObject.info
-            const localEval = IS_IN_SHADOW_REALM ? _.eval : _.undefined
+            const localEval = IS_IN_SHADOW_REALM ? _.eval : undefined
             const globalThisRef =
                 (_ref =
                     (_ref2 =
@@ -161,11 +165,11 @@ export default {
                             ? globalObject // https://caniuse.com/mdn-javascript_builtins_globalthisfor
                             : typeof _.globalThis !== 'undefined'
                             ? _.globalThis
-                            : _.undefined) != null
+                            : undefined) != null
                         ? _ref2 // eslint-disable-next-line no-restricted-globals
                         : typeof _.self !== 'undefined'
                         ? _.self
-                        : _.undefined) != null
+                        : undefined) != null
                     ? _ref
                     : (ReflectDefineProperty(ObjectProto, 'globalThis', {
                           __proto__: null,
@@ -200,9 +204,9 @@ export default {
                                   ? (_callSites$ = callSites[0]) == null
                                       ? void 0
                                       : _callSites$.constructor
-                                  : _.undefined // eslint-disable-next-line no-empty
+                                  : undefined // eslint-disable-next-line no-empty
                           } catch (_unused) {}
-                          return _.undefined
+                          return undefined
                       })()
                       if (typeof CallSite !== 'function') {
                           return
@@ -323,7 +327,7 @@ export default {
                               source,
                           })
                       }
-                      return _.undefined
+                      return undefined
                   }
                 : noop
             const serializeStringObject = IS_IN_SHADOW_REALM
@@ -376,7 +380,7 @@ export default {
                               }
                           // eslint-disable-next-line no-fallthrough
                           default:
-                              return _.undefined
+                              return undefined
                       }
                   }
                 : noop
@@ -411,7 +415,7 @@ export default {
                       try {
                           return serializeStringObject(target) // eslint-disable-next-line no-empty
                       } catch (_unused13) {}
-                      return _.undefined
+                      return undefined
                   }
                 : noop
             function toSafeTemplateStringValue(value) {
@@ -443,7 +447,7 @@ export default {
             }
             return function createHooksCallback(color, foreignCallableHooksCallback, options) {
                 if (IS_IN_SHADOW_REALM) {
-                    options = _.undefined
+                    options = undefined
                 }
                 const {
                     distortionCallback,
@@ -460,28 +464,26 @@ export default {
                 const arityToApplyTrapNameRegistry = {
                     // Populated in the returned connector function below.
                     __proto__: null,
-                    0: _.undefined,
-                    1: _.undefined,
-                    2: _.undefined,
-                    3: _.undefined,
-                    4: _.undefined,
-                    n: _.undefined,
+                    0: undefined,
+                    1: undefined,
+                    2: undefined,
+                    3: undefined,
+                    4: undefined,
+                    n: undefined,
                 }
                 const arityToConstructTrapNameRegistry = {
                     // Populated in the returned connector function below.
                     __proto__: null,
-                    0: _.undefined,
-                    1: _.undefined,
-                    2: _.undefined,
-                    3: _.undefined,
-                    4: _.undefined,
-                    n: _.undefined,
+                    0: undefined,
+                    1: undefined,
+                    2: undefined,
+                    3: undefined,
+                    4: undefined,
+                    n: undefined,
                 }
                 const localProxyTargetToLazyPropertyDescriptorStateMap = toSafeWeakMap(new WeakMapCtor())
                 const proxyTargetToPointerMap = toSafeWeakMap(new WeakMapCtor())
-                const startActivity = LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG
-                    ? instrumentation.startActivity
-                    : _.undefined
+                const startActivity = LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG ? instrumentation.startActivity : undefined
                 let foreignCallablePushErrorTarget
                 let foreignCallablePushTarget
                 let foreignCallableApply
@@ -544,7 +546,7 @@ export default {
                           } catch (error) {
                               var _selectedTarget
                               const errorToThrow = (_selectedTarget = selectedTarget) != null ? _selectedTarget : error
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               throw errorToThrow
                           }
                           if (safeDesc) {
@@ -600,7 +602,7 @@ export default {
                     } catch (error) {
                         var _selectedTarget2
                         const errorToThrow = (_selectedTarget2 = selectedTarget) != null ? _selectedTarget2 : error
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity.error(errorToThrow)
                         }
@@ -610,7 +612,7 @@ export default {
                     if (typeof protoPointerOrNull === 'function') {
                         protoPointerOrNull()
                         proto = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                     } else {
                         proto = null
                     }
@@ -655,13 +657,13 @@ export default {
                                     ? getTransferablePointer(thisArgOrNewTarget) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof thisArgOrNewTarget === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : thisArgOrNewTarget,
                             )
                         } catch (error) {
                             var _selectedTarget3
                             const errorToThrow = (_selectedTarget3 = selectedTarget) != null ? _selectedTarget3 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -671,7 +673,7 @@ export default {
                         if (typeof pointerOrPrimitive === 'function') {
                             pointerOrPrimitive()
                             result = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             result = pointerOrPrimitive
                         }
@@ -718,19 +720,19 @@ export default {
                                     ? getTransferablePointer(thisArgOrNewTarget) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof thisArgOrNewTarget === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : thisArgOrNewTarget,
                                 (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
                                     ? getTransferablePointer(arg0) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg0 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg0,
                             )
                         } catch (error) {
                             var _selectedTarget4
                             const errorToThrow = (_selectedTarget4 = selectedTarget) != null ? _selectedTarget4 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -740,7 +742,7 @@ export default {
                         if (typeof pointerOrPrimitive === 'function') {
                             pointerOrPrimitive()
                             result = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             result = pointerOrPrimitive
                         }
@@ -787,25 +789,25 @@ export default {
                                     ? getTransferablePointer(thisArgOrNewTarget) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof thisArgOrNewTarget === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : thisArgOrNewTarget,
                                 (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
                                     ? getTransferablePointer(arg0) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg0 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg0,
                                 (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function'
                                     ? getTransferablePointer(arg1) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg1 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg1,
                             )
                         } catch (error) {
                             var _selectedTarget5
                             const errorToThrow = (_selectedTarget5 = selectedTarget) != null ? _selectedTarget5 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -815,7 +817,7 @@ export default {
                         if (typeof pointerOrPrimitive === 'function') {
                             pointerOrPrimitive()
                             result = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             result = pointerOrPrimitive
                         }
@@ -862,31 +864,31 @@ export default {
                                     ? getTransferablePointer(thisArgOrNewTarget) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof thisArgOrNewTarget === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : thisArgOrNewTarget,
                                 (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
                                     ? getTransferablePointer(arg0) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg0 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg0,
                                 (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function'
                                     ? getTransferablePointer(arg1) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg1 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg1,
                                 (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function'
                                     ? getTransferablePointer(arg2) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg2 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg2,
                             )
                         } catch (error) {
                             var _selectedTarget6
                             const errorToThrow = (_selectedTarget6 = selectedTarget) != null ? _selectedTarget6 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -896,7 +898,7 @@ export default {
                         if (typeof pointerOrPrimitive === 'function') {
                             pointerOrPrimitive()
                             result = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             result = pointerOrPrimitive
                         }
@@ -943,37 +945,37 @@ export default {
                                     ? getTransferablePointer(thisArgOrNewTarget) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof thisArgOrNewTarget === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : thisArgOrNewTarget,
                                 (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
                                     ? getTransferablePointer(arg0) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg0 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg0,
                                 (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function'
                                     ? getTransferablePointer(arg1) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg1 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg1,
                                 (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function'
                                     ? getTransferablePointer(arg2) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg2 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg2,
                                 (typeof arg3 === 'object' && arg3 !== null) || typeof arg3 === 'function'
                                     ? getTransferablePointer(arg3) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg3 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg3,
                             )
                         } catch (error) {
                             var _selectedTarget7
                             const errorToThrow = (_selectedTarget7 = selectedTarget) != null ? _selectedTarget7 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -983,7 +985,7 @@ export default {
                         if (typeof pointerOrPrimitive === 'function') {
                             pointerOrPrimitive()
                             result = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             result = pointerOrPrimitive
                         }
@@ -1030,43 +1032,43 @@ export default {
                                     ? getTransferablePointer(thisArgOrNewTarget) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof thisArgOrNewTarget === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : thisArgOrNewTarget,
                                 (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
                                     ? getTransferablePointer(arg0) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg0 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg0,
                                 (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function'
                                     ? getTransferablePointer(arg1) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg1 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg1,
                                 (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function'
                                     ? getTransferablePointer(arg2) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg2 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg2,
                                 (typeof arg3 === 'object' && arg3 !== null) || typeof arg3 === 'function'
                                     ? getTransferablePointer(arg3) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg3 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg3,
                                 (typeof arg4 === 'object' && arg4 !== null) || typeof arg4 === 'function'
                                     ? getTransferablePointer(arg4) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof arg4 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : arg4,
                             )
                         } catch (error) {
                             var _selectedTarget8
                             const errorToThrow = (_selectedTarget8 = selectedTarget) != null ? _selectedTarget8 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -1076,7 +1078,7 @@ export default {
                         if (typeof pointerOrPrimitive === 'function') {
                             pointerOrPrimitive()
                             result = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             result = pointerOrPrimitive
                         }
@@ -1117,7 +1119,7 @@ export default {
                                     ? getTransferablePointer(thisArgOrNewTarget) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof thisArgOrNewTarget === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : thisArgOrNewTarget
                             for (let i = 0; i < length; i += 1) {
                                 const arg = args[i] // Inlining `getTransferableValue()`.
@@ -1126,18 +1128,14 @@ export default {
                                         ? getTransferablePointer(arg) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                         : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                         typeof arg === 'undefined'
-                                        ? _.undefined
+                                        ? undefined
                                         : arg
                             }
-                            pointerOrPrimitive = ReflectApply(
-                                foreignCallableApplyOrConstruct,
-                                _.undefined,
-                                combinedArgs,
-                            )
+                            pointerOrPrimitive = ReflectApply(foreignCallableApplyOrConstruct, undefined, combinedArgs)
                         } catch (error) {
                             var _selectedTarget9
                             const errorToThrow = (_selectedTarget9 = selectedTarget) != null ? _selectedTarget9 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -1147,7 +1145,7 @@ export default {
                         if (typeof pointerOrPrimitive === 'function') {
                             pointerOrPrimitive()
                             result = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             result = pointerOrPrimitive
                         }
@@ -1181,25 +1179,25 @@ export default {
                         if (typeof getterPointerOrPrimitive === 'function') {
                             getterPointerOrPrimitive()
                             safeDesc.get = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
-                            safeDesc.get = _.undefined
+                            safeDesc.get = undefined
                         }
                     }
                     if (setterPointerOrPrimitive !== LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL) {
                         if (typeof setterPointerOrPrimitive === 'function') {
                             setterPointerOrPrimitive()
                             safeDesc.set = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
-                            safeDesc.set = _.undefined
+                            safeDesc.set = undefined
                         }
                     }
                     if (valuePointerOrPrimitive !== LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL) {
                         if (typeof valuePointerOrPrimitive === 'function') {
                             valuePointerOrPrimitive()
                             safeDesc.value = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             safeDesc.value = valuePointerOrPrimitive
                         }
@@ -1217,14 +1215,14 @@ export default {
                 const getLazyPropertyDescriptorStateByTarget = IS_IN_SHADOW_REALM
                     ? (target) => {
                           let state = localProxyTargetToLazyPropertyDescriptorStateMap.get(target)
-                          if (state === _.undefined) {
+                          if (state === undefined) {
                               const statePointerOrUndefined = foreignCallableGetLazyPropertyDescriptorStateByTarget(
                                   getTransferablePointer(target),
                               )
                               if (typeof statePointerOrUndefined === 'function') {
                                   statePointerOrUndefined()
                                   state = selectedTarget
-                                  selectedTarget = _.undefined
+                                  selectedTarget = undefined
                                   if (state) {
                                       localProxyTargetToLazyPropertyDescriptorStateMap.set(target, state)
                                   }
@@ -1271,7 +1269,7 @@ export default {
                             }
                             const safeNameDesc = false
                                 ? ReflectGetOwnPropertyDescriptor(originalTarget, 'name')
-                                : _.undefined
+                                : undefined
                             if (safeNameDesc);
                         } catch (_unused16) {
                             isPossiblyRevoked = true
@@ -1359,7 +1357,7 @@ export default {
                               ? {
                                     __proto__: null,
                                 }
-                              : _.undefined
+                              : undefined
                           const getFixedDescriptor = shouldFixChromeBug
                               ? (target, key) =>
                                     ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key])
@@ -1367,14 +1365,14 @@ export default {
                                               configurable: false,
                                               enumerable: ReflectApply(ObjectProtoPropertyIsEnumerable, target, [key]),
                                               get: getUnforgeableGlobalThisGetter(key),
-                                              set: _.undefined,
+                                              set: undefined,
                                           }
                                         : ReflectGetOwnPropertyDescriptor(target, key)
-                              : _.undefined
+                              : undefined
                           const getUnforgeableGlobalThisGetter = shouldFixChromeBug
                               ? (key) => {
                                     let globalThisGetter = keyToGlobalThisGetterRegistry[key]
-                                    if (globalThisGetter === _.undefined) {
+                                    if (globalThisGetter === undefined) {
                                         // Wrap `unboundGlobalThisGetter` in bound function
                                         // to obscure the getter source as "[native code]".
                                         globalThisGetter = ReflectApply(FunctionProtoBind, unboundGlobalThisGetter, []) // Preserve identity continuity of getters.
@@ -1382,20 +1380,20 @@ export default {
                                     }
                                     return globalThisGetter
                                 }
-                              : _.undefined
+                              : undefined
                           const lookupFixedGetter = shouldFixChromeBug
                               ? (target, key) =>
                                     ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key])
                                         ? getUnforgeableGlobalThisGetter(key)
                                         : ReflectApply(ObjectProtoLookupGetter, target, [key])
-                              : _.undefined
+                              : undefined
                           const lookupFixedSetter = shouldFixChromeBug
                               ? (target, key) =>
                                     ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key])
-                                        ? _.undefined
+                                        ? undefined
                                         : ReflectApply(ObjectProtoLookupSetter, target, [key])
-                              : _.undefined
-                          const unboundGlobalThisGetter = shouldFixChromeBug ? () => globalThisRef : _.undefined
+                              : undefined
+                          const unboundGlobalThisGetter = shouldFixChromeBug ? () => globalThisRef : undefined
                           const wrapDefineAccessOrProperty = (originalFunc) => {
                               const { length: originalFuncLength } = originalFunc // `__defineGetter__()` and `__defineSetter__()` have
                               // function lengths of 2 while `Reflect.defineProperty()`
@@ -1473,7 +1471,7 @@ export default {
                           const wrapGetOwnPropertyDescriptors = (originalFunc) =>
                               new ProxyCtor(originalFunc, {
                                   apply(_originalFunc, thisArg, args) {
-                                      const target = args.length ? args[0] : _.undefined
+                                      const target = args.length ? args[0] : undefined
                                       if (
                                           !(
                                               (typeof target === 'object' && target !== null) ||
@@ -1488,7 +1486,7 @@ export default {
                                       const unsafeDescMap = isFixingChromeBug // to populate with curated descriptors.
                                           ? {} // safe to use the native method.
                                           : ReflectApply(originalFunc, thisArg, args)
-                                      if (!isFixingChromeBug && state === _.undefined) {
+                                      if (!isFixingChromeBug && state === undefined) {
                                           // Exit early if the target is not a global
                                           // object and there are no lazy descriptors.
                                           return unsafeDescMap
@@ -1595,25 +1593,25 @@ export default {
                                     if (typeof getterPointerOrPrimitive === 'function') {
                                         getterPointerOrPrimitive()
                                         safeDesc.get = selectedTarget
-                                        selectedTarget = _.undefined
+                                        selectedTarget = undefined
                                     } else {
-                                        safeDesc.get = _.undefined
+                                        safeDesc.get = undefined
                                     }
                                 }
                                 if (setterPointerOrPrimitive !== LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL) {
                                     if (typeof setterPointerOrPrimitive === 'function') {
                                         setterPointerOrPrimitive()
                                         safeDesc.set = selectedTarget
-                                        selectedTarget = _.undefined
+                                        selectedTarget = undefined
                                     } else {
-                                        safeDesc.set = _.undefined
+                                        safeDesc.set = undefined
                                     }
                                 }
                                 if (valuePointerOrPrimitive !== LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL) {
                                     if (typeof valuePointerOrPrimitive === 'function') {
                                         valuePointerOrPrimitive()
                                         safeDesc.value = selectedTarget
-                                        selectedTarget = _.undefined
+                                        selectedTarget = undefined
                                     } else {
                                         safeDesc.value = valuePointerOrPrimitive
                                     }
@@ -1628,20 +1626,20 @@ export default {
                     } catch (error) {
                         var _selectedTarget10
                         const errorToThrow = (_selectedTarget10 = selectedTarget) != null ? _selectedTarget10 : error
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity.error(errorToThrow)
                         }
                         throw errorToThrow
                     }
-                    if (safeDesc === _.undefined) {
+                    if (safeDesc === undefined) {
                         // Avoiding calling the has trap for any proto chain operation,
                         // instead we implement the regular logic here in this trap.
                         let currentObject
                         if (typeof protoPointerOrNull === 'function') {
                             protoPointerOrNull()
                             currentObject = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             currentObject = null
                         }
@@ -1661,7 +1659,7 @@ export default {
                             safeDesc.foreign =
                                 ((typeof possibleProxy === 'object' && possibleProxy !== null) ||
                                     typeof possibleProxy === 'function') &&
-                                proxyTargetToPointerMap.get(possibleProxy) !== _.undefined
+                                proxyTargetToPointerMap.get(possibleProxy) !== undefined
                         }
                     }
                     if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
@@ -1685,13 +1683,13 @@ export default {
                                             ? getTransferablePointer(receiver) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                             : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                             typeof receiver === 'undefined'
-                                            ? _.undefined
+                                            ? undefined
                                             : receiver,
                                         (typeof value === 'object' && value !== null) || typeof value === 'function'
                                             ? getTransferablePointer(value) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                             : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                             typeof value === 'undefined'
-                                            ? _.undefined
+                                            ? undefined
                                             : value,
                                     )
                                 } else {
@@ -1833,7 +1831,7 @@ export default {
                         }
                         this.proxy = proxy
                         this.revoke = revoke
-                        this.serializedValue = _.undefined
+                        this.serializedValue = undefined
                         this.shadowTarget = shadowTarget
                         this.staticToStringTag = 'Object' // Define traps.
                         if (isForeignTargetFunction) {
@@ -1881,7 +1879,7 @@ export default {
                                 // Lazily define serializedValue.
                                 let cachedSerializedValue = LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                                 const { serializedValue } = this
-                                if (MINIFICATION_SAFE_SERIALIZED_VALUE_PROPERTY_NAME === _.undefined) {
+                                if (MINIFICATION_SAFE_SERIALIZED_VALUE_PROPERTY_NAME === undefined) {
                                     // A minification safe way to get the 'serializedValue'
                                     // property name.
                                     ;({ 0: MINIFICATION_SAFE_SERIALIZED_VALUE_PROPERTY_NAME } = ObjectKeys({
@@ -2009,7 +2007,7 @@ export default {
                                     ? getTransferablePointer(value1) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                     typeof value1 === 'undefined'
-                                    ? _.undefined
+                                    ? undefined
                                     : value1
                                 : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                         const getterPointer =
@@ -2047,7 +2045,7 @@ export default {
                             var _selectedTarget11
                             const errorToThrow =
                                 (_selectedTarget11 = selectedTarget) != null ? _selectedTarget11 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -2071,7 +2069,7 @@ export default {
                             var _selectedTarget12
                             const errorToThrow =
                                 (_selectedTarget12 = selectedTarget) != null ? _selectedTarget12 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -2095,7 +2093,7 @@ export default {
                             var _selectedTarget13
                             const errorToThrow =
                                 (_selectedTarget13 = selectedTarget) != null ? _selectedTarget13 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -2105,7 +2103,7 @@ export default {
                         if (typeof protoPointerOrNull === 'function') {
                             protoPointerOrNull()
                             proto = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             proto = null
                         }
@@ -2130,7 +2128,7 @@ export default {
                                 var _selectedTarget14
                                 const errorToThrow =
                                     (_selectedTarget14 = selectedTarget) != null ? _selectedTarget14 : error
-                                selectedTarget = _.undefined
+                                selectedTarget = undefined
                                 if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                     activity.error(errorToThrow)
                                 }
@@ -2164,7 +2162,7 @@ export default {
                             var _selectedTarget15
                             const errorToThrow =
                                 (_selectedTarget15 = selectedTarget) != null ? _selectedTarget15 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -2215,7 +2213,7 @@ export default {
                             var _selectedTarget16
                             const errorToThrow =
                                 (_selectedTarget16 = selectedTarget) != null ? _selectedTarget16 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -2242,7 +2240,7 @@ export default {
                                 var _selectedTarget17
                                 const errorToThrow =
                                     (_selectedTarget17 = selectedTarget) != null ? _selectedTarget17 : error
-                                selectedTarget = _.undefined
+                                selectedTarget = undefined
                                 if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                     activity.error(errorToThrow)
                                 }
@@ -2278,7 +2276,7 @@ export default {
                             var _selectedTarget18
                             const errorToThrow =
                                 (_selectedTarget18 = selectedTarget) != null ? _selectedTarget18 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -2295,7 +2293,7 @@ export default {
                         // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                         if (typeof value === 'undefined') {
-                            value = _.undefined
+                            value = undefined
                         }
                         if (typeof receiver === 'undefined') {
                             receiver = proxy
@@ -2327,7 +2325,7 @@ export default {
                             var _selectedTarget19
                             const errorToThrow =
                                 (_selectedTarget19 = selectedTarget) != null ? _selectedTarget19 : error
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                             if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                 activity.error(errorToThrow)
                             }
@@ -2377,7 +2375,7 @@ export default {
                                           var _selectedTarget20
                                           const errorToThrow =
                                               (_selectedTarget20 = selectedTarget) != null ? _selectedTarget20 : error
-                                          selectedTarget = _.undefined
+                                          selectedTarget = undefined
                                           if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                               activity.error(errorToThrow)
                                           }
@@ -2386,7 +2384,7 @@ export default {
                                       if (typeof pointerOrPrimitive === 'function') {
                                           pointerOrPrimitive()
                                           result = selectedTarget
-                                          selectedTarget = _.undefined
+                                          selectedTarget = undefined
                                       } else {
                                           result = pointerOrPrimitive
                                       }
@@ -2409,7 +2407,7 @@ export default {
                                   var _selectedTarget21
                                   const errorToThrow =
                                       (_selectedTarget21 = selectedTarget) != null ? _selectedTarget21 : error
-                                  selectedTarget = _.undefined
+                                  selectedTarget = undefined
                                   if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                       activity.error(errorToThrow)
                                   }
@@ -2453,7 +2451,7 @@ export default {
                                   var _selectedTarget22
                                   const errorToThrow =
                                       (_selectedTarget22 = selectedTarget) != null ? _selectedTarget22 : error
-                                  selectedTarget = _.undefined
+                                  selectedTarget = undefined
                                   if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                       activity.error(errorToThrow)
                                   }
@@ -2485,7 +2483,7 @@ export default {
                                                   (_selectedTarget23 = selectedTarget) != null
                                                       ? _selectedTarget23
                                                       : error
-                                              selectedTarget = _.undefined
+                                              selectedTarget = undefined
                                               if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                                   activity.error(errorToThrow)
                                               }
@@ -2494,7 +2492,7 @@ export default {
                                           if (typeof pointerOrPrimitive === 'function') {
                                               pointerOrPrimitive()
                                               result = selectedTarget
-                                              selectedTarget = _.undefined
+                                              selectedTarget = undefined
                                           } else {
                                               result = pointerOrPrimitive
                                           }
@@ -2533,7 +2531,7 @@ export default {
                               var _selectedTarget24
                               const errorToThrow =
                                   (_selectedTarget24 = selectedTarget) != null ? _selectedTarget24 : error
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                   activity.error(errorToThrow)
                               }
@@ -2549,7 +2547,7 @@ export default {
                               if (typeof trueOrProtoPointerOrNull === 'function') {
                                   trueOrProtoPointerOrNull()
                                   currentObject = selectedTarget
-                                  selectedTarget = _.undefined
+                                  selectedTarget = undefined
                               } else {
                                   currentObject = null
                               }
@@ -2616,7 +2614,7 @@ export default {
                               var _selectedTarget25
                               const errorToThrow =
                                   (_selectedTarget25 = selectedTarget) != null ? _selectedTarget25 : error
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                   activity.error(errorToThrow)
                               }
@@ -2626,7 +2624,7 @@ export default {
                           if (typeof pointerOrPrimitive === 'function') {
                               pointerOrPrimitive()
                               result = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                           } else {
                               result = pointerOrPrimitive
                           }
@@ -2650,7 +2648,7 @@ export default {
                               var _selectedTarget26
                               const errorToThrow =
                                   (_selectedTarget26 = selectedTarget) != null ? _selectedTarget26 : error
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                   activity.error(errorToThrow)
                               }
@@ -2738,7 +2736,7 @@ export default {
                           const { foreignTargetTraits: foreignTargetTraits1, staticToStringTag } = this
                           const result = ReflectGet(shadowTarget, key, receiver)
                           if (
-                              result === _.undefined &&
+                              result === undefined &&
                               key === SymbolToStringTag &&
                               foreignTargetTraits1 & 16 && // receive "Object" we return `undefined` to let the
                               // language resolve it naturally without projecting a
@@ -2793,7 +2791,7 @@ export default {
                     !IS_IN_SHADOW_REALM
                         ? () => {
                               const result = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               return result
                           }
                         : noop,
@@ -2803,18 +2801,18 @@ export default {
                         } // Intentionally ignoring `document.all`.
                         // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                        return typeof value === 'undefined' ? _.undefined : value
+                        return typeof value === 'undefined' ? undefined : value
                     }, // the foreign realm to access a linkable pointer for a property value.
                     // In order to do that, the foreign side must provide a pointer and
                     // a key access the value in order to produce a pointer
                     (targetPointer, key) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         const value = target == null ? void 0 : target[key] // Intentionally ignoring `document.all`.
                         // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                        return createPointer(typeof value === 'undefined' ? _.undefined : value)
+                        return createPointer(typeof value === 'undefined' ? undefined : value)
                     },
                     IS_IN_SHADOW_REALM
                         ? (sourceText) => {
@@ -2832,7 +2830,7 @@ export default {
                     (targetPointer, newPointer) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         if ((typeof target === 'object' && target !== null) || typeof target === 'function') {
                             proxyTargetToPointerMap.set(target, newPointer)
                         }
@@ -2868,19 +2866,19 @@ export default {
                     (targetPointer, thisArgPointerOrUndefined, ...args) => {
                         targetPointer()
                         const func = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let thisArg
                         if (typeof thisArgPointerOrUndefined === 'function') {
                             thisArgPointerOrUndefined()
                             thisArg = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         }
                         for (let i = 0, { length } = args; i < length; i += 1) {
                             const pointerOrPrimitive = args[i]
                             if (typeof pointerOrPrimitive === 'function') {
                                 pointerOrPrimitive()
                                 args[i] = selectedTarget
-                                selectedTarget = _.undefined
+                                selectedTarget = undefined
                             }
                         }
                         let result
@@ -2893,25 +2891,25 @@ export default {
                             ? getTransferablePointer(result) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                             : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                             typeof result === 'undefined'
-                            ? _.undefined
+                            ? undefined
                             : result
                     },
                     (targetPointer, newTargetPointerOrUndefined, ...args) => {
                         targetPointer()
                         const constructor = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let newTarget
                         if (typeof newTargetPointerOrUndefined === 'function') {
                             newTargetPointerOrUndefined()
                             newTarget = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         }
                         for (let i = 0, { length } = args; i < length; i += 1) {
                             const pointerOrPrimitive = args[i]
                             if (typeof pointerOrPrimitive === 'function') {
                                 pointerOrPrimitive()
                                 args[i] = selectedTarget
-                                selectedTarget = _.undefined
+                                selectedTarget = undefined
                             }
                         }
                         let result
@@ -2924,7 +2922,7 @@ export default {
                             ? getTransferablePointer(result) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                             : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                             typeof result === 'undefined'
-                            ? _.undefined
+                            ? undefined
                             : result
                     },
                     (
@@ -2940,7 +2938,7 @@ export default {
                     ) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         const safePartialDesc = createDescriptorFromMeta(
                             configurable,
                             enumerable,
@@ -3000,7 +2998,7 @@ export default {
                     (targetPointer, key) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         try {
                             return ReflectDeleteProperty(target, key)
                         } catch (error) {
@@ -3010,12 +3008,12 @@ export default {
                     (targetPointer, targetTraits, key, receiverPointerOrPrimitive) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let receiver
                         if (typeof receiverPointerOrPrimitive === 'function') {
                             receiverPointerOrPrimitive()
                             receiver = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             receiver =
                                 receiverPointerOrPrimitive === LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
@@ -3031,7 +3029,7 @@ export default {
                         if ((typeof result === 'object' && result !== null) || typeof result === 'function') {
                             return getTransferablePointer(result)
                         }
-                        if (result === _.undefined && key === SymbolToStringTag && targetTraits & 16) {
+                        if (result === undefined && key === SymbolToStringTag && targetTraits & 16) {
                             try {
                                 if (!(key in target)) {
                                     // Section 19.1.3.6 Object.prototype.toString()
@@ -3050,12 +3048,12 @@ export default {
                         } // Intentionally ignoring `document.all`.
                         // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                        return typeof result === 'undefined' ? _.undefined : result
+                        return typeof result === 'undefined' ? undefined : result
                     },
                     (targetPointer, key, foreignCallableDescriptorCallback) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let safeDesc
                         try {
                             safeDesc = ReflectGetOwnPropertyDescriptor(target, key)
@@ -3081,7 +3079,7 @@ export default {
                                         ? getTransferablePointer(value1) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                         : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                         typeof value1 === 'undefined'
-                                        ? _.undefined
+                                        ? undefined
                                         : value1
                                     : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
                                 'get' in safeDesc
@@ -3100,7 +3098,7 @@ export default {
                     (targetPointer) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let proto
                         try {
                             proto = ReflectGetPrototypeOf(target)
@@ -3117,7 +3115,7 @@ export default {
                     (targetPointer, key) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         try {
                             return key in target
                         } catch (error) {
@@ -3127,7 +3125,7 @@ export default {
                     (targetPointer) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         try {
                             return ReflectIsExtensible(target)
                         } catch (error) {
@@ -3137,19 +3135,19 @@ export default {
                     (targetPointer, foreignCallableKeysCallback) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let ownKeys
                         try {
                             ownKeys = ReflectOwnKeys(target)
                         } catch (error) {
                             throw pushErrorAcrossBoundary(error)
                         }
-                        ReflectApply(foreignCallableKeysCallback, _.undefined, ownKeys)
+                        ReflectApply(foreignCallableKeysCallback, undefined, ownKeys)
                     },
                     (targetPointer) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let result = 2 /* PreventExtensionsResult.False */
                         try {
                             if (ReflectPreventExtensions(target)) {
@@ -3165,12 +3163,12 @@ export default {
                     (targetPointer, key, valuePointerOrPrimitive, receiverPointerOrPrimitive) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let value
                         if (typeof valuePointerOrPrimitive === 'function') {
                             valuePointerOrPrimitive()
                             value = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             value = valuePointerOrPrimitive
                         }
@@ -3178,7 +3176,7 @@ export default {
                         if (typeof receiverPointerOrPrimitive === 'function') {
                             receiverPointerOrPrimitive()
                             receiver = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             receiver =
                                 receiverPointerOrPrimitive === LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
@@ -3194,12 +3192,12 @@ export default {
                     (targetPointer, protoPointerOrNull = null) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let proto
                         if (typeof protoPointerOrNull === 'function') {
                             protoPointerOrNull()
                             proto = selectedTarget
-                            selectedTarget = _.undefined
+                            selectedTarget = undefined
                         } else {
                             proto = null
                         }
@@ -3217,7 +3215,7 @@ export default {
                                       if (typeof pointerOrPrimitive === 'function') {
                                           pointerOrPrimitive()
                                           args[i] = selectedTarget
-                                          selectedTarget = _.undefined
+                                          selectedTarget = undefined
                                       }
                                   }
                                   try {
@@ -3230,7 +3228,7 @@ export default {
                         ? (targetPointer, ...descriptorTuples) => {
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               for (let i = 0, { length } = descriptorTuples; i < length; i += 7) {
                                   // We don't use `ObjectDefineProperties()` here because it
                                   // will throw an exception if it fails to define one of its
@@ -3254,9 +3252,9 @@ export default {
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined // We don't wrap the weak map `get()` call in a try-catch
+                              selectedTarget = undefined // We don't wrap the weak map `get()` call in a try-catch
                               // because we know `target` is an object.
-                              const state = _.proxyTargetToLazyPropertyDescriptorStateMap.get(target)
+                              const state = __.proxyTargetToLazyPropertyDescriptorStateMap.get(target)
                               return state ? getTransferablePointer(state) : state
                           }
                         : noop,
@@ -3264,7 +3262,7 @@ export default {
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined // A target may be a proxy that is revoked or throws in its
+                              selectedTarget = undefined // A target may be a proxy that is revoked or throws in its
                               // "isExtensible" trap.
                               try {
                                   if (!ReflectIsExtensible(target)) {
@@ -3289,7 +3287,7 @@ export default {
                     (targetPointer) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         try {
                             // Section 19.1.3.6 Object.prototype.toString()
                             // https://tc39.github.io/ecma262/#sec-object.prototype.tostring
@@ -3305,7 +3303,7 @@ export default {
                         ? (targetPointer, index) => {
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               try {
                                   return target[index]
                               } catch (error) {
@@ -3336,9 +3334,9 @@ export default {
                               }
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               let state = getLazyPropertyDescriptorStateByTarget(target)
-                              if (state === _.undefined) {
+                              if (state === undefined) {
                                   state = {
                                       __proto__: null,
                                   }
@@ -3381,10 +3379,10 @@ export default {
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               if (
                                   target === null ||
-                                  target === _.undefined ||
+                                  target === undefined ||
                                   target === ObjectProto ||
                                   target === RegExpProto
                               ) {
@@ -3450,7 +3448,7 @@ export default {
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               try {
                                   isArrayOrThrowForRevoked(target)
                                   return false //  eslint-disable-next-line no-empty
@@ -3462,31 +3460,31 @@ export default {
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               try {
                                   return SymbolToStringTag in target
                                       ? serializeTargetByTrialAndError(target)
                                       : serializeTargetByBrand(target) // eslint-disable-next-line no-empty
                               } catch (_unused39) {}
-                              return _.undefined
+                              return undefined
                           }
                         : noop,
                     !IS_IN_SHADOW_REALM
                         ? (targetPointer, statePointer) => {
                               targetPointer()
                               const target = selectedTarget
-                              selectedTarget = _.undefined
+                              selectedTarget = undefined
                               statePointer()
                               const state = selectedTarget
-                              selectedTarget = _.undefined // We don't wrap the weak map `set()` call in a try-catch
+                              selectedTarget = undefined // We don't wrap the weak map `set()` call in a try-catch
                               // because we know `target` is an object.
-                              _.proxyTargetToLazyPropertyDescriptorStateMap.set(target, state)
+                              __.proxyTargetToLazyPropertyDescriptorStateMap.set(target, state)
                           }
                         : noop,
                     (targetPointer, foreignCallableDescriptorsCallback) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let unsafeDescMap
                         try {
                             unsafeDescMap = ObjectGetOwnPropertyDescriptors(target)
@@ -3531,7 +3529,7 @@ export default {
                                         : setter
                                     : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                         }
-                        ReflectApply(foreignCallableDescriptorsCallback, _.undefined, descriptorTuples)
+                        ReflectApply(foreignCallableDescriptorsCallback, undefined, descriptorTuples)
                         let proto
                         try {
                             proto = ReflectGetPrototypeOf(target)
@@ -3548,7 +3546,7 @@ export default {
                     (targetPointer, key) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let proto
                         try {
                             if (ObjectHasOwn(target, key)) {
@@ -3568,7 +3566,7 @@ export default {
                     (targetPointer, key, foreignCallableDescriptorCallback) => {
                         targetPointer()
                         const target = selectedTarget
-                        selectedTarget = _.undefined
+                        selectedTarget = undefined
                         let safeDesc
                         try {
                             safeDesc = ReflectGetOwnPropertyDescriptor(target, key)
@@ -3594,7 +3592,7 @@ export default {
                                         ? getTransferablePointer(value1) // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                         : // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                                         typeof value1 === 'undefined'
-                                        ? _.undefined
+                                        ? undefined
                                         : value1
                                     : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
                                 'get' in safeDesc
@@ -3608,7 +3606,7 @@ export default {
                                         : setter
                                     : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
                             )
-                            return _.undefined
+                            return undefined
                         }
                         let proto
                         try {
@@ -3680,7 +3678,7 @@ export default {
                     const constructTrapForFourOrMoreArgs = createApplyOrConstructTrapForFourOrMoreArgs(2)
                     const constructTrapForFiveOrMoreArgs = createApplyOrConstructTrapForFiveOrMoreArgs(2)
                     const constructTrapForAnyNumberOfArgs = createApplyOrConstructTrapForAnyNumberOfArgs(2)
-                    if (MINIFICATION_SAFE_TRAP_PROPERTY_NAMES === _.undefined) {
+                    if (MINIFICATION_SAFE_TRAP_PROPERTY_NAMES === undefined) {
                         // A minification safe way to get the 'apply' and 'construct'
                         // trap property names.
                         MINIFICATION_SAFE_TRAP_PROPERTY_NAMES = ObjectKeys({

@@ -3,7 +3,7 @@ import type { Connector } from '@locker/near-membrane-base'
 
 const connectorMap = /*#__PURE__*/ new WeakMap<object, Connector>()
 const debuggerMap = /*#__PURE__*/ new WeakMap<object, object>()
-export function createConnector(globalThis: object, allowDebug = false): Connector {
+export function createConnector(globalThis: object, isMainIsolate: boolean, allowDebug = false): Connector {
     if (connectorMap.has(globalThis)) return connectorMap.get(globalThis)!
     let f: Function
     lib.execute(
@@ -13,10 +13,11 @@ export function createConnector(globalThis: object, allowDebug = false): Connect
             },
             debugTargetBookkeeping: allowDebug ? debuggerMap.set.bind(debuggerMap) : undefined,
             attachDebuggerTarget: allowDebug ? TransferablePointerTarget.attachDebuggerTarget : undefined,
+            proxyTargetToLazyPropertyDescriptorStateMap: isMainIsolate ? new WeakMap() : undefined,
         },
         { globalThis },
     )
-    const connector = f!()
+    const connector = f!(isMainIsolate ? globalThis : undefined)
     connectorMap.set(globalThis, connector)
     return connector
 }

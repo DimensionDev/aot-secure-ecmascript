@@ -42,12 +42,12 @@ export default function createVirtualEnvironment(
         instrumentation,
         debugPrivateFieldAttach = true,
     } = ObjectAssign({ __proto__: null }, options) as EnvironmentOptions
-    const blueConnector = createConnector(globalObject, debugPrivateFieldAttach)
+    const blueConnector = createConnector(globalObject, true, debugPrivateFieldAttach)
     const env = new VirtualEnvironment({
         blueConnector,
         distortionCallback: distortionCallback!,
         instrumentation: instrumentation!,
-        redConnector: createConnector(redGlobalObject, debugPrivateFieldAttach),
+        redConnector: createConnector(redGlobalObject, false, debugPrivateFieldAttach),
     })
     linkIntrinsics(env, globalObject)
 

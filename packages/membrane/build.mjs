@@ -7,7 +7,7 @@ import { format } from 'prettier'
 const require = createRequire(import.meta.url)
 
 const { code } = await transform(
-    `import { debugTargetBookkeeping, attachDebuggerTarget } from ''
+    `import { debugTargetBookkeeping, attachDebuggerTarget, proxyTargetToLazyPropertyDescriptorStateMap } from ''
 export default ${createMembraneMarshall
         .toString()
         .replace(`localEval(sourceText)`, `sourceText()`)
@@ -39,7 +39,7 @@ await writeFile(
 // This file is built from '@locker/near-membrane-base'.createMembraneMarshall.
 // DO NOT edit it manually.
 ` +
-        format(code, {
+        format(code.replaceAll('_.undefined', 'undefined'), {
             trailingComma: 'all',
             printWidth: 120,
             semi: false,
