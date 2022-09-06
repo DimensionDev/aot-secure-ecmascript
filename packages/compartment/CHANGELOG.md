@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.7
+
+### Patch Changes
+
+-   91a63b6: fix: alias import and default import not working
+
 ## 0.3.6
 
 ### Patch Changes
