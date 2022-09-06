@@ -253,7 +253,7 @@ export class Module<T extends object = any> {
                     const namespaceObject = Module.#GetModuleNamespace(resolution.module)
                     propertiesToBeDefined[i.LocalName] = { value: namespaceObject, enumerable: true }
                 } else {
-                    resolution.module.#AddLiveExportCallback(i.LocalName, (newValue) => {
+                    resolution.module.#AddLiveExportCallback(i.ImportName, (newValue) => {
                         Object.defineProperty(env, i.LocalName, {
                             value: newValue,
                             configurable: true,
