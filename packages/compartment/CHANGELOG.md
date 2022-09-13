@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.9
+
+### Patch Changes
+
+-   bafad7d: adopt new module loading refactor spec
+
 ## 0.3.8
 
 ### Patch Changes
