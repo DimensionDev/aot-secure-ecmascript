@@ -55,3 +55,15 @@ export interface ModuleExportEntry {
     ImportName: string | typeof all | typeof allButDefault | null
     // LocalName: string | null
 }
+/** @internal */
+export interface NormalCompletion<T> {
+    Type: 'normal'
+    Value: T
+}
+/** @internal */
+export interface ThrowCompletion {
+    Type: 'throw'
+    Value: unknown
+}
+/** @internal */
+export type Completion<T> = NormalCompletion<T> | ThrowCompletion

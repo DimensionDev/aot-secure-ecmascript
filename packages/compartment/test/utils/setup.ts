@@ -1,8 +1,6 @@
 import { transformSync } from '@swc/core'
 import { fileURLToPath } from 'url'
-import { it } from 'vitest'
 
-it('install ModuleSource polyfill', () => {})
 Reflect.set(globalThis, 'ModuleSource', function ModuleSource(sourceText: string) {
     const result = transformSync(sourceText, {
         isModule: true,

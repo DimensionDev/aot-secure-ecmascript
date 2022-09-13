@@ -1,4 +1,4 @@
-import type { ModuleSource } from './ModuleSource.js'
+import { ModuleSource } from './ModuleSource.js'
 import type {
     ImportHook,
     ModuleNamespace,
@@ -12,6 +12,7 @@ import {
     empty,
     namespace,
     PromiseCapability,
+    type Completion,
     type ModuleExportEntry,
     type ModuleImportEntry,
 } from './utils/spec.js'
@@ -34,6 +35,7 @@ export class Module<T extends object = any> {
         importMeta?: object,
     ) {
         if (typeof moduleSource !== 'object') throw new TypeError('moduleSource must be an object')
+        if (typeof referral === 'object' && referral !== null) throw new TypeError('referral must be a primitive')
         if (typeof importHook !== 'function') throw new TypeError('importHook must be a function')
 
         let assignedImportMeta: null | object
@@ -42,7 +44,8 @@ export class Module<T extends object = any> {
         else assignedImportMeta = importMeta
 
         // impossible to create a ModuleSource instance
-        const module = normalizeVirtualModuleRecord(moduleSource as VirtualModuleRecord)
+        if (moduleSource instanceof ModuleSource) internalError()
+        const module = normalizeVirtualModuleRecord(moduleSource)
 
         this.#Source = moduleSource
         this.#Referral = referral
@@ -51,7 +54,7 @@ export class Module<T extends object = any> {
         this.#NeedsImportMeta = module.needsImportMeta
         this.#HasTLA = !!module.isAsync
 
-        this.#AssignedImportMeta = importMeta ?? null
+        this.#AssignedImportMeta = assignedImportMeta
         this.#ImportHook = importHook
 
         const { importEntries, indirectExportEntries, localExportEntries, requestedModules, starExportEntries } =
@@ -66,15 +69,13 @@ export class Module<T extends object = any> {
         return this.#Source
     }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
-    // #Realm: unknown
     /** first argument of execute() */
     #Environment: object | undefined
     /** result of await import(mod) */
     #Namespace: ModuleNamespace | undefined
-    // #HostDefined: unknown = undefined
     //#endregion
 
-    // #region VirtualModuleRecord fields
+    //#region VirtualModuleRecord fields
     // *this value* when calling #Execute.
     #Referral: Referral
     #Source: VirtualModuleRecord
@@ -83,26 +84,26 @@ export class Module<T extends object = any> {
     #NeedsImport: boolean | undefined
     #ContextObject: VirtualModuleRecordExecuteContext | undefined
     #ImportHook: ImportHook
+    #ImportHookCache = new Map<string, PromiseCapability<Module>>()
     #AssignedImportMeta: object | null
     /** the global environment this module binds to */
     #GlobalThis: object = globalThis
     /** imported module cache */
-    #ResolvedModules = new Map<string, PromiseCapability<Module>>()
     #ImportEntries: ModuleImportEntry[]
     #LocalExportEntries: ModuleExportEntry[]
     #IndirectExportEntries: ModuleExportEntry[]
     #StarExportEntries: ModuleExportEntry[]
     /** Where local export stored */
-    #LocalExportValues = new Map<string, unknown>()
+    #LocalExportedValues = new Map<string, unknown>()
     /** Callback to update live exports */
-    #ExportCallback = new Map<string, Set<(newValue: any) => void>>()
-    #AddLiveExportCallback(name: string, callback: (newValue: any) => void) {
-        if (!this.#ExportCallback.has(name)) this.#ExportCallback.set(name, new Set())
-        this.#ExportCallback.get(name)!.add(callback)
-    }
+    #non_std_ExportCallback = new Map<string, Set<(newValue: any) => void>>()
     //#endregion
 
     //#region VirtualModuleRecord methods
+    #non_std_AddLiveExportCallback(name: string, callback: (newValue: any) => void) {
+        if (!this.#non_std_ExportCallback.has(name)) this.#non_std_ExportCallback.set(name, new Set())
+        this.#non_std_ExportCallback.get(name)!.add(callback)
+    }
     //#endregion
 
     //#region ModuleRecord methods https://tc39.es/ecma262/#table-abstract-methods-of-module-records
@@ -122,7 +123,8 @@ export class Module<T extends object = any> {
         }
         for (const e of module.#StarExportEntries) {
             assert(e.ModuleRequest !== null)
-            const requestedModule = Module.#HostResolveImportedModule(module, e.ModuleRequest)
+            const requestedModule = Module.#GetImportedModule(module, e.ModuleRequest)
+            assert(requestedModule)
             const starNames = requestedModule.#GetExportedNames(exportStarSet)
             for (const n of starNames) {
                 if (n === 'default') continue
@@ -155,7 +157,8 @@ export class Module<T extends object = any> {
         for (const e of module.#IndirectExportEntries) {
             if (exportName === e.ExportName) {
                 assert(e.ModuleRequest !== null)
-                const importedModule = Module.#HostResolveImportedModule(module, e.ModuleRequest)
+                const importedModule = Module.#GetImportedModule(module, e.ModuleRequest)
+                assert(importedModule)
                 if (e.ImportName === all) {
                     // Assert: module does not provide the direct binding for this export.
                     return { module: importedModule, bindingName: namespace }
@@ -173,7 +176,8 @@ export class Module<T extends object = any> {
         let starResolution: null | { module: Module; bindingName: string | typeof namespace } = null
         for (const e of module.#StarExportEntries) {
             assert(e.ModuleRequest !== null)
-            const importedModule = Module.#HostResolveImportedModule(module, e.ModuleRequest)
+            const importedModule = Module.#GetImportedModule(module, e.ModuleRequest)
+            assert(importedModule)
             let resolution = importedModule.#ResolveExport(exportName, resolveSet)
             if (resolution === ambiguous) return ambiguous
             if (resolution !== null) {
@@ -198,14 +202,60 @@ export class Module<T extends object = any> {
         }
         return starResolution
     }
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-LoadRequestedModules
+    #LoadRequestedModules(HostDefined = undefined) {
+        const module = this
+        const pc = PromiseCapability<void | ModuleNamespace>()
+        const state: ModuleLoadState = {
+            Action: 'graph-loading',
+            IsLoading: true,
+            PendingModules: 1,
+            Visited: [],
+            PromiseCapability: pc,
+            HostDefined,
+        }
+        Module.#InnerModuleLoading(state, module)
+        return pc.Promise
+    }
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-InnerModuleLoading
+    static #InnerModuleLoading(state: ModuleLoadState, module: Module) {
+        assert(state.IsLoading)
+        if (module.#Status === ModuleStatus.new && !state.Visited.includes(module)) {
+            state.Visited.push(module)
+            const requestedModulesCount = module.#RequestedModules.length
+            state.PendingModules = state.PendingModules + requestedModulesCount
+            for (const required of module.#RequestedModules) {
+                Module.#LoadImportedModule(module, required, state)
+            }
+        }
+        assert(state.PendingModules >= 1)
+        state.PendingModules = state.PendingModules - 1
+        if (state.PendingModules === 0) {
+            state.IsLoading = false
+            for (const loaded of state.Visited) {
+                if (loaded.#Status === ModuleStatus.new) loaded.#Status = ModuleStatus.unlinked
+            }
+            state.PromiseCapability.Resolve()
+        }
+    }
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-ContinueModuleLoading
+    static #ContinueModuleLoading(state: ModuleLoadState, result: Completion<Module>) {
+        if (!state.IsLoading) return
+        if (result.Type === 'normal') Module.#InnerModuleLoading(state, result.Value)
+        else {
+            state.IsLoading = false
+            state.PromiseCapability.Reject(result.Value)
+        }
+    }
     //#endregion
 
     //#region CyclicModuleRecord fields https://tc39.es/ecma262/#sec-cyclic-module-records
-    #Status = ModuleStatus.unlinked
+    #Status = ModuleStatus.new
     #EvaluationError: unknown | empty = empty
     #DFSIndex: number | empty = empty
     #DFSAncestorIndex: number | empty = empty
     #RequestedModules: string[]
+    #LoadedModules = new Map<string, Module>()
     #CycleRoot: Module | undefined
     #HasTLA: boolean
     #AsyncEvaluation = false
@@ -237,7 +287,8 @@ export class Module<T extends object = any> {
             __proto__: null!,
         }
         for (const i of module.#ImportEntries) {
-            const importedModule = Module.#HostResolveImportedModule(module, i.ModuleRequest)
+            const importedModule = Module.#GetImportedModule(module, i.ModuleRequest)
+            assert(importedModule)
             // import * as ns from '..'
             if (i.ImportName === namespace) {
                 const namespaceObject = Module.#GetModuleNamespace(importedModule)
@@ -253,7 +304,7 @@ export class Module<T extends object = any> {
                     const namespaceObject = Module.#GetModuleNamespace(resolution.module)
                     propertiesToBeDefined[i.LocalName] = { value: namespaceObject, enumerable: true }
                 } else {
-                    resolution.module.#AddLiveExportCallback(i.ImportName, (newValue) => {
+                    resolution.module.#non_std_AddLiveExportCallback(i.ImportName, (newValue) => {
                         Object.defineProperty(env, i.LocalName, {
                             value: newValue,
                             configurable: true,
@@ -261,11 +312,11 @@ export class Module<T extends object = any> {
                         })
                     })
 
-                    if (resolution.module.#LocalExportValues.has(resolution.bindingName)) {
+                    if (resolution.module.#LocalExportedValues.has(resolution.bindingName)) {
                         propertiesToBeDefined[i.LocalName] = {
                             configurable: true,
                             enumerable: true,
-                            value: resolution.module.#LocalExportValues.get(resolution.bindingName),
+                            value: resolution.module.#LocalExportedValues.get(resolution.bindingName),
                         }
                     } else {
                         propertiesToBeDefined[i.LocalName] = {
@@ -283,10 +334,10 @@ export class Module<T extends object = any> {
         for (const { ModuleRequest, ExportName, ImportName } of module.#LocalExportEntries) {
             assert(ModuleRequest === null && typeof ExportName === 'string' && ImportName === null)
             propertiesToBeDefined[ExportName] = {
-                get: () => this.#LocalExportValues.get(ExportName),
+                get: () => this.#LocalExportedValues.get(ExportName),
                 set: (value) => {
-                    this.#LocalExportValues.set(ExportName, value)
-                    this.#ExportCallback.get(ExportName)?.forEach((callback) => callback(value))
+                    this.#LocalExportedValues.set(ExportName, value)
+                    this.#non_std_ExportCallback.get(ExportName)?.forEach((callback) => callback(value))
                     return true
                 },
                 // Note: export property should not be enumerable?
@@ -314,12 +365,18 @@ export class Module<T extends object = any> {
             this.#ContextObject!.importMeta = Object.assign({}, this.#AssignedImportMeta)
         }
         if (this.#NeedsImport) {
+            // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-import-call-runtime-semantics-evaluation
             this.#ContextObject!.import = async (specifier: string, options?: ImportCallOptions) => {
-                await Module.#HostResolveModules(this, [specifier])
-                const cap = this.#ResolvedModules.get(specifier)
-                assert(cap?.Status.Type === 'Fulfilled')
-                const module = cap.Status.Value
-                return Module.#DynamicImportModule(module)
+                specifier = String(specifier)
+                const status: ModuleLoadState = {
+                    Action: 'dynamic-import',
+                    PromiseCapability: PromiseCapability(),
+                    IsLoading: true,
+                    PendingModules: 1,
+                    Visited: [],
+                }
+                Module.#LoadImportedModule(this, specifier, status)
+                return status.PromiseCapability.Promise as any
             }
         }
 
@@ -345,7 +402,11 @@ export class Module<T extends object = any> {
     // https://tc39.es/ecma262/#sec-moduledeclarationlinking
     #Link() {
         const module = this
-        assert(![ModuleStatus.linking, ModuleStatus.evaluating].includes(module.#Status))
+        assert(
+            [ModuleStatus.unlinked, ModuleStatus.linked, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(
+                module.#Status,
+            ),
+        )
         const stack: Module[] = []
         try {
             Module.#InnerModuleLinking(module, stack, 0)
@@ -413,7 +474,8 @@ export class Module<T extends object = any> {
         index++
         stack.push(module)
         for (const required of module.#RequestedModules) {
-            const requiredModule = this.#HostResolveImportedModule(module, required)
+            const requiredModule = this.#GetImportedModule(module, required)
+            assert(requiredModule)
             index = this.#InnerModuleLinking(requiredModule, stack, index)
             assert(
                 [
@@ -464,7 +526,8 @@ export class Module<T extends object = any> {
         index++
         stack.push(module)
         for (const required of module.#RequestedModules) {
-            let requiredModule = this.#HostResolveImportedModule(module, required)
+            let requiredModule = this.#GetImportedModule(module, required)
+            assert(requiredModule)
             index = this.#InnerModuleEvaluation(requiredModule, stack, index)
             assert(
                 [ModuleStatus.evaluating, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(
@@ -618,13 +681,6 @@ export class Module<T extends object = any> {
             module.#TopLevelCapability.Reject(error)
         }
     }
-    static #HostResolveImportedModule(module: Module, spec: string) {
-        const cache = module.#ResolvedModules.get(spec)
-        assert(cache && cache.Status.Type !== 'Pending')
-        if (cache.Status.Type === 'Rejected') throw cache.Status.Reason
-        return cache.Status.Value
-    }
-
     static #GetModuleNamespace(module: Module): ModuleNamespace {
         if (module.#Namespace) return module.#Namespace
         assert(module.#Status !== ModuleStatus.unlinked)
@@ -647,12 +703,12 @@ export class Module<T extends object = any> {
             if (bindingName === namespace) {
                 propertiesToBeDefined[name] = { enumerable: true, value: Module.#GetModuleNamespace(targetModule) }
             } else {
-                if (targetModule.#LocalExportValues.has(bindingName)) {
+                if (targetModule.#LocalExportedValues.has(bindingName)) {
                     propertiesToBeDefined[name] = {
                         enumerable: true,
                         // Note: this should not be configurable, but it's a trade-off for DX.
                         configurable: true,
-                        value: targetModule.#LocalExportValues.get(bindingName)!,
+                        value: targetModule.#LocalExportedValues.get(bindingName)!,
                     }
                 } else {
                     propertiesToBeDefined[name] = {
@@ -664,7 +720,7 @@ export class Module<T extends object = any> {
                         enumerable: true,
                     }
                 }
-                targetModule.#AddLiveExportCallback(name, (newValue) => {
+                targetModule.#non_std_AddLiveExportCallback(name, (newValue) => {
                     Object.defineProperty(namespaceObject, name, {
                         enumerable: true,
                         writable: true,
@@ -678,76 +734,150 @@ export class Module<T extends object = any> {
     }
     //#endregion
 
-    //#region Our functions / host hooks
-    static async #DynamicImportModule(module: Module) {
-        if (module.#Status === ModuleStatus.evaluated) return this.#GetModuleNamespace(module)
-        if (module.#Status === ModuleStatus.evaluatingAsync) {
-            assert(module.#TopLevelCapability)
-            await module.#TopLevelCapability.Promise
-            return Module.#GetModuleNamespace(module)
+    //#region Module refactor methods https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/
+
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-GetImportedModule
+    static #GetImportedModule(module: Module, spec: string) {
+        return module.#LoadedModules.get(spec)
+    }
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-LoadImportedModule
+    static #LoadImportedModule(referrer: Module, specifier: string, state: ModuleLoadState) {
+        if (referrer && referrer.#LoadedModules.has(specifier)) {
+            Module.#DispatchLoadImportedModuleContinuation(state, {
+                Type: 'normal',
+                Value: referrer.#LoadedModules.get(specifier)!,
+            })
+        } else {
+            Module.#HostLoadImportedModule(referrer, specifier, state.HostDefined, state)
         }
-
-        await this.#HostResolveModules(module, module.#RequestedModules)
-        module.#Link()
-        await module.#Evaluate()
-        return Module.#GetModuleNamespace(module)
     }
-    static #HostResolveModulesInner(module: Module, spec: string) {
-        const capability = PromiseCapability<Module>()
-        module.#ResolvedModules.set(spec, capability)
-        Promise.resolve(module.#ImportHook(spec, module.#Referral))
-            .then(
-                async (module) => {
-                    if (module === null || module === undefined)
-                        throw new SyntaxError(`Failed to resolve module '${spec}'`)
-                    // Safari: private in
-                    module.#HasTLA
-                    // if (!(#HasTLA in module)) throw new TypeError('ImportHook must return a Module instance')
-                    // Note: do not await here, otherwise it will deadlock under self-import.
-                    // But can we make sure the top promise resolved when and only when all of it's transitive dependency resolved?
-                    this.#HostResolveModules(module, module.#RequestedModules)
-                    return module
-                },
-                (error) => {
-                    throw new SyntaxError(`Failed to import module '${spec}'`, { cause: error })
-                },
-            )
-            .then(capability.Resolve, capability.Reject)
-        return capability.Promise
-    }
-    // call importHook recursively to get all module referenced.
-    static #HostResolveModules(module: Module, requestModules: string[]) {
-        if (requestModules.length === 0) return Promise.resolve()
-        const overallCapability = PromiseCapability<void>()
-
-        function check(): void {
-            if (overallCapability.Status.Type !== 'Pending') return
-            for (const m of module.#ResolvedModules.values()) {
-                if (m.Status.Type === 'Rejected') return overallCapability.Reject(m.Status.Reason)
-                if (m.Status.Type === 'Pending')
-                    return void overallCapability.Promise.then(check, overallCapability.Reject)
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-HostLoadImportedModule
+    static #HostLoadImportedModule(
+        referrer: Module,
+        specifier: string,
+        hostDefined: undefined,
+        payload: ModuleLoadState,
+    ) {
+        let promiseCapability = referrer.#ImportHookCache.get(specifier)
+        function onFulfilled(module: Module) {
+            promiseCapability?.Resolve(module)
+            Module.#FinishLoadImportedModule(referrer, specifier, payload, { Type: 'normal', Value: module })
+        }
+        function onRejected(reason: unknown) {
+            promiseCapability?.Reject(reason)
+            Module.#FinishLoadImportedModule(referrer, specifier, payload, { Type: 'throw', Value: reason })
+        }
+        if (promiseCapability) {
+            if (promiseCapability.Status.Type === 'Fulfilled') {
+                onFulfilled(promiseCapability.Status.Value)
+                return
+            } else if (promiseCapability.Status.Type === 'Pending') {
+                promiseCapability.Promise.then(onFulfilled, onRejected)
+                return
             }
-            overallCapability.Resolve()
+            // if error, fallthorugh
         }
-        for (const spec of requestModules) {
-            const capability = module.#ResolvedModules.get(spec)
-            if (!capability) {
-                this.#HostResolveModulesInner(module, spec).then(check, overallCapability.Reject)
-            } else if (capability.Status.Type === 'Fulfilled') {
-                check()
-            } else if (capability.Status.Type === 'Pending') {
-                capability.Promise.then(check, overallCapability.Reject)
+
+        promiseCapability = PromiseCapability()
+        referrer.#ImportHookCache.set(specifier, promiseCapability)
+        try {
+            const result = referrer.#ImportHook(specifier, referrer.#Referral)
+            if (result === null) throw new SyntaxError(`Failed to load module ${specifier}.`)
+            try {
+                const module = result as Module
+                module.#Referral
+                onFulfilled(module)
+                return
+            } catch {}
+            // treat it as a Promise
+            Promise.resolve(result).then((result) => {
+                if (result === null) onRejected(new SyntaxError(`Failed to load module ${specifier}.`))
+                try {
+                    const module = result as Module
+                    module.#Referral
+                    onFulfilled(module)
+                } catch (error) {
+                    onRejected(new TypeError('importHook must return an instance of Module'))
+                }
+            })
+        } catch (error) {
+            onRejected(error)
+        }
+    }
+
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-FinishLoadImportedModule
+    static #FinishLoadImportedModule(
+        referrer: Module,
+        specifier: string,
+        payload: ModuleLoadState,
+        result: Completion<Module>,
+    ) {
+        if (result.Type === 'normal') {
+            const record = referrer.#LoadedModules.get(specifier)
+            if (record) {
+                assert(record === result.Value)
             } else {
-                overallCapability.Reject(capability.Status.Reason)
+                referrer.#LoadedModules.set(specifier, result.Value)
             }
         }
-        return overallCapability.Promise
+        Module.#DispatchLoadImportedModuleContinuation(payload, result)
+    }
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-DispatchLoadImportedModuleContinuation
+    static #DispatchLoadImportedModuleContinuation(state: ModuleLoadState, result: Completion<Module>) {
+        if (state.Action === 'graph-loading') this.#ContinueModuleLoading(state, result)
+        else this.#ContinueDynamicImport(state, result)
+    }
+
+    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-ContinueDynamicImport
+    static #ContinueDynamicImport(state: ModuleLoadState, result: Completion<Module>) {
+        const promiseCapability = state.PromiseCapability
+        if (result.Type === 'throw') {
+            promiseCapability.Reject(result.Value)
+            return
+        }
+        const module = result.Value
+        const onRejected = (reason: unknown) => {
+            promiseCapability.Reject(reason)
+        }
+        function linkAndEvaluate() {
+            try {
+                module.#Link()
+                const evaluatePromise = module.#Evaluate()
+                function onFulfilled() {
+                    try {
+                        const namespace = Module.#GetModuleNamespace(module)
+                        promiseCapability.Resolve(namespace)
+                    } catch (error) {
+                        promiseCapability.Reject(error)
+                    }
+                }
+                evaluatePromise.then(onFulfilled, onRejected)
+            } catch (error) {
+                promiseCapability.Reject(error)
+            }
+        }
+        const loadPromise = module.#LoadRequestedModules()
+        loadPromise.then(linkAndEvaluate, onRejected)
     }
     //#endregion
     /** @internal */
     static {
+        // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-import-call-runtime-semantics-evaluation
         imports = async (module, options) => {
-            return Module.#DynamicImportModule(module) as any
+            const promiseCapability = PromiseCapability<ModuleNamespace>()
+            const state: ModuleLoadState = {
+                Action: 'dynamic-import',
+                PromiseCapability: promiseCapability as any,
+                // Note: those three fields are not used in dynamic import.
+                IsLoading: true,
+                PendingModules: 1,
+                Visited: [],
+            }
+            Module.#ContinueDynamicImport(state, {
+                Type: 'normal',
+                Value: module,
+            })
+            return promiseCapability.Promise as any
         }
         setGlobalThis = (module, global) => (module.#GlobalThis = global)
     }
@@ -757,7 +887,18 @@ Reflect.defineProperty(Module.prototype, Symbol.toStringTag, {
     value: 'Module',
 })
 
+// https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#table-moduleloadstate-record-fields
+interface ModuleLoadState {
+    Action: 'graph-loading' | 'dynamic-import'
+    PromiseCapability: PromiseCapability<void | ModuleNamespace>
+    IsLoading: boolean
+    PendingModules: number
+    Visited: Module[]
+    HostDefined?: undefined
+}
+
 const enum ModuleStatus {
+    new,
     unlinked,
     linking,
     linked,
