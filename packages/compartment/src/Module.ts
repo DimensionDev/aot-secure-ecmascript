@@ -11,7 +11,9 @@ import {
     ambiguous,
     empty,
     namespace,
+    NormalCompletion,
     PromiseCapability,
+    ThrowCompletion,
     type Completion,
     type ModuleExportEntry,
     type ModuleImportEntry,
@@ -124,6 +126,7 @@ export class Module<T extends object = any> {
         for (const e of module.#StarExportEntries) {
             assert(e.ModuleRequest !== null)
             const requestedModule = Module.#GetImportedModule(module, e.ModuleRequest)
+            // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
             assert(requestedModule)
             const starNames = requestedModule.#GetExportedNames(exportStarSet)
             for (const n of starNames) {
@@ -158,6 +161,7 @@ export class Module<T extends object = any> {
             if (exportName === e.ExportName) {
                 assert(e.ModuleRequest !== null)
                 const importedModule = Module.#GetImportedModule(module, e.ModuleRequest)
+                // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
                 assert(importedModule)
                 if (e.ImportName === all) {
                     // Assert: module does not provide the direct binding for this export.
@@ -177,6 +181,7 @@ export class Module<T extends object = any> {
         for (const e of module.#StarExportEntries) {
             assert(e.ModuleRequest !== null)
             const importedModule = Module.#GetImportedModule(module, e.ModuleRequest)
+            // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
             assert(importedModule)
             let resolution = importedModule.#ResolveExport(exportName, resolveSet)
             if (resolution === ambiguous) return ambiguous
@@ -202,10 +207,9 @@ export class Module<T extends object = any> {
         }
         return starResolution
     }
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-LoadRequestedModules
     #LoadRequestedModules(HostDefined = undefined) {
         const module = this
-        const pc = PromiseCapability<void | ModuleNamespace>()
+        const pc = PromiseCapability<void>()
         const state: ModuleLoadState = {
             Action: 'graph-loading',
             IsLoading: true,
@@ -217,15 +221,19 @@ export class Module<T extends object = any> {
         Module.#InnerModuleLoading(state, module)
         return pc.Promise
     }
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-InnerModuleLoading
     static #InnerModuleLoading(state: ModuleLoadState, module: Module) {
-        assert(state.IsLoading)
+        assert(state.Action === 'graph-loading' && state.IsLoading)
         if (module.#Status === ModuleStatus.new && !state.Visited.includes(module)) {
             state.Visited.push(module)
             const requestedModulesCount = module.#RequestedModules.length
             state.PendingModules = state.PendingModules + requestedModulesCount
             for (const required of module.#RequestedModules) {
-                Module.#LoadImportedModule(module, required, state)
+                const record = module.#LoadedModules.get(required)
+                if (record) {
+                    Module.#ContinueModuleLoading(state, NormalCompletion(record))
+                } else {
+                    Module.#HostLoadImportedModule(module, required, state.HostDefined, state)
+                }
             }
         }
         assert(state.PendingModules >= 1)
@@ -238,8 +246,8 @@ export class Module<T extends object = any> {
             state.PromiseCapability.Resolve()
         }
     }
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-ContinueModuleLoading
     static #ContinueModuleLoading(state: ModuleLoadState, result: Completion<Module>) {
+        assert(state.Action === 'graph-loading')
         if (!state.IsLoading) return
         if (result.Type === 'normal') Module.#InnerModuleLoading(state, result.Value)
         else {
@@ -365,17 +373,13 @@ export class Module<T extends object = any> {
             this.#ContextObject!.importMeta = Object.assign({}, this.#AssignedImportMeta)
         }
         if (this.#NeedsImport) {
-            // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-import-call-runtime-semantics-evaluation
             this.#ContextObject!.import = async (specifier: string, options?: ImportCallOptions) => {
                 specifier = String(specifier)
                 const status: ModuleLoadState = {
                     Action: 'dynamic-import',
                     PromiseCapability: PromiseCapability(),
-                    IsLoading: true,
-                    PendingModules: 1,
-                    Visited: [],
                 }
-                Module.#LoadImportedModule(this, specifier, status)
+                Module.#HostLoadImportedModule(this, specifier, status.HostDefined, status)
                 return status.PromiseCapability.Promise as any
             }
         }
@@ -734,24 +738,11 @@ export class Module<T extends object = any> {
     }
     //#endregion
 
-    //#region Module refactor methods https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/
+    //#region Module refactor methods https://github.com/tc39/ecma262/pull/2905/
 
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-GetImportedModule
     static #GetImportedModule(module: Module, spec: string) {
         return module.#LoadedModules.get(spec)
     }
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-LoadImportedModule
-    static #LoadImportedModule(referrer: Module, specifier: string, state: ModuleLoadState) {
-        if (referrer && referrer.#LoadedModules.has(specifier)) {
-            Module.#DispatchLoadImportedModuleContinuation(state, {
-                Type: 'normal',
-                Value: referrer.#LoadedModules.get(specifier)!,
-            })
-        } else {
-            Module.#HostLoadImportedModule(referrer, specifier, state.HostDefined, state)
-        }
-    }
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-HostLoadImportedModule
     static #HostLoadImportedModule(
         referrer: Module,
         specifier: string,
@@ -761,11 +752,11 @@ export class Module<T extends object = any> {
         let promiseCapability = referrer.#ImportHookCache.get(specifier)
         function onFulfilled(module: Module) {
             promiseCapability?.Resolve(module)
-            Module.#FinishLoadImportedModule(referrer, specifier, payload, { Type: 'normal', Value: module })
+            Module.#FinishLoadImportedModule(referrer, specifier, payload, NormalCompletion(module))
         }
         function onRejected(reason: unknown) {
             promiseCapability?.Reject(reason)
-            Module.#FinishLoadImportedModule(referrer, specifier, payload, { Type: 'throw', Value: reason })
+            Module.#FinishLoadImportedModule(referrer, specifier, payload, ThrowCompletion(reason))
         }
         if (promiseCapability) {
             if (promiseCapability.Status.Type === 'Fulfilled') {
@@ -805,7 +796,6 @@ export class Module<T extends object = any> {
         }
     }
 
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-FinishLoadImportedModule
     static #FinishLoadImportedModule(
         referrer: Module,
         specifier: string,
@@ -820,16 +810,15 @@ export class Module<T extends object = any> {
                 referrer.#LoadedModules.set(specifier, result.Value)
             }
         }
-        Module.#DispatchLoadImportedModuleContinuation(payload, result)
-    }
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-DispatchLoadImportedModuleContinuation
-    static #DispatchLoadImportedModuleContinuation(state: ModuleLoadState, result: Completion<Module>) {
-        if (state.Action === 'graph-loading') this.#ContinueModuleLoading(state, result)
-        else this.#ContinueDynamicImport(state, result)
+        if (payload.Action === 'graph-loading') {
+            Module.#ContinueModuleLoading(payload, result)
+        } else {
+            Module.#ContinueDynamicImport(payload, result)
+        }
     }
 
-    // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-ContinueDynamicImport
     static #ContinueDynamicImport(state: ModuleLoadState, result: Completion<Module>) {
+        assert(state.Action === 'dynamic-import')
         const promiseCapability = state.PromiseCapability
         if (result.Type === 'throw') {
             promiseCapability.Reject(result.Value)
@@ -862,21 +851,13 @@ export class Module<T extends object = any> {
     //#endregion
     /** @internal */
     static {
-        // https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#sec-import-call-runtime-semantics-evaluation
         imports = async (module, options) => {
             const promiseCapability = PromiseCapability<ModuleNamespace>()
             const state: ModuleLoadState = {
                 Action: 'dynamic-import',
-                PromiseCapability: promiseCapability as any,
-                // Note: those three fields are not used in dynamic import.
-                IsLoading: true,
-                PendingModules: 1,
-                Visited: [],
+                PromiseCapability: promiseCapability,
             }
-            Module.#ContinueDynamicImport(state, {
-                Type: 'normal',
-                Value: module,
-            })
+            Module.#ContinueDynamicImport(state, NormalCompletion(module))
             return promiseCapability.Promise as any
         }
         setGlobalThis = (module, global) => (module.#GlobalThis = global)
@@ -887,15 +868,20 @@ Reflect.defineProperty(Module.prototype, Symbol.toStringTag, {
     value: 'Module',
 })
 
-// https://nicolo-ribaudo.github.io/modules-import-hooks-refactor/#table-moduleloadstate-record-fields
-interface ModuleLoadState {
-    Action: 'graph-loading' | 'dynamic-import'
-    PromiseCapability: PromiseCapability<void | ModuleNamespace>
+interface ModuleLoadState_GraphLoading {
+    Action: 'graph-loading'
+    PromiseCapability: PromiseCapability<void>
     IsLoading: boolean
     PendingModules: number
     Visited: Module[]
     HostDefined?: undefined
 }
+interface ModuleLoadState_DynamicImport {
+    Action: 'dynamic-import'
+    PromiseCapability: PromiseCapability<ModuleNamespace>
+    HostDefined?: undefined
+}
+type ModuleLoadState = ModuleLoadState_DynamicImport | ModuleLoadState_GraphLoading
 
 const enum ModuleStatus {
     new,

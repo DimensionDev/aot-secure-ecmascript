@@ -67,3 +67,17 @@ export interface ThrowCompletion {
 }
 /** @internal */
 export type Completion<T> = NormalCompletion<T> | ThrowCompletion
+/** @internal */
+export function NormalCompletion<T>(value: T): NormalCompletion<T> {
+    return {
+        Type: 'normal',
+        Value: value,
+    }
+}
+/** @internal */
+export function ThrowCompletion(error: unknown): ThrowCompletion {
+    return {
+        Type: 'throw',
+        Value: error,
+    }
+}
