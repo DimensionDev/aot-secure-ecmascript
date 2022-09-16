@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.10
+
+### Patch Changes
+
+-   2a8c9f7: follow tc39/ecma262#2905
+
 ## 0.3.9
 
 ### Patch Changes
