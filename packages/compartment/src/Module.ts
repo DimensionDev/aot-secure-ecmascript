@@ -799,7 +799,7 @@ export class Module<T extends object = any> {
     static #FinishLoadImportedModule(
         referrer: Module,
         specifier: string,
-        payload: ModuleLoadState,
+        state: ModuleLoadState,
         result: Completion<Module>,
     ) {
         if (result.Type === 'normal') {
@@ -810,10 +810,10 @@ export class Module<T extends object = any> {
                 referrer.#LoadedModules.set(specifier, result.Value)
             }
         }
-        if (payload.Action === 'graph-loading') {
-            Module.#ContinueModuleLoading(payload, result)
+        if (state.Action === 'graph-loading') {
+            Module.#ContinueModuleLoading(state, result)
         } else {
-            Module.#ContinueDynamicImport(payload, result)
+            Module.#ContinueDynamicImport(state, result)
         }
     }
 
