@@ -9,7 +9,7 @@
     "default": "./dist/index.js"
   },
   "dependencies": {
-    "@locker/near-membrane-base": "0.11.2"
+    "@locker/near-membrane-base": "0.11.5"
   },
   "devDependencies": {
     "@swc/core": "1.2.245"

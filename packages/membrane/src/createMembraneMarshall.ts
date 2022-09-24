@@ -33,7 +33,7 @@ export default {
             const RegExpCtor = _.RegExp
             const StringCtor = _.String
             const SymbolCtor = _.Symbol
-            const TypeErrorCtor = _.TypeError
+            const TypeErrorCtor = _.TypeError // eslint-disable-next-line @typescript-eslint/no-shadow, no-shadow
             const WeakMapCtor = _.WeakMap
             const { for: SymbolFor, toStringTag: SymbolToStringTag } = SymbolCtor
             const {
@@ -83,7 +83,6 @@ export default {
             const IS_IN_SHADOW_REALM = typeof globalObject !== 'object' || globalObject === null
             const LOCKER_DEBUG_MODE_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerDebugMode') : undefined
             const LOCKER_IDENTIFIER_MARKER = '$LWS'
-            const LOCKER_LIVE_VALUE_MARKER_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerLiveValue') : undefined
             const LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL = !IS_IN_SHADOW_REALM
                 ? SymbolFor('@@lockerNearMembraneSerializedValue')
                 : undefined
@@ -113,9 +112,6 @@ export default {
                 slice: ArrayProtoSlice,
             } = ArrayCtor.prototype
             const { isView: ArrayBufferIsView } = ArrayBufferCtor
-            const ArrayBufferProtoByteLengthGetter = !IS_IN_SHADOW_REALM
-                ? ReflectApply(ObjectProtoLookupGetter, ArrayBufferCtor.prototype, ['byteLength'])
-                : undefined
             const BigIntProtoValueOf = SUPPORTS_BIG_INT ? _.BigInt.prototype.valueOf : undefined
             const { valueOf: BooleanProtoValueOf } = _.Boolean.prototype
             const { toString: ErrorProtoToString } = ErrorCtor.prototype
@@ -451,7 +447,8 @@ export default {
                 }
                 const {
                     distortionCallback,
-                    instrumentation, // eslint-disable-next-line prefer-object-spread
+                    instrumentation,
+                    liveTargetCallback, // eslint-disable-next-line prefer-object-spread
                 } = ObjectAssign(
                     {
                         __proto__: null,
@@ -2399,10 +2396,22 @@ export default {
                               } else {
                                   result = localValue
                               }
-                          } else if (key === SymbolToStringTag && foreignTargetTraits1 & 16) {
-                              let toStringTag
+                          } else {
+                              const transferableReceiver =
+                                  proxy === receiver
+                                      ? foreignTargetPointer1
+                                      : (typeof receiver === 'object' && receiver !== null) ||
+                                        typeof receiver === 'function'
+                                      ? getTransferablePointer(receiver)
+                                      : receiver
+                              let pointerOrPrimitive
                               try {
-                                  toStringTag = foreignCallableGetToStringTagOfTarget(foreignTargetPointer1)
+                                  pointerOrPrimitive = foreignCallableGet(
+                                      foreignTargetPointer1,
+                                      foreignTargetTraits1,
+                                      key,
+                                      transferableReceiver,
+                                  )
                               } catch (error) {
                                   var _selectedTarget21
                                   const errorToThrow =
@@ -2412,12 +2421,34 @@ export default {
                                       activity.error(errorToThrow)
                                   }
                                   throw errorToThrow
-                              } // The default language toStringTag is "Object". If we
-                              // receive "Object" we return `undefined` to let the
-                              // language resolve it naturally without projecting a
-                              // value.
-                              if (toStringTag !== 'Object') {
-                                  result = toStringTag
+                              }
+                              if (typeof pointerOrPrimitive === 'function') {
+                                  pointerOrPrimitive()
+                                  result = selectedTarget
+                                  selectedTarget = undefined
+                              } else {
+                                  result = pointerOrPrimitive
+                              }
+                              if (result === undefined && key === SymbolToStringTag && foreignTargetTraits1 & 16) {
+                                  let toStringTag
+                                  try {
+                                      toStringTag = foreignCallableGetToStringTagOfTarget(foreignTargetPointer1)
+                                  } catch (error) {
+                                      var _selectedTarget22
+                                      const errorToThrow =
+                                          (_selectedTarget22 = selectedTarget) != null ? _selectedTarget22 : error
+                                      selectedTarget = undefined
+                                      if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
+                                          activity.error(errorToThrow)
+                                      }
+                                      throw errorToThrow
+                                  } // The default language toStringTag is "Object". If we
+                                  // receive "Object" we return `undefined` to let the
+                                  // language resolve it naturally without projecting a
+                                  // value.
+                                  if (toStringTag !== 'Object') {
+                                      result = toStringTag
+                                  }
                               }
                           }
                           if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
@@ -2448,9 +2479,9 @@ export default {
                               try {
                                   result = foreignCallableGetTypedArrayIndexedValue(foreignTargetPointer1, key)
                               } catch (error) {
-                                  var _selectedTarget22
+                                  var _selectedTarget23
                                   const errorToThrow =
-                                      (_selectedTarget22 = selectedTarget) != null ? _selectedTarget22 : error
+                                      (_selectedTarget23 = selectedTarget) != null ? _selectedTarget23 : error
                                   selectedTarget = undefined
                                   if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                       activity.error(errorToThrow)
@@ -2478,10 +2509,10 @@ export default {
                                                   transferableReceiver,
                                               )
                                           } catch (error) {
-                                              var _selectedTarget23
+                                              var _selectedTarget24
                                               const errorToThrow =
-                                                  (_selectedTarget23 = selectedTarget) != null
-                                                      ? _selectedTarget23
+                                                  (_selectedTarget24 = selectedTarget) != null
+                                                      ? _selectedTarget24
                                                       : error
                                               selectedTarget = undefined
                                               if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
@@ -2528,9 +2559,9 @@ export default {
                                   key,
                               )
                           } catch (error) {
-                              var _selectedTarget24
+                              var _selectedTarget25
                               const errorToThrow =
-                                  (_selectedTarget24 = selectedTarget) != null ? _selectedTarget24 : error
+                                  (_selectedTarget25 = selectedTarget) != null ? _selectedTarget25 : error
                               selectedTarget = undefined
                               if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                   activity.error(errorToThrow)
@@ -2611,9 +2642,9 @@ export default {
                                   transferableReceiver,
                               )
                           } catch (error) {
-                              var _selectedTarget25
+                              var _selectedTarget26
                               const errorToThrow =
-                                  (_selectedTarget25 = selectedTarget) != null ? _selectedTarget25 : error
+                                  (_selectedTarget26 = selectedTarget) != null ? _selectedTarget26 : error
                               selectedTarget = undefined
                               if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                   activity.error(errorToThrow)
@@ -2645,9 +2676,9 @@ export default {
                           try {
                               result = foreignCallableHas(this.foreignTargetPointer, key)
                           } catch (error) {
-                              var _selectedTarget26
+                              var _selectedTarget27
                               const errorToThrow =
-                                  (_selectedTarget26 = selectedTarget) != null ? _selectedTarget26 : error
+                                  (_selectedTarget27 = selectedTarget) != null ? _selectedTarget27 : error
                               selectedTarget = undefined
                               if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                                   activity.error(errorToThrow)
@@ -2669,7 +2700,7 @@ export default {
                     ? function (shadowTarget, key, unsafePartialDesc) {
                           // We don't wrap `foreignCallableIsTargetLive()` in a
                           // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(this.foreignTargetPointer)) {
+                          if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
                               this.makeProxyLive()
                           } else {
                               this.makeProxyStatic()
@@ -2681,7 +2712,7 @@ export default {
                     ? function (shadowTarget, key) {
                           // We don't wrap `foreignCallableIsTargetLive()` in a
                           // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(this.foreignTargetPointer)) {
+                          if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
                               this.makeProxyLive()
                           } else {
                               this.makeProxyStatic()
@@ -2693,7 +2724,7 @@ export default {
                     ? function (shadowTarget) {
                           // We don't wrap `foreignCallableIsTargetLive()` in a
                           // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(this.foreignTargetPointer)) {
+                          if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
                               this.makeProxyLive()
                           } else {
                               this.makeProxyStatic()
@@ -2705,7 +2736,7 @@ export default {
                     ? function (shadowTarget, proto) {
                           // We don't wrap `foreignCallableIsTargetLive()` in a
                           // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(this.foreignTargetPointer)) {
+                          if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
                               this.makeProxyLive()
                           } else {
                               this.makeProxyStatic()
@@ -2717,7 +2748,7 @@ export default {
                     ? function (shadowTarget, key, value, receiver) {
                           // We don't wrap `foreignCallableIsTargetLive()` in a
                           // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(this.foreignTargetPointer)) {
+                          if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
                               this.makeProxyLive()
                           } else {
                               this.makeProxyStatic()
@@ -3375,72 +3406,14 @@ export default {
                               installPropertyDescriptorMethodWrappers(unforgeableGlobalThisKeys)
                           }
                         : noop,
-                    !IS_IN_SHADOW_REALM
-                        ? (targetPointer) => {
+                    !IS_IN_SHADOW_REALM && liveTargetCallback
+                        ? (targetPointer, targetTraits) => {
                               targetPointer()
                               const target = selectedTarget
                               selectedTarget = undefined
-                              if (
-                                  target === null ||
-                                  target === undefined ||
-                                  target === ObjectProto ||
-                                  target === RegExpProto
-                              ) {
-                                  return false
-                              }
-                              if (typeof target === 'function') {
-                                  try {
-                                      return ObjectHasOwn(target, LOCKER_LIVE_VALUE_MARKER_SYMBOL) // eslint-disable-next-line no-empty
-                                  } catch (_unused32) {}
-                                  return false
-                              }
-                              if (typeof target === 'object') {
-                                  let constructor
-                                  try {
-                                      ;({ constructor } = target)
-                                      if (constructor === ObjectCtor) {
-                                          // If the constructor, own or inherited, points to `Object`
-                                          // then `value` is not likely a prototype object.
-                                          return true
-                                      } // eslint-disable-next-line no-empty
-                                  } catch (_unused33) {}
-                                  try {
-                                      if (ObjectHasOwn(target, LOCKER_LIVE_VALUE_MARKER_SYMBOL)) {
-                                          return true
-                                      } // eslint-disable-next-line no-empty
-                                  } catch (_unused34) {}
-                                  try {
-                                      if (
-                                          ReflectGetPrototypeOf(target) === null &&
-                                          (typeof constructor !== 'function' || constructor.prototype !== target)
-                                      ) {
-                                          return true
-                                      } // eslint-disable-next-line no-empty
-                                  } catch (_unused35) {} // We only check for regexp and array buffers here
-                                  // since plain arrays and array buffer views are
-                                  // marked as live in the BoundaryProxyHandler
-                                  // constructor.
-                                  //
-                                  // Section 25.1.5.1 get ArrayBuffer.prototype.byteLength
-                                  // https://tc39.es/ecma262/#sec-get-regexp.prototype.source
-                                  // Step 3: If R does not have an [[OriginalSource]] internal slot, then
-                                  //     a. If SameValue(R, %RegExp.prototype%) is true, return "(?:)".
-                                  //     b. Otherwise, throw a TypeError exception.
-                                  try {
-                                      if (ObjectHasOwn(target, 'lastIndex')) {
-                                          ReflectApply(RegExpProtoSourceGetter, target, [])
-                                          return true
-                                      } // eslint-disable-next-line no-empty
-                                  } catch (_unused36) {} // Section 25.1.5.1 get ArrayBuffer.prototype.byteLength
-                                  // https://tc39.es/ecma262/#sec-get-arraybuffer.prototype.bytelength
-                                  // Step 2: Perform ? RequireInternalSlot(O, [[ArrayBufferData]]).
-                                  try {
-                                      if ('byteLength' in target) {
-                                          ReflectApply(ArrayBufferProtoByteLengthGetter, target, [])
-                                          return true
-                                      } // eslint-disable-next-line no-empty
-                                  } catch (_unused37) {}
-                              }
+                              try {
+                                  return liveTargetCallback(target, targetTraits) // eslint-disable-next-line no-empty
+                              } catch (_unused32) {}
                               return false
                           }
                         : alwaysFalse,
@@ -3452,7 +3425,7 @@ export default {
                               try {
                                   isArrayOrThrowForRevoked(target)
                                   return false //  eslint-disable-next-line no-empty
-                              } catch (_unused38) {}
+                              } catch (_unused33) {}
                               return true
                           }
                         : alwaysFalse,
@@ -3465,7 +3438,7 @@ export default {
                                   return SymbolToStringTag in target
                                       ? serializeTargetByTrialAndError(target)
                                       : serializeTargetByBrand(target) // eslint-disable-next-line no-empty
-                              } catch (_unused39) {}
+                              } catch (_unused34) {}
                               return undefined
                           }
                         : noop,

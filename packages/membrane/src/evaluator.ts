@@ -5,7 +5,6 @@ import {
     VirtualEnvironment,
     type DistortionCallback,
     type Instrumentation,
-    type PropertyKeys,
 } from '@locker/near-membrane-base'
 import { createConnector } from './membrane.js'
 
@@ -21,7 +20,7 @@ const ObjectCtor = Object
 const { assign: ObjectAssign } = ObjectCtor
 const TypeErrorCtor = TypeError
 
-let defaultGlobalOwnKeys: PropertyKeys | null = null
+let defaultGlobalOwnKeys: PropertyKey[] | null = null
 
 export interface MembraneInstance {
     execute<T>(func: () => T): T
@@ -58,9 +57,7 @@ export default function createVirtualEnvironment(
 
     env.lazyRemapProperties(
         globalObject,
-        shouldUseDefaultGlobalOwnKeys
-            ? (defaultGlobalOwnKeys as PropertyKeys)
-            : getFilteredGlobalOwnKeys(globalObjectShape),
+        shouldUseDefaultGlobalOwnKeys ? defaultGlobalOwnKeys! : getFilteredGlobalOwnKeys(globalObjectShape),
     )
 
     if (endowments) {
