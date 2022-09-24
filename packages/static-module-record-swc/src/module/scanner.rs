@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use super::{binding_descriptor::*, VirtualModuleRecordTransformer};
-use swc_core::ast::*;
 use swc_core::common::DUMMY_SP;
-use swc_core::utils::{contains_top_level_await, private_ident};
-use swc_core::visit::*;
+use swc_core::ecma::ast::*;
+use swc_core::ecma::utils::{contains_top_level_await, private_ident};
+use swc_core::ecma::visit::{Visit, VisitWith};
 
 struct ScannerFirstPass(HashMap<Id, (ModuleBinding, Str)>);
 impl Visit for ScannerFirstPass {
@@ -23,20 +23,20 @@ impl Visit for ScannerFirstPass {
                                 .clone()
                                 .unwrap_or_else(|| named.local.clone().into())
                                 .into(),
-                            n.src.clone(),
+                            *n.src.clone(),
                         ),
                     );
                 }
                 ImportSpecifier::Default(default) => {
                     self.0.insert(
                         default.local.to_id(),
-                        (ModuleBinding::default_export(), n.src.clone()),
+                        (ModuleBinding::default_export(), *n.src.clone()),
                     );
                 }
                 ImportSpecifier::Namespace(namespace) => {
                     self.0.insert(
                         namespace.local.to_id(),
-                        (ModuleBinding::Namespace, n.src.clone()),
+                        (ModuleBinding::Namespace, *n.src.clone()),
                     );
                 }
             }
@@ -60,7 +60,7 @@ impl Visit for ScannerSecondPass {
                     self.bindings.push(
                         ImportBinding {
                             import: ModuleBinding::Namespace,
-                            from: import.src.clone(),
+                            from: *import.src.clone(),
                             alias: Some(private_ident!(format!(
                                 "import_{}",
                                 self.phantom_import_binding_id
@@ -85,7 +85,7 @@ impl Visit for ScannerSecondPass {
                                 ImportBinding {
                                     import: imported_ident.into(),
                                     alias: Some(local_ident),
-                                    from: import.src.clone(),
+                                    from: *import.src.clone(),
                                 }
                                 .into(),
                             );
@@ -94,7 +94,7 @@ impl Visit for ScannerSecondPass {
                             ImportBinding {
                                 import: ModuleBinding::default_export(),
                                 alias: Some(spec.local.clone()),
-                                from: import.src.clone(),
+                                from: *import.src.clone(),
                             }
                             .into(),
                         ),
@@ -102,7 +102,7 @@ impl Visit for ScannerSecondPass {
                             ImportBinding {
                                 import: ModuleBinding::Namespace,
                                 alias: Some(spec.local.clone()),
-                                from: import.src.clone(),
+                                from: *import.src.clone(),
                             }
                             .into(),
                         ),
@@ -140,7 +140,7 @@ impl Visit for ScannerSecondPass {
                                 ExportBinding {
                                     export: ModuleBinding::Namespace,
                                     alias: Some(ns.name.clone()),
-                                    from: export.src.clone(),
+                                    from: export.src.clone().map(|from| *from),
                                 }
                                 .into(),
                             );
@@ -151,7 +151,7 @@ impl Visit for ScannerSecondPass {
                                 ExportBinding {
                                     export: ModuleBinding::default_export(),
                                     alias: Some(spec.exported.clone().into()),
-                                    from: export.src.clone(),
+                                    from: export.src.clone().map(|from| *from),
                                 }
                                 .into(),
                             );
@@ -182,7 +182,7 @@ impl Visit for ScannerSecondPass {
                                     ExportBinding {
                                         export: (&spec.orig).clone().into(),
                                         alias: (&spec.exported).clone(),
-                                        from: export.src.clone(),
+                                        from: export.src.clone().map(|from| *from),
                                     }
                                     .into(),
                                 )
@@ -251,7 +251,7 @@ impl Visit for ScannerSecondPass {
             ModuleDecl::ExportAll(export) => {
                 self.bindings.push(
                     ExportBinding {
-                        from: Some(export.src.clone()),
+                        from: Some(*export.src.clone()),
                         export: ModuleBinding::Namespace,
                         alias: None,
                     }

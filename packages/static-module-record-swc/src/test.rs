@@ -2,9 +2,9 @@ use std::env::current_dir;
 use std::fs::{read_to_string, write};
 use std::{path::PathBuf, rc::Rc};
 use swc_core::common::{chain, comments::SingleThreadedComments, Mark};
-use swc_ecma_parser::Syntax;
-use swc_ecma_transforms::{hygiene, resolver};
-use swc_ecma_transforms_testing::{test, Tester};
+use swc_core::ecma::transforms::base::hygiene::hygiene;
+use swc_core::ecma::transforms::base::resolver;
+use swc_core::ecma::transforms::testing::Tester;
 
 use crate::module::config::{Config, Template};
 use crate::VirtualModuleRecordTransformer;
@@ -30,7 +30,7 @@ fn test(input: PathBuf) {
                 hygiene()
             ),
             "input.js",
-            Syntax::Es(Default::default()),
+            Default::default(),
             file.as_str(),
         )?;
         let result = tester.print(&actual, &Rc::new(SingleThreadedComments::default()));
