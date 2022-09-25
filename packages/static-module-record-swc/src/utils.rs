@@ -1,6 +1,6 @@
-use swc_core::ast::*;
-use swc_core::atoms::JsWord;
 use swc_core::common::{errors, MultiSpan, Span, DUMMY_SP};
+use swc_core::ecma::ast::*;
+use swc_core::ecma::atoms::JsWord;
 
 pub fn key_value(key: JsWord, expr: Expr) -> PropOrSpread {
     PropOrSpread::Prop(Box::new(

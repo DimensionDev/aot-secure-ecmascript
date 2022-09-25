@@ -2,13 +2,13 @@
 
 use module::{config::Config, VirtualModuleRecordTransformer};
 use script::ErrorTransformer;
-use swc_core::ast::*;
 use swc_core::common::DUMMY_SP;
+use swc_core::ecma::ast::*;
+use swc_core::ecma::visit::FoldWith;
 use swc_core::plugin::{
     metadata::{TransformPluginMetadataContextKind, TransformPluginProgramMetadata},
     plugin_transform,
 };
-use swc_core::visit::*;
 use utils::emit_error;
 
 mod module;

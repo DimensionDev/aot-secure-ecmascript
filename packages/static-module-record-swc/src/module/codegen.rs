@@ -1,9 +1,9 @@
 use super::{binding_descriptor::Binding, config::Template, VirtualModuleRecordTransformer};
 use crate::utils::*;
-use swc_core::ast::*;
 use swc_core::common::util::take::Take;
-use swc_core::common::*;
-use swc_core::utils::*;
+use swc_core::common::DUMMY_SP;
+use swc_core::ecma::ast::*;
+use swc_core::ecma::utils::quote_ident;
 
 impl VirtualModuleRecordTransformer {
     pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &VirtualModuleRecordTransformer) -> Module {
@@ -36,7 +36,7 @@ impl VirtualModuleRecordTransformer {
         if self.uses_global_lookup {
             stmts.insert(
                 0,
-                Stmt::Decl(Decl::Var(VarDecl {
+                Stmt::Decl(Decl::Var(Box::new(VarDecl {
                     span: DUMMY_SP,
                     kind: VarDeclKind::Var,
                     declare: false,
@@ -49,7 +49,7 @@ impl VirtualModuleRecordTransformer {
                         ))),
                         definite: false,
                     }],
-                })),
+                }))),
             );
         }
         let init_fn = Function {
@@ -101,7 +101,7 @@ impl VirtualModuleRecordTransformer {
             "execute".into(),
             FnExpr {
                 ident: None,
-                function: init_fn,
+                function: Box::new(init_fn),
             }
             .into(),
         ));

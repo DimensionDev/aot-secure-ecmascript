@@ -1,6 +1,6 @@
-use swc_core::ast::*;
 use swc_core::common::DUMMY_SP;
-use swc_core::visit::*;
+use swc_core::ecma::ast::*;
+use swc_core::ecma::visit::Fold;
 
 use crate::utils::str_lit;
 

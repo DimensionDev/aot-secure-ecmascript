@@ -1,10 +1,10 @@
 use std::ops::Deref;
 
-use swc_core::ast::*;
-use swc_core::atoms::*;
 use swc_core::common::DUMMY_SP;
-use swc_core::utils::*;
-use swc_core::visit::*;
+use swc_core::ecma::ast::*;
+use swc_core::ecma::atoms::js_word;
+use swc_core::ecma::utils::quote_ident;
+use swc_core::ecma::visit::{Fold, FoldWith};
 
 use super::{
     codegen::{assign_prop, prop_access, undefined_this_wrapper},
