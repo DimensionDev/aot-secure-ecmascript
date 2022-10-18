@@ -21,6 +21,7 @@ import {
 import { normalizeBindingsToSpecRecord, normalizeVirtualModuleRecord } from './utils/normalize.js'
 import { assertFailed, internalError, opaqueProxy } from './utils/assert.js'
 import { defaultImportHook } from './Evaluators.js'
+import { createTask, type Task } from './utils/async-task.js'
 
 export let imports: <T extends object = any>(specifier: Module<T>, options?: ImportCallOptions) => Promise<T>
 /** @internal */
@@ -207,7 +208,7 @@ export class Module<T extends object = any> {
         }
         return starResolution
     }
-    #LoadRequestedModules(HostDefined = undefined) {
+    #LoadRequestedModules(HostDefined: Task) {
         const module = this
         const pc = PromiseCapability<void>()
         const state: ModuleLoadState = {
@@ -366,6 +367,7 @@ export class Module<T extends object = any> {
         // prevent access to global env until [[ExecuteModule]]
         Object.setPrototypeOf(env, opaqueProxy)
     }
+    /** All call to ExecuteModule must use Task.run to keep the call stack continue */
     #ExecuteModule(promise?: PromiseCapability<void>) {
         // prepare context
         this.#ContextObject!.globalThis = this.#GlobalThis as any
@@ -378,6 +380,7 @@ export class Module<T extends object = any> {
                 const status: ModuleLoadState = {
                     Action: 'dynamic-import',
                     PromiseCapability: PromiseCapability(),
+                    HostDefined: createTask(`import("${specifier}")`)
                 }
                 Module.#HostLoadImportedModule(this, specifier, status.HostDefined, status)
                 return status.PromiseCapability.Promise as any
@@ -432,7 +435,7 @@ export class Module<T extends object = any> {
     }
 
     // https://tc39.es/ecma262/#sec-moduleevaluation
-    #Evaluate() {
+    #Evaluate(HostDefined: Task) {
         let module: Module = this
         // TODO: Assert: This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent.
         if (![ModuleStatus.linked, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status))
@@ -446,7 +449,7 @@ export class Module<T extends object = any> {
         const capability = PromiseCapability<void>()
         module.#TopLevelCapability = capability
         try {
-            Module.#InnerModuleEvaluation(module, stack, 0)
+            Module.#InnerModuleEvaluation(module, stack, 0, HostDefined)
         } catch (err) {
             for (const m of stack) {
                 if (!(m.#Status === ModuleStatus.evaluating)) assertFailed()
@@ -523,7 +526,7 @@ export class Module<T extends object = any> {
     }
 
     // https://tc39.es/ecma262/#sec-InnerModuleEvaluation
-    static #InnerModuleEvaluation(module: Module, stack: Module[], index: number) {
+    static #InnerModuleEvaluation(module: Module, stack: Module[], index: number, HostDefined: Task) {
         if ([ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status)) {
             if (module.#EvaluationError === empty) return index
             throw module.#EvaluationError
@@ -539,7 +542,7 @@ export class Module<T extends object = any> {
         for (const required of module.#RequestedModules) {
             let requiredModule = this.#GetImportedModule(module, required)
             if (!requiredModule) assertFailed()
-            index = this.#InnerModuleEvaluation(requiredModule, stack, index)
+            index = this.#InnerModuleEvaluation(requiredModule, stack, index, HostDefined)
             if (
                 ![ModuleStatus.evaluating, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(
                     requiredModule.#Status,
@@ -574,10 +577,10 @@ export class Module<T extends object = any> {
             module.#__AsyncEvaluationPreviouslyTrue = true
             // Note: The order in which module records have their [[AsyncEvaluation]] fields transition to true is significant. (See 16.2.1.5.2.4.)
             if (module.#PendingAsyncDependencies === 0) {
-                this.#ExecuteAsyncModule(module)
+                this.#ExecuteAsyncModule(module, HostDefined)
             }
         } else {
-            module.#ExecuteModule()
+            HostDefined.run(() => module.#ExecuteModule())
         }
         if (!(stack.filter((x) => x === module).length === 1)) assertFailed()
         if (!(module.#DFSAncestorIndex <= module.#DFSIndex)) assertFailed()
@@ -598,19 +601,19 @@ export class Module<T extends object = any> {
     }
 
     // https://tc39.es/ecma262/#sec-execute-async-module
-    static #ExecuteAsyncModule(module: Module) {
+    static #ExecuteAsyncModule(module: Module, HostDefined: Task) {
         if (![ModuleStatus.evaluating, ModuleStatus.evaluatingAsync].includes(module.#Status)) assertFailed()
         if (!module.#HasTLA) assertFailed()
         const capability = PromiseCapability<void>()
         capability.Promise.then(
             () => {
-                this.#AsyncModuleExecutionFulfilled(module)
+                this.#AsyncModuleExecutionFulfilled(module, HostDefined)
             },
             (error) => {
                 this.#AsyncModuleExecutionRejected(module, error)
             },
         )
-        module.#ExecuteModule(capability)
+        HostDefined.run(() => module.#ExecuteModule(capability))
     }
 
     // https://tc39.es/ecma262/#sec-gather-available-ancestors
@@ -631,7 +634,7 @@ export class Module<T extends object = any> {
     }
 
     // https://tc39.es/ecma262/#sec-async-module-execution-fulfilled
-    static #AsyncModuleExecutionFulfilled(module: Module) {
+    static #AsyncModuleExecutionFulfilled(module: Module, HostDefined: Task) {
         if (module.#Status === ModuleStatus.evaluated) {
             if (!(module.#EvaluationError !== empty)) assertFailed()
             return
@@ -659,10 +662,10 @@ export class Module<T extends object = any> {
             if (m.#Status === ModuleStatus.evaluated) {
                 if (!(m.#EvaluationError !== empty)) assertFailed()
             } else if (m.#HasTLA) {
-                this.#ExecuteAsyncModule(m)
+                this.#ExecuteAsyncModule(m, HostDefined)
             } else {
                 try {
-                    m.#ExecuteModule()
+                    HostDefined.run(() => m.#ExecuteModule())
                 } catch (err) {
                     this.#AsyncModuleExecutionRejected(m, err)
                     continue
@@ -756,7 +759,7 @@ export class Module<T extends object = any> {
     static #HostLoadImportedModule(
         referrer: Module,
         specifier: string,
-        hostDefined: undefined,
+        hostDefined: Task,
         payload: ModuleLoadState,
     ) {
         let promiseCapability = referrer.#ImportHookCache.get(specifier)
@@ -841,7 +844,7 @@ export class Module<T extends object = any> {
         function linkAndEvaluate() {
             try {
                 module.#Link()
-                const evaluatePromise = module.#Evaluate()
+                const evaluatePromise = module.#Evaluate(state.HostDefined)
                 function onFulfilled() {
                     try {
                         const namespace = Module.#GetModuleNamespace(module)
@@ -855,7 +858,7 @@ export class Module<T extends object = any> {
                 promiseCapability.Reject(error)
             }
         }
-        const loadPromise = module.#LoadRequestedModules()
+        const loadPromise = module.#LoadRequestedModules(state.HostDefined)
         loadPromise.then(linkAndEvaluate, onRejected)
     }
     //#endregion
@@ -863,9 +866,15 @@ export class Module<T extends object = any> {
     static {
         imports = async (module, options) => {
             const promiseCapability = PromiseCapability<ModuleNamespace>()
+
+            let HostDefinedName = "Module<...>"
+            if (typeof module.#Referral === 'symbol') HostDefinedName = `Module<@${module.#Referral.description}>`
+            else if (typeof module.#Referral === 'string') HostDefinedName = `"${module.#Referral}"`
+
             const state: ModuleLoadState = {
                 Action: 'dynamic-import',
                 PromiseCapability: promiseCapability,
+                HostDefined: createTask(`import(${HostDefinedName})`)
             }
             Module.#ContinueDynamicImport(state, NormalCompletion(module))
             return promiseCapability.Promise as any
@@ -884,12 +893,12 @@ interface ModuleLoadState_GraphLoading {
     IsLoading: boolean
     PendingModules: number
     Visited: Module[]
-    HostDefined?: undefined
+    HostDefined: Task
 }
 interface ModuleLoadState_DynamicImport {
     Action: 'dynamic-import'
     PromiseCapability: PromiseCapability<ModuleNamespace>
-    HostDefined?: undefined
+    HostDefined: Task
 }
 type ModuleLoadState = ModuleLoadState_DynamicImport | ModuleLoadState_GraphLoading
 
