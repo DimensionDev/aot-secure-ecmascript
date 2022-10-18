@@ -1,5 +1,12 @@
 # @masknet/compartment
 
+## 0.3.12
+
+### Patch Changes
+
+-   319ace2: follow upstream spec change
+-   abd0433: support async stack tagging API
+
 ## 0.3.11
 
 ### Patch Changes
