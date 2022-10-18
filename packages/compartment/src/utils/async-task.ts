@@ -1,6 +1,6 @@
 let asyncTaskPolyfill: Task
 function getAsyncTaskAPI() {
-    // if (typeof console === 'object' && typeof console.createTask === 'function') return console.createTask
+    if (typeof console === 'object' && typeof console.createTask === 'function') return console.createTask
     return (_name: string): Task =>
         (asyncTaskPolyfill ||= {
             run: Function.prototype.call.bind(Function.call),
