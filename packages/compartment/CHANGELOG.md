@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.3.11
+
+### Patch Changes
+
+-   48e5022: update dependencies
+
 ## 0.3.10
 
 ### Patch Changes

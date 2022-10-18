@@ -1,5 +1,12 @@
 # @masknet/static-module-record-swc
 
+## 0.3.5
+
+### Patch Changes
+
+-   48e5022: update dependencies
+-   54dd8c4: follow swc version
+
 ## 0.3.4
 
 ### Patch Changes

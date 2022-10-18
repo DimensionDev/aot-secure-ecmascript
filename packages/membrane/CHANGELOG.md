@@ -1,5 +1,12 @@
 # @masknet/membrane
 
+## 0.1.4
+
+### Patch Changes
+
+-   48e5022: update dependencies
+-   7a2c83c: update dependencies
+
 ## 0.1.3
 
 ### Patch Changes
