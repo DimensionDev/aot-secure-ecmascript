@@ -765,11 +765,11 @@ export class Module<T extends object = any> {
         let promiseCapability = referrer.#ImportHookCache.get(specifier)
         function onFulfilled(module: Module) {
             promiseCapability?.Resolve(module)
-            Module.#FinishLoadImportedModule(referrer, specifier, payload, NormalCompletion(module))
+            Module.#FinishLoadingImportedModule(referrer, specifier, payload, NormalCompletion(module))
         }
         function onRejected(reason: unknown) {
             promiseCapability?.Reject(reason)
-            Module.#FinishLoadImportedModule(referrer, specifier, payload, ThrowCompletion(reason))
+            Module.#FinishLoadingImportedModule(referrer, specifier, payload, ThrowCompletion(reason))
         }
         if (promiseCapability) {
             if (promiseCapability.Status.Type === 'Fulfilled') {
@@ -809,7 +809,7 @@ export class Module<T extends object = any> {
         }
     }
 
-    static #FinishLoadImportedModule(
+    static #FinishLoadingImportedModule(
         referrer: Module,
         specifier: string,
         state: ModuleLoadState,
