@@ -243,7 +243,8 @@ impl VirtualModuleRecordTransformer {
     fn trace_live_export_ident(&self, local_ident: &Ident, tracing: &mut Vec<Expr>) {
         let mut need_init_expr = false;
         let init_expr: Expr = local_ident.clone().into();
-        let assign = self.local_resolved_bindings
+        let assign = self
+            .local_resolved_bindings
             .iter()
             .filter(|x| x.local_ident.to_id() == local_ident.to_id())
             .fold(init_expr, |expr, x| {
