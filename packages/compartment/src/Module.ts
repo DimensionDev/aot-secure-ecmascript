@@ -211,7 +211,7 @@ export class Module<T extends object = any> {
     #LoadRequestedModules(HostDefined: Task) {
         const module = this
         const pc = PromiseCapability<void>()
-        const state: ModuleLoadState = {
+        const state: ModuleLoadState_GraphLoading = {
             Action: 'graph-loading',
             IsLoading: true,
             PendingModules: 1,
@@ -222,8 +222,8 @@ export class Module<T extends object = any> {
         Module.#InnerModuleLoading(state, module)
         return pc.Promise
     }
-    static #InnerModuleLoading(state: ModuleLoadState, module: Module) {
-        if (!(state.Action === 'graph-loading' && state.IsLoading)) assertFailed()
+    static #InnerModuleLoading(state: ModuleLoadState_GraphLoading, module: Module) {
+        if (!state.IsLoading) assertFailed()
         if (module.#Status === ModuleStatus.new && !state.Visited.includes(module)) {
             state.Visited.push(module)
             const requestedModulesCount = module.#RequestedModules.length
@@ -250,8 +250,7 @@ export class Module<T extends object = any> {
             state.PromiseCapability.Resolve()
         }
     }
-    static #ContinueModuleLoading(state: ModuleLoadState, moduleCompletion: Completion<Module>) {
-        if (!(state.Action === 'graph-loading')) assertFailed()
+    static #ContinueModuleLoading(state: ModuleLoadState_GraphLoading, moduleCompletion: Completion<Module>) {
         if (!state.IsLoading) return
         if (moduleCompletion.Type === 'normal') Module.#InnerModuleLoading(state, moduleCompletion.Value)
         else {
@@ -380,7 +379,7 @@ export class Module<T extends object = any> {
         if (this.#NeedsImport) {
             this.#ContextObject!.import = async (specifier: string, options?: ImportCallOptions) => {
                 specifier = String(specifier)
-                const status: ModuleLoadState = {
+                const status: ModuleLoadState_DynamicImport = {
                     Action: 'dynamic-import',
                     PromiseCapability: PromiseCapability(),
                     HostDefined: createTask(`import("${specifier}")`),
@@ -828,8 +827,7 @@ export class Module<T extends object = any> {
         }
     }
 
-    static #ContinueDynamicImport(state: ModuleLoadState, moduleCompletion: Completion<Module>) {
-        if (!(state.Action === 'dynamic-import')) assertFailed()
+    static #ContinueDynamicImport(state: ModuleLoadState_DynamicImport, moduleCompletion: Completion<Module>) {
         const promiseCapability = state.PromiseCapability
         if (moduleCompletion.Type === 'throw') {
             promiseCapability.Reject(moduleCompletion.Value)
@@ -869,7 +867,7 @@ export class Module<T extends object = any> {
             if (typeof module.#Referral === 'symbol') HostDefinedName = `Module<@${module.#Referral.description}>`
             else if (typeof module.#Referral === 'string') HostDefinedName = `"${module.#Referral}"`
 
-            const state: ModuleLoadState = {
+            const state: ModuleLoadState_DynamicImport = {
                 Action: 'dynamic-import',
                 PromiseCapability: promiseCapability,
                 HostDefined: createTask(`import(${HostDefinedName})`),
