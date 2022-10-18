@@ -180,8 +180,8 @@ impl Visit for ScannerSecondPass {
                             if !bindings_pushed {
                                 self.bindings.push(
                                     ExportBinding {
-                                        export: (&spec.orig).clone().into(),
-                                        alias: (&spec.exported).clone(),
+                                        export: spec.orig.clone().into(),
+                                        alias: spec.exported.clone(),
                                         from: export.src.clone().map(|from| *from),
                                     }
                                     .into(),

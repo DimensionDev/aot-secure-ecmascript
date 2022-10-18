@@ -114,7 +114,7 @@ impl VirtualModuleRecordTransformer {
                         test: node.test.map(|x| x.fold_children_with(self)),
                         update: node.update.map(|x| x.fold_children_with(self)),
                         body: prepend_stmt(
-                            node.body.fold_children_with(self),
+                            *node.body.fold_children_with(self),
                             exprs_to_stmt(tracing),
                         ),
                         span: node.span,
@@ -142,7 +142,7 @@ impl VirtualModuleRecordTransformer {
                 } else {
                     vec![ForInStmt {
                         body: prepend_stmt(
-                            node.body.fold_children_with(self),
+                            *node.body.fold_children_with(self),
                             exprs_to_stmt(tracing),
                         ),
                         left: node.left.fold_children_with(self),
@@ -173,7 +173,7 @@ impl VirtualModuleRecordTransformer {
                 } else {
                     vec![ForOfStmt {
                         body: prepend_stmt(
-                            node.body.fold_children_with(self),
+                            *node.body.fold_children_with(self),
                             exprs_to_stmt(tracing),
                         ),
                         left: node.left.fold_children_with(self),
@@ -243,7 +243,7 @@ impl VirtualModuleRecordTransformer {
     fn trace_live_export_ident(&self, local_ident: &Ident, tracing: &mut Vec<Expr>) {
         let mut need_init_expr = false;
         let init_expr: Expr = local_ident.clone().into();
-        let assign = (&self.local_resolved_bindings)
+        let assign = self.local_resolved_bindings
             .iter()
             .filter(|x| x.local_ident.to_id() == local_ident.to_id())
             .fold(init_expr, |expr, x| {
@@ -344,7 +344,7 @@ impl Fold for VirtualModuleRecordTransformer {
     fn fold_expr(&mut self, n: Expr) -> Expr {
         match n {
             Expr::Update(expr) => {
-                if let Some(id) = (&expr.arg).as_ident() {
+                if let Some(id) = expr.arg.as_ident() {
                     let mut tracing = vec![];
                     self.trace_live_export_ident(id, &mut tracing);
                     if tracing.is_empty() && !self.is_unresolved(id) {
@@ -506,7 +506,7 @@ fn expr_to_stmt(expr: Expr) -> Stmt {
 fn exprs_to_stmt(expr: Vec<Expr>) -> Vec<Stmt> {
     expr.into_iter().map(expr_to_stmt).collect()
 }
-fn prepend_stmt(stmt: Box<Stmt>, mut insert_before: Vec<Stmt>) -> Box<Stmt> {
+fn prepend_stmt(stmt: Stmt, mut insert_before: Vec<Stmt>) -> Box<Stmt> {
     if let Some(block) = stmt.as_block() {
         insert_before.append(&mut block.stmts.clone());
         Box::new(
@@ -517,7 +517,7 @@ fn prepend_stmt(stmt: Box<Stmt>, mut insert_before: Vec<Stmt>) -> Box<Stmt> {
             .into(),
         )
     } else {
-        insert_before.push(*stmt);
+        insert_before.push(stmt);
         Box::new(
             BlockStmt {
                 span: DUMMY_SP,
