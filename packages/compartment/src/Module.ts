@@ -19,7 +19,7 @@ import {
     type ModuleImportEntry,
 } from './utils/spec.js'
 import { normalizeBindingsToSpecRecord, normalizeVirtualModuleRecord } from './utils/normalize.js'
-import { assert, internalError, opaqueProxy } from './utils/assert.js'
+import { assertFailed, internalError, opaqueProxy } from './utils/assert.js'
 import { defaultImportHook } from './Evaluators.js'
 
 export let imports: <T extends object = any>(specifier: Module<T>, options?: ImportCallOptions) => Promise<T>
@@ -116,18 +116,18 @@ export class Module<T extends object = any> {
         exportStarSet.push(module)
         const exportedNames: string[] = []
         for (const e of module.#LocalExportEntries) {
-            assert(e.ExportName !== null)
+            if (!(e.ExportName !== null)) assertFailed()
             exportedNames.push(e.ExportName)
         }
         for (const e of module.#IndirectExportEntries) {
-            assert(e.ExportName !== null)
+            if (!(e.ExportName !== null)) assertFailed()
             exportedNames.push(e.ExportName)
         }
         for (const e of module.#StarExportEntries) {
-            assert(e.ModuleRequest !== null)
+            if (!(e.ModuleRequest !== null)) assertFailed()
             const requestedModule = Module.#GetImportedModule(module, e.ModuleRequest)
             // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
-            assert(requestedModule)
+            if (!requestedModule) assertFailed()
             const starNames = requestedModule.#GetExportedNames(exportStarSet)
             for (const n of starNames) {
                 if (n === 'default') continue
@@ -152,22 +152,22 @@ export class Module<T extends object = any> {
         resolveSet.push({ module, exportName })
         for (const e of module.#LocalExportEntries) {
             if (exportName === e.ExportName) {
-                // assert(e.LocalName !== null)
+                // if (!(e.LocalName !== null)) assertFailed()
                 // return { module, bindingName: e.LocalName }
                 return { module, bindingName: e.ExportName }
             }
         }
         for (const e of module.#IndirectExportEntries) {
             if (exportName === e.ExportName) {
-                assert(e.ModuleRequest !== null)
+                if (!(e.ModuleRequest !== null)) assertFailed()
                 const importedModule = Module.#GetImportedModule(module, e.ModuleRequest)
                 // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
-                assert(importedModule)
+                if (!importedModule) assertFailed()
                 if (e.ImportName === all) {
                     // Assert: module does not provide the direct binding for this export.
                     return { module: importedModule, bindingName: namespace }
                 } else {
-                    assert(typeof e.ImportName === 'string')
+                    if (!(typeof e.ImportName === 'string')) assertFailed()
                     return importedModule.#ResolveExport(e.ImportName, resolveSet)
                 }
             }
@@ -179,10 +179,10 @@ export class Module<T extends object = any> {
         }
         let starResolution: null | { module: Module; bindingName: string | typeof namespace } = null
         for (const e of module.#StarExportEntries) {
-            assert(e.ModuleRequest !== null)
+            if (!(e.ModuleRequest !== null)) assertFailed()
             const importedModule = Module.#GetImportedModule(module, e.ModuleRequest)
             // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
-            assert(importedModule)
+            if (!importedModule) assertFailed()
             let resolution = importedModule.#ResolveExport(exportName, resolveSet)
             if (resolution === ambiguous) return ambiguous
             if (resolution !== null) {
@@ -222,7 +222,7 @@ export class Module<T extends object = any> {
         return pc.Promise
     }
     static #InnerModuleLoading(state: ModuleLoadState, module: Module) {
-        assert(state.Action === 'graph-loading' && state.IsLoading)
+        if (!(state.Action === 'graph-loading' && state.IsLoading)) assertFailed()
         if (module.#Status === ModuleStatus.new && !state.Visited.includes(module)) {
             state.Visited.push(module)
             const requestedModulesCount = module.#RequestedModules.length
@@ -236,7 +236,7 @@ export class Module<T extends object = any> {
                 }
             }
         }
-        assert(state.PendingModules >= 1)
+        if (!(state.PendingModules >= 1)) assertFailed()
         state.PendingModules = state.PendingModules - 1
         if (state.PendingModules === 0) {
             state.IsLoading = false
@@ -247,7 +247,7 @@ export class Module<T extends object = any> {
         }
     }
     static #ContinueModuleLoading(state: ModuleLoadState, result: Completion<Module>) {
-        assert(state.Action === 'graph-loading')
+        if (!(state.Action === 'graph-loading')) assertFailed()
         if (!state.IsLoading) return
         if (result.Type === 'normal') Module.#InnerModuleLoading(state, result.Value)
         else {
@@ -278,7 +278,7 @@ export class Module<T extends object = any> {
     #InitializeEnvironment() {
         const module = this
         for (const e of module.#IndirectExportEntries) {
-            assert(e.ExportName !== null)
+            if (!(e.ExportName !== null)) assertFailed()
             const resolution = module.#ResolveExport(e.ExportName)
             if (resolution === null || resolution === ambiguous) {
                 throw new SyntaxError(`Module '${e.ModuleRequest}' does not provide an export ${e.ExportName}`)
@@ -296,7 +296,7 @@ export class Module<T extends object = any> {
         }
         for (const i of module.#ImportEntries) {
             const importedModule = Module.#GetImportedModule(module, i.ModuleRequest)
-            assert(importedModule)
+            if (!importedModule) assertFailed()
             // import * as ns from '..'
             if (i.ImportName === namespace) {
                 const namespaceObject = Module.#GetModuleNamespace(importedModule)
@@ -340,7 +340,7 @@ export class Module<T extends object = any> {
         }
 
         for (const { ModuleRequest, ExportName, ImportName } of module.#LocalExportEntries) {
-            assert(ModuleRequest === null && typeof ExportName === 'string' && ImportName === null)
+            if (!(ModuleRequest === null && typeof ExportName === 'string' && ImportName === null)) assertFailed()
             propertiesToBeDefined[ExportName] = {
                 get: () => this.#LocalExportedValues.get(ExportName),
                 set: (value) => {
@@ -384,16 +384,16 @@ export class Module<T extends object = any> {
             }
         }
 
-        assert(this.#Environment)
+        if (!this.#Environment) assertFailed()
         const env = new Proxy(this.#Environment, moduleEnvExoticMethods)
 
         if (!this.#HasTLA) {
-            assert(!promise)
+            if (!!promise) assertFailed()
             if (this.#Execute) {
                 Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObject])
             }
         } else {
-            assert(promise)
+            if (!promise) assertFailed()
             if (this.#Execute) {
                 Promise.resolve(Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObject])).then(
                     promise.Resolve,
@@ -406,34 +406,40 @@ export class Module<T extends object = any> {
     // https://tc39.es/ecma262/#sec-moduledeclarationlinking
     #Link() {
         const module = this
-        assert(
-            [ModuleStatus.unlinked, ModuleStatus.linked, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(
-                module.#Status,
-            ),
+        if (
+            ![
+                ModuleStatus.unlinked,
+                ModuleStatus.linked,
+                ModuleStatus.evaluatingAsync,
+                ModuleStatus.evaluated,
+            ].includes(module.#Status)
         )
+            assertFailed()
         const stack: Module[] = []
         try {
             Module.#InnerModuleLinking(module, stack, 0)
         } catch (err) {
             for (const mod of stack) {
-                assert(mod.#Status === ModuleStatus.linking)
+                if (!(mod.#Status === ModuleStatus.linking)) assertFailed()
                 mod.#Status = ModuleStatus.unlinked
             }
-            assert(module.#Status === ModuleStatus.unlinked)
+            if (!(module.#Status === ModuleStatus.unlinked)) assertFailed()
             throw err
         }
-        assert([ModuleStatus.linked, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status))
-        assert(stack.length === 0)
+        if (![ModuleStatus.linked, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status))
+            assertFailed()
+        if (!(stack.length === 0)) assertFailed()
     }
 
     // https://tc39.es/ecma262/#sec-moduleevaluation
     #Evaluate() {
         let module: Module = this
         // TODO: Assert: This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent.
-        assert([ModuleStatus.linked, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status))
+        if (![ModuleStatus.linked, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status))
+            assertFailed()
         if ([ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status)) {
             module = module.#CycleRoot!
-            assert(module) // TODO: https://github.com/tc39/ecma262/issues/2823
+            if (!module) assertFailed() // TODO: https://github.com/tc39/ecma262/issues/2823
         }
         if (module.#TopLevelCapability) return module.#TopLevelCapability.Promise
         const stack: Module[] = []
@@ -443,22 +449,22 @@ export class Module<T extends object = any> {
             Module.#InnerModuleEvaluation(module, stack, 0)
         } catch (err) {
             for (const m of stack) {
-                assert(m.#Status === ModuleStatus.evaluating)
+                if (!(m.#Status === ModuleStatus.evaluating)) assertFailed()
                 m.#Status = ModuleStatus.evaluated
                 m.#EvaluationError = err
             }
-            assert(module.#Status === ModuleStatus.evaluated)
-            assert(module.#EvaluationError === err)
+            if (!(module.#Status === ModuleStatus.evaluated)) assertFailed()
+            if (!(module.#EvaluationError === err)) assertFailed()
             capability.Reject(err)
             return capability.Promise
         }
-        assert([ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status))
-        assert(module.#EvaluationError === empty)
+        if (![ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(module.#Status)) assertFailed()
+        if (!(module.#EvaluationError === empty)) assertFailed()
         if (module.#AsyncEvaluation === false) {
-            assert(module.#Status === ModuleStatus.evaluated)
+            if (!(module.#Status === ModuleStatus.evaluated)) assertFailed()
             capability.Resolve()
         }
-        assert(stack.length === 0)
+        if (!(stack.length === 0)) assertFailed()
         return capability.Promise
     }
 
@@ -471,7 +477,7 @@ export class Module<T extends object = any> {
         ) {
             return index
         }
-        assert(module.#Status === ModuleStatus.unlinked)
+        if (!(module.#Status === ModuleStatus.unlinked)) assertFailed()
         module.#Status = ModuleStatus.linking
         module.#DFSIndex = index
         module.#DFSAncestorIndex = index
@@ -479,20 +485,21 @@ export class Module<T extends object = any> {
         stack.push(module)
         for (const required of module.#RequestedModules) {
             const requiredModule = this.#GetImportedModule(module, required)
-            assert(requiredModule)
+            if (!requiredModule) assertFailed()
             index = this.#InnerModuleLinking(requiredModule, stack, index)
-            assert(
-                [
+            if (
+                ![
                     ModuleStatus.linking,
                     ModuleStatus.linked,
                     ModuleStatus.evaluatingAsync,
                     ModuleStatus.evaluated,
-                ].includes(requiredModule.#Status),
+                ].includes(requiredModule.#Status)
             )
+                assertFailed()
             if (stack.includes(requiredModule)) {
-                assert(requiredModule.#Status === ModuleStatus.linking)
+                if (!(requiredModule.#Status === ModuleStatus.linking)) assertFailed()
             } else {
-                assert(requiredModule.#Status !== ModuleStatus.linking)
+                if (!(requiredModule.#Status !== ModuleStatus.linking)) assertFailed()
             }
             if (requiredModule.#Status === ModuleStatus.linking) {
                 module.#DFSAncestorIndex = Math.min(
@@ -502,8 +509,8 @@ export class Module<T extends object = any> {
             }
         }
         module.#InitializeEnvironment()
-        assert(stack.filter((x) => x === module).length === 1)
-        assert(module.#DFSAncestorIndex <= module.#DFSIndex)
+        if (!(stack.filter((x) => x === module).length === 1)) assertFailed()
+        if (!(module.#DFSAncestorIndex <= module.#DFSIndex)) assertFailed()
         if (module.#DFSAncestorIndex === module.#DFSIndex) {
             let done = false
             while (!done) {
@@ -522,7 +529,7 @@ export class Module<T extends object = any> {
             throw module.#EvaluationError
         }
         if (module.#Status === ModuleStatus.evaluating) return index
-        assert(module.#Status === ModuleStatus.linked)
+        if (!(module.#Status === ModuleStatus.linked)) assertFailed()
         module.#Status = ModuleStatus.evaluating
         module.#DFSIndex = index
         module.#DFSAncestorIndex = index
@@ -531,17 +538,18 @@ export class Module<T extends object = any> {
         stack.push(module)
         for (const required of module.#RequestedModules) {
             let requiredModule = this.#GetImportedModule(module, required)
-            assert(requiredModule)
+            if (!requiredModule) assertFailed()
             index = this.#InnerModuleEvaluation(requiredModule, stack, index)
-            assert(
-                [ModuleStatus.evaluating, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(
+            if (
+                ![ModuleStatus.evaluating, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(
                     requiredModule.#Status,
-                ),
+                )
             )
+                assertFailed()
             if (stack.includes(requiredModule)) {
-                assert(requiredModule.#Status === ModuleStatus.evaluating)
+                if (!(requiredModule.#Status === ModuleStatus.evaluating)) assertFailed()
             } else {
-                assert(requiredModule.#Status !== ModuleStatus.evaluating)
+                if (!(requiredModule.#Status !== ModuleStatus.evaluating)) assertFailed()
             }
             if (requiredModule.#Status === ModuleStatus.evaluating) {
                 module.#DFSAncestorIndex = Math.min(
@@ -550,7 +558,8 @@ export class Module<T extends object = any> {
                 )
             } else {
                 requiredModule = requiredModule.#CycleRoot!
-                assert([ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(requiredModule.#Status))
+                if (![ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(requiredModule.#Status))
+                    assertFailed()
                 if (requiredModule.#EvaluationError !== empty) throw requiredModule.#EvaluationError
             }
             if (requiredModule.#AsyncEvaluation === true) {
@@ -559,8 +568,8 @@ export class Module<T extends object = any> {
             }
         }
         if (module.#PendingAsyncDependencies > 0 || module.#HasTLA) {
-            assert(module.#AsyncEvaluation === false)
-            assert(module.#__AsyncEvaluationPreviouslyTrue === false)
+            if (!(module.#AsyncEvaluation === false)) assertFailed()
+            if (!(module.#__AsyncEvaluationPreviouslyTrue === false)) assertFailed()
             module.#AsyncEvaluation = true
             module.#__AsyncEvaluationPreviouslyTrue = true
             // Note: The order in which module records have their [[AsyncEvaluation]] fields transition to true is significant. (See 16.2.1.5.2.4.)
@@ -570,8 +579,8 @@ export class Module<T extends object = any> {
         } else {
             module.#ExecuteModule()
         }
-        assert(stack.filter((x) => x === module).length === 1)
-        assert(module.#DFSAncestorIndex <= module.#DFSIndex)
+        if (!(stack.filter((x) => x === module).length === 1)) assertFailed()
+        if (!(module.#DFSAncestorIndex <= module.#DFSIndex)) assertFailed()
         if (module.#DFSAncestorIndex === module.#DFSIndex) {
             let done = false
             while (!done) {
@@ -590,8 +599,8 @@ export class Module<T extends object = any> {
 
     // https://tc39.es/ecma262/#sec-execute-async-module
     static #ExecuteAsyncModule(module: Module) {
-        assert([ModuleStatus.evaluating, ModuleStatus.evaluatingAsync].includes(module.#Status))
-        assert(module.#HasTLA)
+        if (![ModuleStatus.evaluating, ModuleStatus.evaluatingAsync].includes(module.#Status)) assertFailed()
+        if (!module.#HasTLA) assertFailed()
         const capability = PromiseCapability<void>()
         capability.Promise.then(
             () => {
@@ -608,10 +617,10 @@ export class Module<T extends object = any> {
     static #GatherAvailableAncestors(module: Module, execList: Module[]) {
         for (const m of module.#AsyncParentModules) {
             if (!execList.includes(m) && m.#CycleRoot!.#EvaluationError === empty) {
-                assert(m.#Status === ModuleStatus.evaluatingAsync)
-                assert(m.#EvaluationError === empty)
-                assert(m.#AsyncEvaluation === true)
-                assert((m.#PendingAsyncDependencies as number) > 0)
+                if (!(m.#Status === ModuleStatus.evaluatingAsync)) assertFailed()
+                if (!(m.#EvaluationError === empty)) assertFailed()
+                if (!(m.#AsyncEvaluation === true)) assertFailed()
+                if (!((m.#PendingAsyncDependencies as number) > 0)) assertFailed()
                 ;(m.#PendingAsyncDependencies as number)--
                 if (m.#PendingAsyncDependencies === 0) {
                     execList.push(m)
@@ -624,30 +633,31 @@ export class Module<T extends object = any> {
     // https://tc39.es/ecma262/#sec-async-module-execution-fulfilled
     static #AsyncModuleExecutionFulfilled(module: Module) {
         if (module.#Status === ModuleStatus.evaluated) {
-            assert(module.#EvaluationError !== empty)
+            if (!(module.#EvaluationError !== empty)) assertFailed()
             return
         }
-        assert(module.#Status === ModuleStatus.evaluatingAsync)
-        assert(module.#AsyncEvaluation === true)
-        assert(module.#EvaluationError === empty)
+        if (!(module.#Status === ModuleStatus.evaluatingAsync)) assertFailed()
+        if (!(module.#AsyncEvaluation === true)) assertFailed()
+        if (!(module.#EvaluationError === empty)) assertFailed()
         module.#AsyncEvaluation = false
         module.#Status = ModuleStatus.evaluated
         if (module.#TopLevelCapability) {
-            assert(module.#CycleRoot === module)
+            if (!(module.#CycleRoot === module)) assertFailed()
             module.#TopLevelCapability.Resolve()
         }
         const execList: Module[] = []
         this.#GatherAvailableAncestors(module, execList)
         // TODO: Let sortedExecList be a List whose elements are the elements of execList, in the order in which they had their [[AsyncEvaluation]] fields set to true in InnerModuleEvaluation.
         const sortedExecList = execList
-        assert(
-            sortedExecList.every(
+        if (
+            !sortedExecList.every(
                 (x) => x.#AsyncEvaluation && x.#PendingAsyncDependencies === 0 && x.#EvaluationError === empty,
-            ),
+            )
         )
+            assertFailed()
         for (const m of sortedExecList) {
             if (m.#Status === ModuleStatus.evaluated) {
-                assert(m.#EvaluationError !== empty)
+                if (!(m.#EvaluationError !== empty)) assertFailed()
             } else if (m.#HasTLA) {
                 this.#ExecuteAsyncModule(m)
             } else {
@@ -659,7 +669,7 @@ export class Module<T extends object = any> {
                 }
                 m.#Status = ModuleStatus.evaluated
                 if (m.#TopLevelCapability) {
-                    assert(m.#CycleRoot === m)
+                    if (!(m.#CycleRoot === m)) assertFailed()
                     m.#TopLevelCapability.Resolve()
                 }
             }
@@ -669,25 +679,25 @@ export class Module<T extends object = any> {
     // https://tc39.es/ecma262/#sec-async-module-execution-rejected
     static #AsyncModuleExecutionRejected = (module: Module, error: unknown) => {
         if (module.#Status === ModuleStatus.evaluated) {
-            assert(module.#EvaluationError !== empty)
+            if (!(module.#EvaluationError !== empty)) assertFailed()
             return
         }
-        assert(module.#Status === ModuleStatus.evaluatingAsync)
-        assert(module.#AsyncEvaluation === true)
-        assert(module.#EvaluationError === empty)
+        if (!(module.#Status === ModuleStatus.evaluatingAsync)) assertFailed()
+        if (!(module.#AsyncEvaluation === true)) assertFailed()
+        if (!(module.#EvaluationError === empty)) assertFailed()
         module.#EvaluationError = error
         module.#Status = ModuleStatus.evaluated
         for (const m of module.#AsyncParentModules) {
             this.#AsyncModuleExecutionRejected(m, error)
         }
         if (module.#TopLevelCapability) {
-            assert(module.#CycleRoot === module)
+            if (!(module.#CycleRoot === module)) assertFailed()
             module.#TopLevelCapability.Reject(error)
         }
     }
     static #GetModuleNamespace(module: Module): ModuleNamespace {
         if (module.#Namespace) return module.#Namespace
-        assert(module.#Status !== ModuleStatus.unlinked)
+        if (!(module.#Status !== ModuleStatus.unlinked)) assertFailed()
         const exportedNames = module.#GetExportedNames()
 
         const namespaceObject: ModuleNamespace = { __proto__: null }
@@ -805,7 +815,7 @@ export class Module<T extends object = any> {
         if (result.Type === 'normal') {
             const record = referrer.#LoadedModules.get(specifier)
             if (record) {
-                assert(record === result.Value)
+                if (!(record === result.Value)) assertFailed()
             } else {
                 referrer.#LoadedModules.set(specifier, result.Value)
             }
@@ -818,7 +828,7 @@ export class Module<T extends object = any> {
     }
 
     static #ContinueDynamicImport(state: ModuleLoadState, result: Completion<Module>) {
-        assert(state.Action === 'dynamic-import')
+        if (!(state.Action === 'dynamic-import')) assertFailed()
         const promiseCapability = state.PromiseCapability
         if (result.Type === 'throw') {
             promiseCapability.Reject(result.Value)

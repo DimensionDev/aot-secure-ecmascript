@@ -1,5 +1,5 @@
 import type { VirtualModuleRecord, Binding, ExportAllBinding, ImportBinding } from '../types.js'
-import { assert, unreachable } from './assert.js'
+import { assertFailed, unreachable } from './assert.js'
 import { hasFromField, isExportAllBinding, isExportBinding, isImportAllBinding, isImportBinding } from './shapeCheck.js'
 import { all, allButDefault, namespace, type ModuleExportEntry, type ModuleImportEntry } from './spec.js'
 
@@ -151,7 +151,7 @@ export function normalizeBindingsToSpecRecord(bindings: Binding[] | undefined) {
         // export { T } from '...'
         else {
             if (isExportAllBinding(binding)) {
-                assert(binding.as !== undefined)
+                if (!(binding.as !== undefined)) assertFailed()
                 indirectExportEntries.push({
                     ExportName: binding.as,
                     ImportName: all,

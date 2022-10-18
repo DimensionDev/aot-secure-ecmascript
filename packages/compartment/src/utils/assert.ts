@@ -11,8 +11,8 @@ export function internalError(): never {
     throw new TypeError('Internal error.')
 }
 /** @internal */
-export function assert(val: any): asserts val {
-    if (!val) throw new TypeError('Internal error.')
+export function assertFailed(): never {
+    throw new TypeError('Assertion failed.')
 }
 /** @internal */
 export function unreachable(val: never): never {
