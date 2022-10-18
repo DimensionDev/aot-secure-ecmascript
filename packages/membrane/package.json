@@ -9,10 +9,10 @@
     "default": "./dist/index.js"
   },
   "dependencies": {
-    "@locker/near-membrane-base": "0.11.5"
+    "@locker/near-membrane-base": "0.11.7"
   },
   "devDependencies": {
-    "@swc/core": "1.3.3"
+    "@swc/core": "1.3.9"
   },
   "scripts": {
     "update": "node ./build.mjs"
