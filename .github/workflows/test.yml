@@ -1,43 +1,24 @@
+name: Linters and tests
+
 on:
-  push:
-    paths:
-      - 'packages/static-module-record-swc/**'
-      - '.github/workflows/**'
+  push
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
   cancel-in-progress: true
 
-name: Rust
-# https://github.com/actions-rs/cargo/issues/86
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
-        with:
-          working-directory: ./packages/static-module-record-swc/
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --manifest-path ./packages/static-module-record-swc/Cargo.toml --release --target wasm32-unknown-unknown
-      - uses: actions/upload-artifact@v3
-        with:
-          name: wasm
-          path: ./packages/static-module-record-swc/target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm
   test:
-    name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "pnpm"
+      - run: pnpm install
+      - run: pnpm run build
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -61,3 +42,4 @@ jobs:
           command: test
           args: --manifest-path ./packages/static-module-record-swc/Cargo.toml
       - run: git diff --exit-code
+      - run: pnpm test
