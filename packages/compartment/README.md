@@ -18,7 +18,7 @@ This package currently implements the following specs/API explainers:
 1.  The environment is already `lockdown()` by [ses][ses].
 2.  Dynamic code execution (`eval` and `Function`) is not possible.
 3.  Code executed are either trusted or precompiled into a [Virtual Module Source][layer-2] by a compiler like [@masknet/static-module-record-swc](../static-module-record-swc/).
-4. ECMAScript 2022 syntax is available.
+4.  ECMAScript 2022 syntax is available.
 
 ## APIs
 

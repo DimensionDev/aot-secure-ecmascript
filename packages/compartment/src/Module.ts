@@ -388,7 +388,10 @@ export class Module<T extends object = any> {
         if (!this.#HasTLA) {
             if (promise) assertFailed()
             const result = Reflect.apply(execute, this.#Source, [env, this.#ContextObject])
-            if (result) throw new TypeError('Due to specification limitations, in order to support Async Modules (modules that use Top Level Await or a Virtual Module that has an execute() function that returns a Promise), the Virtual Module record must be marked with `isAsync: true`. The `isAsync` property is non-standard, and it is being tracked in https://github.com/tc39/proposal-compartments/issues/84.')
+            if (result)
+                throw new TypeError(
+                    'Due to specification limitations, in order to support Async Modules (modules that use Top Level Await or a Virtual Module that has an execute() function that returns a Promise), the Virtual Module record must be marked with `isAsync: true`. The `isAsync` property is non-standard, and it is being tracked in https://github.com/tc39/proposal-compartments/issues/84.',
+                )
         } else {
             if (!promise) assertFailed()
             Promise.resolve(Reflect.apply(execute, this.#Source, [env, this.#ContextObject])).then(
