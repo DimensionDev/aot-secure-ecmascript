@@ -113,6 +113,7 @@ export class Module<T extends object = any> {
     // https://tc39.es/ecma262/#sec-getexportednames
     #GetExportedNames(exportStarSet: Module[] = []): string[] {
         const module = this
+        if (!(module.#Status !== ModuleStatus.new)) assertFailed()
         if (exportStarSet.includes(module)) return []
         exportStarSet.push(module)
         const exportedNames: string[] = []
@@ -127,8 +128,6 @@ export class Module<T extends object = any> {
         for (const e of module.#StarExportEntries) {
             if (!(e.ModuleRequest !== null)) assertFailed()
             const requestedModule = Module.#GetImportedModule(module, e.ModuleRequest)
-            // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
-            if (!requestedModule) assertFailed()
             const starNames = requestedModule.#GetExportedNames(exportStarSet)
             for (const n of starNames) {
                 if (n === 'default') continue
@@ -144,6 +143,7 @@ export class Module<T extends object = any> {
         resolveSet: { module: Module; exportName: string }[] = [],
     ): typeof ambiguous | { module: Module; bindingName: string | typeof namespace } | null {
         const module = this
+        if (!(module.#Status !== ModuleStatus.new)) assertFailed()
         for (const r of resolveSet) {
             if (module === r.module && exportName === r.exportName) {
                 // Assert: This is a circular import request.
@@ -162,8 +162,6 @@ export class Module<T extends object = any> {
             if (exportName === e.ExportName) {
                 if (!(e.ModuleRequest !== null)) assertFailed()
                 const importedModule = Module.#GetImportedModule(module, e.ModuleRequest)
-                // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
-                if (!importedModule) assertFailed()
                 if (e.ImportName === all) {
                     // Assert: module does not provide the direct binding for this export.
                     return { module: importedModule, bindingName: namespace }
@@ -182,8 +180,6 @@ export class Module<T extends object = any> {
         for (const e of module.#StarExportEntries) {
             if (!(e.ModuleRequest !== null)) assertFailed()
             const importedModule = Module.#GetImportedModule(module, e.ModuleRequest)
-            // TODO: https://github.com/tc39/ecma262/pull/2905/files#r973044508
-            if (!importedModule) assertFailed()
             let resolution = importedModule.#ResolveExport(exportName, resolveSet)
             if (resolution === ambiguous) return ambiguous
             if (resolution !== null) {
@@ -296,7 +292,6 @@ export class Module<T extends object = any> {
         }
         for (const i of module.#ImportEntries) {
             const importedModule = Module.#GetImportedModule(module, i.ModuleRequest)
-            if (!importedModule) assertFailed()
             // import * as ns from '..'
             if (i.ImportName === namespace) {
                 const namespaceObject = Module.#GetModuleNamespace(importedModule)
@@ -484,7 +479,6 @@ export class Module<T extends object = any> {
         stack.push(module)
         for (const required of module.#RequestedModules) {
             const requiredModule = this.#GetImportedModule(module, required)
-            if (!requiredModule) assertFailed()
             index = this.#InnerModuleLinking(requiredModule, stack, index)
             if (
                 ![
@@ -537,7 +531,6 @@ export class Module<T extends object = any> {
         stack.push(module)
         for (const required of module.#RequestedModules) {
             let requiredModule = this.#GetImportedModule(module, required)
-            if (!requiredModule) assertFailed()
             index = this.#InnerModuleEvaluation(requiredModule, stack, index, HostDefined)
             if (
                 ![ModuleStatus.evaluating, ModuleStatus.evaluatingAsync, ModuleStatus.evaluated].includes(
@@ -696,7 +689,7 @@ export class Module<T extends object = any> {
     }
     static #GetModuleNamespace(module: Module): ModuleNamespace {
         if (module.#Namespace) return module.#Namespace
-        if (!(module.#Status !== ModuleStatus.unlinked)) assertFailed()
+        if (!(module.#Status !== ModuleStatus.new && module.#Status !== ModuleStatus.unlinked)) assertFailed()
         const exportedNames = module.#GetExportedNames()
 
         const namespaceObject: ModuleNamespace = { __proto__: null }
@@ -750,7 +743,9 @@ export class Module<T extends object = any> {
     //#region Module refactor methods https://github.com/tc39/ecma262/pull/2905/
 
     static #GetImportedModule(module: Module, spec: string) {
-        return module.#LoadedModules.get(spec)
+        const record = module.#LoadedModules.get(spec)
+        if (!record) assertFailed()
+        return record
     }
     static #HostLoadImportedModule(
         referrer: Module,
@@ -846,12 +841,8 @@ export class Module<T extends object = any> {
                 module.#Link()
                 const evaluatePromise = module.#Evaluate(hostDefined)
                 function onFulfilled() {
-                    try {
-                        const namespace = Module.#GetModuleNamespace(module)
-                        promiseCapability.Resolve(namespace)
-                    } catch (error) {
-                        promiseCapability.Reject(error)
-                    }
+                    const namespace = Module.#GetModuleNamespace(module)
+                    promiseCapability.Resolve(namespace)
                 }
                 evaluatePromise.then(onFulfilled, onRejected)
             } catch (error) {
