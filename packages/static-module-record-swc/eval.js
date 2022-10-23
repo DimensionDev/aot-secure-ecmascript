@@ -9,7 +9,7 @@ export function transform(sourceText, sourceMap = false) {
     if (typeof sourceText !== 'string') throw new TypeError()
     const result = transformSync(sourceText, {
         isModule: true,
-        sourceMaps: sourceMap ? 'inline': false,
+        sourceMaps: sourceMap ? 'inline' : false,
         inlineSourcesContent: true,
         filename: typeof sourceMap === 'string' ? sourceMap : 'virtual-module.js',
         jsc: {
