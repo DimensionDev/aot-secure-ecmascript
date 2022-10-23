@@ -24,6 +24,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+          target: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
         with:
           working-directory: ./packages/static-module-record-swc/
@@ -41,9 +42,9 @@ jobs:
         with:
           command: test
           args: --manifest-path ./packages/static-module-record-swc/Cargo.toml
+      - run: git diff --exit-code
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --manifest-path ./packages/static-module-record-swc/Cargo.toml --release --target wasm32-unknown-unknown
-      - run: git diff --exit-code
       - run: pnpm test
