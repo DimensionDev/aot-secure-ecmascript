@@ -18,5 +18,13 @@
   },
   "files": [
     "target/wasm32-unknown-unknown/release/swc_transformer_static_module_record.wasm"
-  ]
+  ],
+  "peerDependencies": {
+    "@swc/core": "^1.3.10"
+  },
+  "peerDependenciesMeta": {
+    "@swc/core": {
+      "optional": true
+    }
+  }
 }
