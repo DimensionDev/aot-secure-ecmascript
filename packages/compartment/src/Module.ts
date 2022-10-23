@@ -363,6 +363,10 @@ export class Module<T extends object = any> {
     }
     /** All call to ExecuteModule must use Task.run to keep the call stack continue */
     #ExecuteModule(promise?: PromiseCapability<void>) {
+        const execute = this.#Execute
+        if (!execute) return
+        this.#Execute = undefined
+
         // prepare context
         this.#ContextObject!.globalThis = this.#GlobalThis as any
         if (this.#NeedsImportMeta) {
@@ -382,20 +386,16 @@ export class Module<T extends object = any> {
         const env = new Proxy(this.#Environment, moduleEnvExoticMethods)
 
         if (!this.#HasTLA) {
-            if (!!promise) assertFailed()
-            if (this.#Execute) {
-                Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObject])
-            }
+            if (promise) assertFailed()
+            const result = Reflect.apply(execute, this.#Source, [env, this.#ContextObject])
+            if (result) throw new TypeError('Due to specification limitations, in order to support Async Modules (modules that use Top Level Await or a Virtual Module that has an execute() function that returns a Promise), the Virtual Module record must be marked with `isAsync: true`. The `isAsync` property is non-standard, and it is being tracked in https://github.com/tc39/proposal-compartments/issues/84.')
         } else {
             if (!promise) assertFailed()
-            if (this.#Execute) {
-                Promise.resolve(Reflect.apply(this.#Execute, this.#Source, [env, this.#ContextObject])).then(
-                    promise.Resolve,
-                    promise.Reject,
-                )
-            }
+            Promise.resolve(Reflect.apply(execute, this.#Source, [env, this.#ContextObject])).then(
+                promise.Resolve,
+                promise.Reject,
+            )
         }
-        this.#Execute = undefined!
     }
     // https://tc39.es/ecma262/#sec-moduledeclarationlinking
     #Link() {
