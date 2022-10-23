@@ -3,7 +3,7 @@ use std::ops::Deref;
 use swc_core::common::DUMMY_SP;
 use swc_core::ecma::ast::*;
 use swc_core::ecma::atoms::js_word;
-use swc_core::ecma::utils::quote_ident;
+use swc_core::ecma::utils::{quote_ident, ExprFactory};
 use swc_core::ecma::visit::{Fold, FoldWith};
 
 use super::{
@@ -499,10 +499,7 @@ impl Fold for VirtualModuleRecordTransformer {
 }
 
 fn expr_to_stmt(expr: Expr) -> Stmt {
-    Stmt::Expr(ExprStmt {
-        span: DUMMY_SP,
-        expr: Box::new(expr),
-    })
+    expr.into_stmt()
 }
 fn exprs_to_stmt(expr: Vec<Expr>) -> Vec<Stmt> {
     expr.into_iter().map(expr_to_stmt).collect()

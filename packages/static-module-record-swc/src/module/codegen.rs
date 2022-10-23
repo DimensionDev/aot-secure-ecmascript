@@ -3,7 +3,7 @@ use crate::utils::*;
 use swc_core::common::util::take::Take;
 use swc_core::common::DUMMY_SP;
 use swc_core::ecma::ast::*;
-use swc_core::ecma::utils::quote_ident;
+use swc_core::ecma::utils::{quote_ident, ExprFactory};
 
 impl VirtualModuleRecordTransformer {
     pub fn codegen(&self, stmt: Vec<Stmt>, transformer: &VirtualModuleRecordTransformer) -> Module {
@@ -11,6 +11,7 @@ impl VirtualModuleRecordTransformer {
         Module {
             body: match &self.config.template {
                 Template::ExportDefault => export_default_expr(expr),
+                Template::Eval => eval_expr(expr),
                 Template::Callback {
                     callback_name,
                     first_arg,
@@ -123,6 +124,21 @@ fn export_default_expr(expr: Expr) -> Vec<ModuleItem> {
     vec![export_default_expr.into()]
 }
 
+fn eval_expr(expr: Expr) -> Vec<ModuleItem> {
+    let use_strict = Expr::from("use strict").into_stmt();
+
+    vec![
+        ModuleItem::Stmt(use_strict),
+        ModuleItem::Stmt(
+            ParenExpr {
+                expr: expr.into(),
+                span: DUMMY_SP,
+            }
+            .into_stmt(),
+        ),
+    ]
+}
+
 fn callback(callee: Ident, first_arg: Expr, second_arg: Expr) -> Vec<ModuleItem> {
     let call = CallExpr {
         callee: Callee::Expr(Box::new(callee.into())),
@@ -139,26 +155,14 @@ fn callback(callee: Ident, first_arg: Expr, second_arg: Expr) -> Vec<ModuleItem>
         ..CallExpr::dummy()
     };
     vec![
-        ModuleItem::Stmt(
-            ExprStmt {
-                expr: Box::new(Expr::Lit("use strict".into())),
-                span: DUMMY_SP,
-            }
-            .into(),
-        ),
-        ModuleItem::Stmt(
-            ExprStmt {
-                expr: Box::new(call.into()),
-                span: DUMMY_SP,
-            }
-            .into(),
-        ),
+        ModuleItem::Stmt(Expr::Lit("use strict".into()).into_stmt()),
+        ModuleItem::Stmt(call.into_stmt()),
     ]
 }
 
 pub fn prop_access(obj: Ident, prop: Ident) -> Expr {
     MemberExpr {
-        obj: Box::new(obj.into()),
+        obj: obj.into(),
         prop: prop.into(),
         span: DUMMY_SP,
     }
@@ -169,15 +173,7 @@ pub fn undefined_this_wrapper(expr: Expr) -> Expr {
     ParenExpr {
         expr: Box::new(
             SeqExpr {
-                exprs: vec![
-                    Expr::Lit(Lit::Num(Number {
-                        value: 0.0,
-                        raw: None,
-                        span: DUMMY_SP,
-                    }))
-                    .into(),
-                    Box::new(expr),
-                ],
+                exprs: vec![0.0.into(), Box::new(expr)],
                 span: DUMMY_SP,
             }
             .into(),

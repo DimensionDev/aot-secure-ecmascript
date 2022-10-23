@@ -38,4 +38,8 @@ pub enum Template {
         #[serde(rename = "cwd")]
         cwd: String,
     },
+
+    /// "use strict"; ({ ... })
+    #[serde(rename = "eval")]
+    Eval,
 }

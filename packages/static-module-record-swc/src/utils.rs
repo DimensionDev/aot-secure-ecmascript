@@ -20,15 +20,6 @@ pub fn param(id: Ident) -> Param {
     }
 }
 
-pub fn str_lit(value: JsWord) -> Expr {
-    Str {
-        span: DUMMY_SP,
-        value,
-        raw: None,
-    }
-    .into()
-}
-
 pub fn emit_error(span: Span, msg: &str) {
     let mut m_span = MultiSpan::new();
     m_span.push_span_label(span, "here".into());

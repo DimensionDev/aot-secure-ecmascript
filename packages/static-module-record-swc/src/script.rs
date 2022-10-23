@@ -2,8 +2,6 @@ use swc_core::common::DUMMY_SP;
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::Fold;
 
-use crate::utils::str_lit;
-
 pub struct ErrorTransformer {
     pub msg: String,
 }
@@ -11,7 +9,7 @@ pub struct ErrorTransformer {
 fn err(msg: &str) -> ThrowStmt {
     ThrowStmt {
         span: DUMMY_SP,
-        arg: Box::new(str_lit(msg.into())),
+        arg: Box::new(msg.into()),
     }
 }
 

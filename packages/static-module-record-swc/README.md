@@ -56,6 +56,30 @@ await writeFile(url, 'Hello World')
 
 into [this file](./tests/snapshot/example.js)
 
+#### `config.template.type: "eval"`
+
+```json
+[
+    "@masknet/static-module-record-swc",
+    {
+        "template": {
+            "type": "eval"
+        }
+    }
+]
+```
+
+It will convert code
+
+```js
+import { writeFile } from 'node:fs/promises'
+
+export const url = new URL('./here.txt', import.meta.url)
+await writeFile(url, 'Hello World')
+```
+
+into [this file](./tests/snapshot/example-eval.js)
+
 #### `config.template.type: "callback"`
 
 ```json

@@ -83,7 +83,7 @@ impl From<ModuleBinding> for Expr {
                 .into(),
                 ModuleExportName::Str(f) => f.into(),
             },
-            ModuleBinding::Namespace => str_lit("*".into()),
+            ModuleBinding::Namespace => "*".into(),
         }
     }
 }
@@ -100,7 +100,7 @@ impl ImportBinding {
                 result.push(key_value("importAllFrom".into(), self.from.clone().into()));
                 result.push(key_value(
                     "as".into(),
-                    str_lit(self.alias.clone().unwrap().to_id().0),
+                    self.alias.clone().unwrap().to_id().0.into(),
                 ));
             }
             ModuleBinding::ModuleExportName(binding) => {
@@ -108,7 +108,7 @@ impl ImportBinding {
                 result.push(key_value("from".into(), self.from.clone().into()));
                 if let Some(alias) = &self.alias {
                     if alias.to_id().0 != module_export_name_to_str(binding) {
-                        result.push(key_value("as".into(), str_lit(alias.to_id().0)));
+                        result.push(key_value("as".into(), alias.to_id().0.into()));
                     }
                 }
             }
@@ -144,7 +144,7 @@ impl ExportBinding {
                 if let Some(alias) = &self.alias {
                     result.push(key_value(
                         "as".into(),
-                        str_lit(module_export_name_to_str(alias).into()),
+                        module_export_name_to_str(alias).into(),
                     ));
                 }
             }
@@ -157,27 +157,15 @@ impl ExportBinding {
 
                 if let Some(actual_export_name) = actual_export_name {
                     if actual_export_name == original_export_name {
-                        result.push(key_value(
-                            "export".into(),
-                            str_lit(original_export_name.into()),
-                        ));
+                        result.push(key_value("export".into(), original_export_name.into()));
                     } else if self.from.is_none() {
-                        result.push(key_value(
-                            "export".into(),
-                            str_lit(actual_export_name.into()),
-                        ));
+                        result.push(key_value("export".into(), actual_export_name.into()));
                     } else {
-                        result.push(key_value(
-                            "export".into(),
-                            str_lit(original_export_name.into()),
-                        ));
-                        result.push(key_value("as".into(), str_lit(actual_export_name.into())));
+                        result.push(key_value("export".into(), original_export_name.into()));
+                        result.push(key_value("as".into(), actual_export_name.into()));
                     }
                 } else {
-                    result.push(key_value(
-                        "export".into(),
-                        str_lit(original_export_name.into()),
-                    ));
+                    result.push(key_value("export".into(), original_export_name.into()));
                 }
                 if let Some(from) = &self.from {
                     result.push(key_value("from".into(), from.clone().into()))
