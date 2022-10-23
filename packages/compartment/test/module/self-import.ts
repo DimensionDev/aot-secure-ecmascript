@@ -1,13 +1,13 @@
-import { Module, Evaluators, imports } from '../../dist/index.js'
+import { Module, Evaluators, imports } from '../../src/index.js'
 import { expect, it } from 'vitest'
 
 it('can import itself', async () => {
-    const src1 = static module {
+    const src1 = new ModuleSource(`
         // @ts-ignore
         import * as self from "self"
         // @ts-expect-error
         export { self }
-    }
+    `)
     const { Module } = new Evaluators({
         importHook: () => mod1,
         globalThis: {}

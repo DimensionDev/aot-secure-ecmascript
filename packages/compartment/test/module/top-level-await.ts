@@ -1,17 +1,15 @@
-import { Module, Evaluators, imports } from '../../dist/index.js'
+import { Module, Evaluators, imports } from '../../src/index.js'
 import { expect, it } from 'vitest'
 
 it('can initialize top-level-await module correctly', async () => {
-    const src1 = static module {
-        // @ts-ignore
+    const src1 = new ModuleSource(`
         import { value } from "src2"
         export const a = value
-    }
-    const src2 = static module {
-        declare function sleep(time: number): Promise<void>
+    `)
+    const src2 = new ModuleSource(`
         await sleep(5)
         export const value = 1
-    }
+    `)
     const { Module } = new Evaluators({
         importHook: (spec) => spec === 'src2' ? mod2 : null,
         globalThis: {

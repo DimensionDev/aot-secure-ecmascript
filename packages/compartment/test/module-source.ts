@@ -1,4 +1,4 @@
-import { ModuleSource } from '../dist/index.js'
+import { ModuleSource } from '../src/index.js'
 import { expect, it } from 'vitest'
 
 it('throws', () => {

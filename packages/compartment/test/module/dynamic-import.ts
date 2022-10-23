@@ -1,14 +1,9 @@
-import { type Module, Evaluators, imports } from '../../dist/index.js'
+import { type Module, Evaluators, imports } from '../../src/index.js'
 import { expect, it } from 'vitest'
 
 it('can use dynamic import', async () => {
-    const src1 = static module {
-        // @ts-expect-error
-        export default await import('src2')
-    }
-    const src2 = static module {
-        export const value = 1
-    }
+    const src1 = new ModuleSource(`export default await import('src2')`)
+    const src2 = new ModuleSource(`export const value = 1`)
     const { Module } = new Evaluators({
         importHook: (spec) => spec === 'src2' ? mod2 : null,
         globalThis: {}

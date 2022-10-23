@@ -18,8 +18,8 @@
     "c8": "^7.12.0",
     "prettier": "^2.7.1",
     "rollup": "^3.2.3",
-    "rollup-plugin-swc3": "^0.6.0",
-    "typescript": "npm:@jackworks/typescript@module-block",
+    "rollup-plugin-swc3": "^0.7.0",
+    "typescript": "4.9.1-beta",
     "vite": "^3.1.8",
     "vitest": "^0.24.3"
   },

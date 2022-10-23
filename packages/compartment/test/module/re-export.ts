@@ -1,14 +1,9 @@
-import { Module, Evaluators, imports } from '../../dist/index.js'
+import { Module, Evaluators, imports } from '../../src/index.js'
 import { expect, it } from 'vitest'
 
 it('can handle `export * from` correctly', async () => {
-    const src1 = static module {
-        export function echo() {}
-    }
-    const src2 = static module {
-        // @ts-ignore
-        export * from 'src1'
-    }
+    const src1 = new ModuleSource(`export function echo() {}`)
+    const src2 = new ModuleSource(`export * from 'src1'`)
     const { Module } = new Evaluators({
         importHook: (spec) => spec === 'src1' ? mod1 : null,
         globalThis: {
@@ -23,13 +18,8 @@ it('can handle `export * from` correctly', async () => {
 })
 
 it('can handle `export * as T` all correctly', async () => {
-    const src1 = static module {
-        export function echo() {}
-    }
-    const src2 = static module {
-        // @ts-ignore
-        export * as T from 'src1'
-    }
+    const src1 = new ModuleSource(`export function echo() {}`)
+    const src2 = new ModuleSource(`export * as T from 'src1'`)
     const { Module } = new Evaluators({
         importHook: (spec) => spec === 'src1' ? mod1 : null,
         globalThis: {
