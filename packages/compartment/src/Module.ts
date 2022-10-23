@@ -233,7 +233,7 @@ export class Module<T extends object = any> {
                 if (!state.IsLoading) return
             }
         }
-        if (!(state.PendingModulesCount > 1)) assertFailed()
+        if (!(state.PendingModulesCount >= 1)) assertFailed()
         state.PendingModulesCount = state.PendingModulesCount - 1
         if (state.PendingModulesCount === 0) {
             state.IsLoading = false
