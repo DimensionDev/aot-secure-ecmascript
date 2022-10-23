@@ -2,7 +2,7 @@
 
 > WARNING: This package currently does not follow the [Semantic Versioning](https://semver.org/) because the original standard is still developing. Minor version might include breaking changes!
 
-A @swc/core plugin to convert an ES Module into a [VirtualModuleRecord](https://github.com/tc39/proposal-compartments/blob/6a180313515f6faec2818dad229e6921109b50f5/README.md#sketch).
+A @swc/core plugin to convert an ES Module into a [VirtualModuleSource](https://github.com/tc39/proposal-compartments/blob/master/2-virtual-module-source.md).
 
 ## Usage
 
@@ -34,14 +34,14 @@ Specify the emit template
 
 This is the default option.
 
-```js
-;[
-    '@masknet/static-module-record-swc',
+```json
+[
+    "@masknet/static-module-record-swc",
     {
-        template: {
-            type: 'export-default',
-        },
-    },
+        "template": {
+            "type": "export-default"
+        }
+    }
 ]
 ```
 
@@ -58,10 +58,10 @@ into [this file](./tests/snapshot/example.js)
 
 #### `config.template.type: "callback"`
 
-```js
-;[
-    '@masknet/static-module-record-swc',
-    { template: { type: 'callback', callback: '__register', firstArg: '/index.js' } },
+```json
+[
+    "@masknet/static-module-record-swc",
+    { "template": { "type": "callback", "callback": "__register", "firstArg": "/index.js" } }
 ]
 ```
 
@@ -82,16 +82,16 @@ It is similar to `callback` but it will try to infer the file name to URI as the
 
 Let's take `/home/jack/aot-ses/packages/static-module-record-swc/tests/fixtures/example-callback-infer.js` as an example.
 
-```js
-;[
-    '@masknet/static-module-record-swc',
+```json
+[
+    "@masknet/static-module-record-swc",
     {
-        template: {
-            type: 'callback-cwd',
-            callback: '__register',
-            cwd: '/home/jack/aot-ses/packages/static-module-record-swc/',
-        },
-    },
+        "template": {
+            "type": "callback-cwd",
+            "callback": "__register",
+            "cwd": "/home/jack/aot-ses/packages/static-module-record-swc/"
+        }
+    }
 ]
 ```
 
