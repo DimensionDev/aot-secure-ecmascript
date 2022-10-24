@@ -11,10 +11,10 @@ it('can initialize top-level-await module correctly', async () => {
         export const value = 1
     `)
     const { Module } = new Evaluators({
-        importHook: (spec) => spec === 'src2' ? mod2 : null,
+        importHook: (spec) => (spec === 'src2' ? mod2 : null),
         globalThis: {
             sleep: (time: number) => new Promise((resolve) => setTimeout(resolve, time)),
-        }
+        },
     })
     const mod1 = new Module(src1, 'src1')
     const mod2: Module = new Module(src2, 'src2')

@@ -16,11 +16,11 @@ it('can virtualize the global object', async () => {
 it('can inherit the import.meta', async () => {
     const { Module } = new Evaluators({
         importHook: async () => null,
-        importMeta: { url: "hello" },
+        importMeta: { url: 'hello' },
     })
     const src = new ModuleSource(`export const url = import.meta.url`)
     const { url } = await imports(new Module(src, ''))
-    expect(url).toBe("hello")
+    expect(url).toBe('hello')
 })
 
 it('returns the given globalThis', () => {

@@ -10,7 +10,7 @@ it('can import itself', async () => {
     `)
     const { Module } = new Evaluators({
         importHook: () => mod1,
-        globalThis: {}
+        globalThis: {},
     })
     const mod1: Module = new Module(src1, 'src1')
 

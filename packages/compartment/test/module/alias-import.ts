@@ -8,8 +8,8 @@ it('can handle default import correctly', async () => {
         x()
     `)
     const { Module } = new Evaluators({
-        importHook: (spec) => spec === 'src1' ? mod1 : null,
-        globalThis: {}
+        importHook: (spec) => (spec === 'src1' ? mod1 : null),
+        globalThis: {},
     })
     const mod1: Module = new Module(src1, 'src1')
     const mod2: Module = new Module(src2, 'src2')
@@ -24,8 +24,8 @@ it('can handle alias import correctly', async () => {
         y()
     `)
     const { Module } = new Evaluators({
-        importHook: (spec) => spec === 'src1' ? mod1 : null,
-        globalThis: {}
+        importHook: (spec) => (spec === 'src1' ? mod1 : null),
+        globalThis: {},
     })
     const mod1: Module = new Module(src1, 'src1')
     const mod2: Module = new Module(src2, 'src2')

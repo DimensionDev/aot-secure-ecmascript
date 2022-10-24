@@ -5,10 +5,10 @@ it('can handle `export * from` correctly', async () => {
     const src1 = new ModuleSource(`export function echo() {}`)
     const src2 = new ModuleSource(`export * from 'src1'`)
     const { Module } = new Evaluators({
-        importHook: (spec) => spec === 'src1' ? mod1 : null,
+        importHook: (spec) => (spec === 'src1' ? mod1 : null),
         globalThis: {
             sleep: (time: number) => new Promise((resolve) => setTimeout(resolve, time)),
-        }
+        },
     })
     const mod1: Module = new Module(src1, 'src1')
     const mod2: Module = new Module(src2, 'src2')
@@ -21,10 +21,10 @@ it('can handle `export * as T` all correctly', async () => {
     const src1 = new ModuleSource(`export function echo() {}`)
     const src2 = new ModuleSource(`export * as T from 'src1'`)
     const { Module } = new Evaluators({
-        importHook: (spec) => spec === 'src1' ? mod1 : null,
+        importHook: (spec) => (spec === 'src1' ? mod1 : null),
         globalThis: {
             sleep: (time: number) => new Promise((resolve) => setTimeout(resolve, time)),
-        }
+        },
     })
     const mod1: Module = new Module(src1, 'src1')
     const mod2: Module = new Module(src2, 'src2')
