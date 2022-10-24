@@ -1,5 +1,17 @@
 # @masknet/compartment
 
+## 0.4.0
+
+### Minor Changes
+
+-   4128bdc: change signature of Module constructor to follow upstream spec
+
+### Patch Changes
+
+-   b2d840c: follow spec change https://github.com/tc39/ecma262/commit/24f5631ca109f14c7efe545ee1e4549a8123811d
+-   edb67fb: throw for async execute() that does not marked as isAsync: true
+-   2836929: follow spec change https://github.com/tc39/ecma262/commit/4b83bcca92eb54126e2523d4d01290f3cd8521e1
+
 ## 0.3.12
 
 ### Patch Changes
