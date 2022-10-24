@@ -91,7 +91,6 @@ export class Module<T extends ModuleNamespace = any> {
     #ImportHook: ImportHook | undefined
     #ImportMetaHook: ImportMetaHook | undefined
     #HandlerValue: ModuleHandler
-    #ImportHookCache = new Map<string, PromiseCapability<Module>>()
     /** the global environment this module binds to */
     #GlobalThis: object = globalThis
     #ParentImportHook: ImportHook = defaultImportHook
@@ -349,7 +348,7 @@ export class Module<T extends ModuleNamespace = any> {
                     return true
                 },
                 // Note: export property should not be enumerable?
-                // but it will crash Chrome devtools.See: https://bugs.chromium.org/p/chromium/issues/detail?id=1358114
+                // but it will crash Chrome devtools. See: https://bugs.chromium.org/p/chromium/issues/detail?id=1358114
                 enumerable: true,
             }
         }
@@ -811,60 +810,6 @@ export class Module<T extends ModuleNamespace = any> {
             this.#FinishLoadingImportedModule(referrer, specifier, payload, ThrowCompletion(error), hostDefined)
         }
     }
-    static #HostLoadImportedModule(
-        referrer: Module,
-        specifier: string,
-        hostDefined: Task,
-        payload: GraphLoadingState | PromiseCapability<ModuleNamespace>,
-    ) {
-        let promiseCapability = referrer.#ImportHookCache.get(specifier)
-        function onFulfilled(module: Module) {
-            promiseCapability?.Resolve(module)
-            Module.#FinishLoadingImportedModule(referrer, specifier, payload, NormalCompletion(module), hostDefined)
-        }
-        function onRejected(reason: unknown) {
-            promiseCapability?.Reject(reason)
-            Module.#FinishLoadingImportedModule(referrer, specifier, payload, ThrowCompletion(reason), hostDefined)
-        }
-        if (promiseCapability) {
-            if (promiseCapability.Status.Type === 'Fulfilled') {
-                onFulfilled(promiseCapability.Status.Value)
-                return
-            } else if (promiseCapability.Status.Type === 'Pending') {
-                promiseCapability.Promise.then(onFulfilled, onRejected)
-                return
-            }
-            // if error, fallthorugh
-        }
-
-        promiseCapability = PromiseCapability()
-        referrer.#ImportHookCache.set(specifier, promiseCapability)
-        try {
-            const result = referrer.#ImportHook
-                ? Reflect.apply(referrer.#ImportHook, referrer.#HandlerValue, [specifier])
-                : Reflect.apply(referrer.#ParentImportHook, undefined, [specifier])
-            if (result === null) throw new SyntaxError(`Failed to load module ${specifier}.`)
-            try {
-                const module = result as Module
-                module.#HandlerValue
-                onFulfilled(module)
-                return
-            } catch {}
-            // treat it as a Promise
-            Promise.resolve(result).then((result) => {
-                if (result === null) onRejected(new SyntaxError(`Failed to load module ${specifier}.`))
-                try {
-                    const module = result as Module
-                    module.#HandlerValue
-                    onFulfilled(module)
-                } catch (error) {
-                    onRejected(new TypeError('importHook must return an instance of Module'))
-                }
-            })
-        } catch (error) {
-            onRejected(error)
-        }
-    }
 
     static #FinishLoadingImportedModule(
         referrer: Module,
@@ -994,19 +939,8 @@ const moduleNamespaceExoticMethods: ProxyHandler<any> = {
 
 const moduleEnvExoticMethods: ProxyHandler<any> = {
     getOwnPropertyDescriptor: () => undefined,
-    defineProperty() {
-        // TODO:
-        assertFailed('Todo: moduleEnvExoticMethods.defineProperty')
-    },
-    deleteProperty() {
-        return false
-    },
-    has() {
-        return false
-    },
-    ownKeys() {
-        return []
-    },
+    defineProperty: () => false,
+    deleteProperty: () => false,
     isExtensible: () => false,
     preventExtensions: () => true,
     getPrototypeOf: () => null,
