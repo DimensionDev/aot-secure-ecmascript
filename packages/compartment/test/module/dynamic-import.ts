@@ -8,8 +8,8 @@ it('can use dynamic import', async () => {
         importHook: (spec) => (spec === 'src2' ? mod2 : null),
         globalThis: {},
     })
-    const mod1 = new Module(src1, 'src1')
-    const mod2: Module = new Module(src2, 'src2')
+    const mod1 = new Module(src1, {})
+    const mod2: Module = new Module(src2, {})
 
     const { default: a } = await imports(mod1)
     expect(a.value).toBe(1)

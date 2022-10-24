@@ -12,7 +12,7 @@ it('can import itself', async () => {
         importHook: () => mod1,
         globalThis: {},
     })
-    const mod1: Module = new Module(src1, 'src1')
+    const mod1: Module = new Module(src1, {})
 
     const { self } = await imports(mod1)
     expect(self).toBeTypeOf('object')

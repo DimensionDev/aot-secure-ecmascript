@@ -11,8 +11,8 @@ it('can handle default import correctly', async () => {
         importHook: (spec) => (spec === 'src1' ? mod1 : null),
         globalThis: {},
     })
-    const mod1: Module = new Module(src1, 'src1')
-    const mod2: Module = new Module(src2, 'src2')
+    const mod1: Module = new Module(src1, {})
+    const mod2: Module = new Module(src2, {})
 
     await imports(mod2)
 })
@@ -27,8 +27,8 @@ it('can handle alias import correctly', async () => {
         importHook: (spec) => (spec === 'src1' ? mod1 : null),
         globalThis: {},
     })
-    const mod1: Module = new Module(src1, 'src1')
-    const mod2: Module = new Module(src2, 'src2')
+    const mod1: Module = new Module(src1, {})
+    const mod2: Module = new Module(src2, {})
 
     await imports(mod2)
 })

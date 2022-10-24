@@ -1,8 +1,9 @@
 import { ModuleSource } from './ModuleSource.js'
 import type {
     ImportHook,
+    ImportMetaHook,
+    ModuleHandler,
     ModuleNamespace,
-    Referral,
     VirtualModuleRecord,
     VirtualModuleRecordExecuteContext,
 } from './types.js'
@@ -19,46 +20,48 @@ import {
     type ModuleImportEntry,
 } from './utils/spec.js'
 import { normalizeBindingsToSpecRecord, normalizeVirtualModuleRecord } from './utils/normalize.js'
-import { assertFailed, internalError, opaqueProxy } from './utils/assert.js'
+import { assertFailed, opaqueProxy } from './utils/assert.js'
 import { defaultImportHook } from './Evaluators.js'
 import { createTask, type Task } from './utils/async-task.js'
 
-export let imports: <T extends object = any>(specifier: Module<T>, options?: ImportCallOptions) => Promise<T>
+export let imports: <T extends ModuleNamespace = any>(specifier: Module<T>, options?: ImportCallOptions) => Promise<T>
 /** @internal */
-export let setGlobalThis: (module: Module, global: object) => void
+export let setParentGlobalThis: (module: Module, global: object) => void
+/** @internal */
+export let setParentImportHook: (module: Module, handler: ImportHook) => void
+/** @internal */
+export let setParentImportMetaHook: (module: Module, handler: ImportMetaHook) => void
 
-export class Module<T extends object = any> {
+export class Module<T extends ModuleNamespace = any> {
     // The constructor is equivalent to ParseModule in SourceTextModuleRecord
     // https://tc39.es/ecma262/#sec-parsemodule
-    constructor(
-        moduleSource: ModuleSource<T> | VirtualModuleRecord,
-        referral: Referral,
-        // it actually NOT an optional argument when it is the top-level Module.
-        importHook: ImportHook = defaultImportHook,
-        importMeta?: object,
-    ) {
+    constructor(moduleSource: ModuleSource<T> | VirtualModuleRecord, handler: ModuleHandler) {
         if (typeof moduleSource !== 'object') throw new TypeError('moduleSource must be an object')
-        if (typeof referral === 'object' && referral !== null) throw new TypeError('referral must be a primitive')
-        if (typeof importHook !== 'function') throw new TypeError('importHook must be a function')
-
-        let assignedImportMeta: null | object
-        if (importMeta === undefined) assignedImportMeta = null
-        else if (typeof importMeta !== 'object') throw new TypeError('importMeta must be an object')
-        else assignedImportMeta = importMeta
-
         // impossible to create a ModuleSource instance
-        if (moduleSource instanceof ModuleSource) internalError()
+        if (moduleSource instanceof ModuleSource) assertFailed('ModuleSource instance cannot be created')
         const module = normalizeVirtualModuleRecord(moduleSource)
 
-        this.#Source = moduleSource
-        this.#Referral = referral
+        if (handler === null) throw new TypeError('handler must not be null')
+        let importHook: ImportHook | undefined
+        let importMetaHook: ImportMetaHook | undefined
+        if (typeof handler === 'object') {
+            importHook = handler.importHook
+            if (typeof importHook !== 'function' && importHook !== undefined)
+                throw new TypeError('importHook must be a function')
+            importMetaHook = handler.importMetaHook
+            if (typeof importMetaHook !== 'function' && importMetaHook !== undefined)
+                throw new TypeError('importMetaHook must be a function')
+        }
+
+        this.#VirtualModuleSource = moduleSource
         this.#Execute = module.execute
         this.#NeedsImport = module.needsImport
         this.#NeedsImportMeta = module.needsImportMeta
         this.#HasTLA = !!module.isAsync
 
-        this.#AssignedImportMeta = assignedImportMeta
         this.#ImportHook = importHook
+        this.#ImportMetaHook = importMetaHook
+        this.#HandlerValue = handler
 
         const { importEntries, indirectExportEntries, localExportEntries, requestedModules, starExportEntries } =
             normalizeBindingsToSpecRecord(module.bindings)
@@ -69,7 +72,7 @@ export class Module<T extends object = any> {
         this.#StarExportEntries = starExportEntries
     }
     get source(): ModuleSource | VirtualModuleRecord | null {
-        return this.#Source
+        return this.#VirtualModuleSource
     }
     //#region ModuleRecord fields https://tc39.es/ecma262/#table-module-record-fields
     /** first argument of execute() */
@@ -80,17 +83,19 @@ export class Module<T extends object = any> {
 
     //#region VirtualModuleRecord fields
     // *this value* when calling #Execute.
-    #Referral: Referral
-    #Source: VirtualModuleRecord
+    #VirtualModuleSource: VirtualModuleRecord
     #Execute: VirtualModuleRecord['execute']
     #NeedsImportMeta: boolean | undefined
     #NeedsImport: boolean | undefined
     #ContextObject: VirtualModuleRecordExecuteContext | undefined
-    #ImportHook: ImportHook
+    #ImportHook: ImportHook | undefined
+    #ImportMetaHook: ImportMetaHook | undefined
+    #HandlerValue: ModuleHandler
     #ImportHookCache = new Map<string, PromiseCapability<Module>>()
-    #AssignedImportMeta: object | null
     /** the global environment this module binds to */
     #GlobalThis: object = globalThis
+    #ParentImportHook: ImportHook = defaultImportHook
+    #ParentImportMetaHook: ImportMetaHook | undefined
     /** imported module cache */
     #ImportEntries: ModuleImportEntry[]
     #LocalExportEntries: ModuleExportEntry[]
@@ -228,7 +233,7 @@ export class Module<T extends object = any> {
                 if (record) {
                     Module.#InnerModuleLoading(state, record)
                 } else {
-                    Module.#HostLoadImportedModule(module, required, state.HostDefined, state)
+                    Module.#LoadImportedModule(module, required, state.HostDefined, state)
                 }
                 if (!state.IsLoading) return
             }
@@ -370,15 +375,42 @@ export class Module<T extends object = any> {
         // prepare context
         this.#ContextObject!.globalThis = this.#GlobalThis as any
         if (this.#NeedsImportMeta) {
-            this.#ContextObject!.importMeta = Object.assign({}, this.#AssignedImportMeta)
+            const importMeta = { __proto__: null }
+            if (this.#ImportMetaHook) Reflect.apply(this.#ImportMetaHook, this.#HandlerValue, [importMeta])
+            else if (this.#ParentImportMetaHook) Reflect.apply(this.#ParentImportMetaHook, undefined, [importMeta])
+            this.#ContextObject!.importMeta = importMeta
         }
         if (this.#NeedsImport) {
-            this.#ContextObject!.import = async (specifier: string, options?: ImportCallOptions) => {
-                specifier = String(specifier)
+            this.#ContextObject!.import = async (
+                specifier: string | Module<ModuleNamespace>,
+                options?: ImportCallOptions,
+            ) => {
+                const referrer = this
                 const promiseCapability = PromiseCapability<ModuleNamespace>()
-                const hostDefined = createTask(`import("${specifier}")`)
-                Module.#HostLoadImportedModule(this, specifier, hostDefined, promiseCapability)
-                return promiseCapability.Promise
+
+                let hasModuleInternalSlot = false
+                try {
+                    ;(specifier as Module).#HandlerValue
+                    hasModuleInternalSlot = true
+                } catch {}
+
+                if (hasModuleInternalSlot) {
+                    const hostDefined = createTask(`import(<module block>)`)
+                    Module.#ContinueDynamicImport(promiseCapability, NormalCompletion(specifier as Module), hostDefined)
+                } else {
+                    specifier = String(specifier)
+                    const hostDefined = createTask(`import("${specifier}")`)
+                    if (referrer.#LoadedModules.has(specifier)) {
+                        Module.#ContinueDynamicImport(
+                            promiseCapability,
+                            NormalCompletion(referrer.#LoadedModules.get(specifier)!),
+                            hostDefined,
+                        )
+                    } else {
+                        Module.#LoadImportedModule(referrer, specifier, hostDefined, promiseCapability)
+                    }
+                }
+                return promiseCapability.Promise as any
             }
         }
 
@@ -387,14 +419,14 @@ export class Module<T extends object = any> {
 
         if (!this.#HasTLA) {
             if (promise) assertFailed()
-            const result = Reflect.apply(execute, this.#Source, [env, this.#ContextObject])
+            const result = Reflect.apply(execute, this.#VirtualModuleSource, [env, this.#ContextObject])
             if (result)
                 throw new TypeError(
                     'Due to specification limitations, in order to support Async Modules (modules that use Top Level Await or a Virtual Module that has an execute() function that returns a Promise), the Virtual Module record must be marked with `isAsync: true`. The `isAsync` property is non-standard, and it is being tracked in https://github.com/tc39/proposal-compartments/issues/84.',
                 )
         } else {
             if (!promise) assertFailed()
-            Promise.resolve(Reflect.apply(execute, this.#Source, [env, this.#ContextObject])).then(
+            Promise.resolve(Reflect.apply(execute, this.#VirtualModuleSource, [env, this.#ContextObject])).then(
                 promise.Resolve,
                 promise.Reject,
             )
@@ -750,6 +782,35 @@ export class Module<T extends object = any> {
         if (!record) assertFailed()
         return record
     }
+    static #LoadImportedModule(
+        referrer: Module,
+        specifier: string,
+        hostDefined: Task,
+        payload: GraphLoadingState | PromiseCapability<ModuleNamespace>,
+    ) {
+        try {
+            const importHookResult = referrer.#ImportHook
+                ? Reflect.apply(referrer.#ImportHook, referrer.#HandlerValue, [specifier])
+                : Reflect.apply(referrer.#ParentImportHook, undefined, [specifier])
+            const importHookPromise = Promise.resolve(importHookResult)
+            const onFulfilled = (result: any) => {
+                let completion: Completion<Module>
+                try {
+                    ;(result as Module).#HandlerValue
+                    completion = NormalCompletion(result)
+                } catch (error) {
+                    completion = ThrowCompletion(new TypeError('importHook must return a Module instance'))
+                }
+                this.#FinishLoadingImportedModule(referrer, specifier, payload, completion, hostDefined)
+            }
+            const onRejected = (error: any) => {
+                this.#FinishLoadingImportedModule(referrer, specifier, payload, ThrowCompletion(error), hostDefined)
+            }
+            importHookPromise.then(onFulfilled, onRejected)
+        } catch (error) {
+            this.#FinishLoadingImportedModule(referrer, specifier, payload, ThrowCompletion(error), hostDefined)
+        }
+    }
     static #HostLoadImportedModule(
         referrer: Module,
         specifier: string,
@@ -779,11 +840,13 @@ export class Module<T extends object = any> {
         promiseCapability = PromiseCapability()
         referrer.#ImportHookCache.set(specifier, promiseCapability)
         try {
-            const result = referrer.#ImportHook(specifier, referrer.#Referral)
+            const result = referrer.#ImportHook
+                ? Reflect.apply(referrer.#ImportHook, referrer.#HandlerValue, [specifier])
+                : Reflect.apply(referrer.#ParentImportHook, undefined, [specifier])
             if (result === null) throw new SyntaxError(`Failed to load module ${specifier}.`)
             try {
                 const module = result as Module
-                module.#Referral
+                module.#HandlerValue
                 onFulfilled(module)
                 return
             } catch {}
@@ -792,7 +855,7 @@ export class Module<T extends object = any> {
                 if (result === null) onRejected(new SyntaxError(`Failed to load module ${specifier}.`))
                 try {
                     const module = result as Module
-                    module.#Referral
+                    module.#HandlerValue
                     onFulfilled(module)
                 } catch (error) {
                     onRejected(new TypeError('importHook must return an instance of Module'))
@@ -860,15 +923,13 @@ export class Module<T extends object = any> {
         imports = async (module, options) => {
             const promiseCapability = PromiseCapability<ModuleNamespace>()
 
-            let HostDefinedName = 'Module<...>'
-            if (typeof module.#Referral === 'symbol') HostDefinedName = `Module<@${module.#Referral.description}>`
-            else if (typeof module.#Referral === 'string') HostDefinedName = `"${module.#Referral}"`
-            const hostDefined = createTask(`import(${HostDefinedName})`)
-
+            const hostDefined = createTask(`import(<module block>)`)
             Module.#ContinueDynamicImport(promiseCapability, NormalCompletion(module), hostDefined)
             return promiseCapability.Promise as any
         }
-        setGlobalThis = (module, global) => (module.#GlobalThis = global)
+        setParentGlobalThis = (module, global) => (module.#GlobalThis = global)
+        setParentImportHook = (module, hook) => (module.#ParentImportHook = hook)
+        setParentImportMetaHook = (module, hook) => (module.#ParentImportMetaHook = hook)
     }
 }
 Reflect.defineProperty(Module.prototype, Symbol.toStringTag, {
@@ -935,7 +996,7 @@ const moduleEnvExoticMethods: ProxyHandler<any> = {
     getOwnPropertyDescriptor: () => undefined,
     defineProperty() {
         // TODO:
-        internalError()
+        assertFailed('Todo: moduleEnvExoticMethods.defineProperty')
     },
     deleteProperty() {
         return false

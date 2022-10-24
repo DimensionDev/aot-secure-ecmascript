@@ -7,12 +7,8 @@ function getOpaqueProxy() {
 /** @internal */
 export const opaqueProxy = /*#__PURE__*/ getOpaqueProxy()
 /** @internal */
-export function internalError(): never {
-    throw new TypeError('Internal error.')
-}
-/** @internal */
-export function assertFailed(): never {
-    throw new TypeError('Assertion failed.')
+export function assertFailed(message?: string): never {
+    throw new TypeError('Assertion failed.' + (message ? ' ' : '') + message)
 }
 /** @internal */
 export function unreachable(val: never): never {

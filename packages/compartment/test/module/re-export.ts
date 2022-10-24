@@ -10,8 +10,8 @@ it('can handle `export * from` correctly', async () => {
             sleep: (time: number) => new Promise((resolve) => setTimeout(resolve, time)),
         },
     })
-    const mod1: Module = new Module(src1, 'src1')
-    const mod2: Module = new Module(src2, 'src2')
+    const mod1: Module = new Module(src1, {})
+    const mod2: Module = new Module(src2, {})
 
     const mod2Namespace = await imports(mod2)
     expect(mod2Namespace.echo).toBeTypeOf('function')
@@ -26,8 +26,8 @@ it('can handle `export * as T` all correctly', async () => {
             sleep: (time: number) => new Promise((resolve) => setTimeout(resolve, time)),
         },
     })
-    const mod1: Module = new Module(src1, 'src1')
-    const mod2: Module = new Module(src2, 'src2')
+    const mod1: Module = new Module(src1, {})
+    const mod2: Module = new Module(src2, {})
 
     const { T } = await imports(mod2)
     expect(T.echo).toBeTypeOf('function')

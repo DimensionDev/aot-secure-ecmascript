@@ -16,8 +16,8 @@ it('can initialize top-level-await module correctly', async () => {
             sleep: (time: number) => new Promise((resolve) => setTimeout(resolve, time)),
         },
     })
-    const mod1 = new Module(src1, 'src1')
-    const mod2: Module = new Module(src2, 'src2')
+    const mod1 = new Module(src1, {})
+    const mod2: Module = new Module(src2, {})
 
     const { a } = await imports(mod1)
     expect(a).toBe(1)

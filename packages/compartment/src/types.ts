@@ -36,8 +36,8 @@ export interface ExportAllBinding {
     as?: string | undefined
 }
 export interface VirtualModuleRecord {
-    bindings?: Array<Binding>
-    execute?(environment: any, context?: VirtualModuleRecordExecuteContext): void | Promise<void>
+    bindings?: Array<Binding> | undefined
+    execute?(environment: any, context: VirtualModuleRecordExecuteContext): void | Promise<void>
     needsImportMeta?: boolean | undefined
     needsImport?: boolean | undefined
     isAsync?: boolean | undefined
@@ -46,12 +46,16 @@ export interface VirtualModuleRecord {
 export type ModuleNamespace = Record<string, unknown>
 export interface VirtualModuleRecordExecuteContext {
     importMeta?: object
-    import?(spec: string, options?: ImportCallOptions): Promise<ModuleNamespace>
+    import?<T extends ModuleNamespace = ModuleNamespace>(
+        spec: string | Module<T>,
+        options?: ImportCallOptions,
+    ): Promise<T>
     globalThis: typeof globalThis
 }
 
-export interface StaticModuleRecordInstance {
-    get bindings(): readonly Binding[]
+export type ImportHook = (importSpecifier: string) => PromiseLike<Module | null> | Module | null
+export type ImportMetaHook = (importMeta: object) => void
+export interface ModuleHandler {
+    importHook?: ImportHook | undefined
+    importMetaHook?: ImportMetaHook
 }
-export type ImportHook = (importSpecifier: string, referrer: Referral) => PromiseLike<Module | null> | Module | null
-export type Referral = symbol | string | number | bigint

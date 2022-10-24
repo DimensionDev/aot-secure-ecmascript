@@ -8,8 +8,8 @@ export type {
     VirtualModuleRecordExecuteContext,
     ModuleNamespace,
     ImportHook,
-    Referral,
-    StaticModuleRecordInstance,
+    ImportMetaHook,
+    ModuleHandler,
 } from './types.js'
 export { ModuleSource } from './ModuleSource.js'
 export { Evaluators } from './Evaluators.js'
