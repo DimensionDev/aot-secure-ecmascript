@@ -34,3 +34,23 @@ it('checks the argument', () => {
     expect(() => new Evaluators({ importHook: 1 as any })).toThrow(TypeError)
     expect(() => new Evaluators({ importMeta: 1 as any })).toThrow(TypeError)
 })
+
+it('can inherit nested Evaluators', async () => {
+    const levelA = {}
+
+    const LevelA = new Evaluators({ globalThis: levelA })
+    const LevelB = new LevelA.Evaluators({})
+
+    let innerGlobalThis: any
+    await imports(
+        new LevelB.Module(
+            {
+                execute(environment, context) {
+                    innerGlobalThis = context.globalThis
+                },
+            },
+            {},
+        ),
+    )
+    expect(innerGlobalThis).toBe(levelA)
+})
