@@ -1,5 +1,15 @@
 # @masknet/static-module-record-swc
 
+## 0.4.0
+
+### Minor Changes
+
+-   d52bc2e: add new transform options: eval
+
+### Patch Changes
+
+-   d52bc2e: upgrade deps
+
 ## 0.3.5
 
 ### Patch Changes
