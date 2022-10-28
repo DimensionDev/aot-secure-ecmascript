@@ -551,8 +551,8 @@ export default {
                 let foreignPointerUint16ArrayProto
                 let foreignPointerUint32ArrayProto
                 let selectedTarget
-                let useFastForeignTargetPath = true
-                let useFastForeignTargetPathForTypedArrays = true
+                let useFastForeignTargetPath = IS_IN_SHADOW_REALM
+                let useFastForeignTargetPathForTypedArrays = IS_IN_SHADOW_REALM
                 let nearMembraneSymbolFlag = false
                 let lastProxyTrapCalled = 0
                 const activateLazyOwnPropertyDefinition = IS_IN_SHADOW_REALM

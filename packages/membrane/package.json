@@ -5,14 +5,18 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    "types": "./dist/index.d.ts",
-    "default": "./dist/index.js"
+    "./chrome-devtools": "./chrome-devtools.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "dependencies": {
-    "@locker/near-membrane-base": "0.11.7"
+    "@locker/near-membrane-base": "0.11.10",
+    "@locker/near-membrane-dom": "0.11.10"
   },
   "devDependencies": {
-    "@swc/core": "1.3.10"
+    "@swc/core": "1.3.11"
   },
   "scripts": {
     "update": "node ./build.mjs"
@@ -20,6 +24,7 @@
   "files": [
     "dist",
     "!dist/.tsbuildinfo",
-    "src"
+    "src",
+    "chrome-devtools.js"
   ]
 }
