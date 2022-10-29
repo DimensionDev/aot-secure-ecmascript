@@ -264,6 +264,8 @@ export class Module<T extends ModuleNamespace = any> {
     #DFSAncestorIndex: number | empty = empty
     #RequestedModules: string[]
     #LoadedModules = new Map<string, Module>()
+    #LoadingModules = new Map<string, Set<GraphLoadingState | PromiseCapability<ModuleNamespace>>>()
+    #LoadStates = new Set<GraphLoadingState | PromiseCapability<ModuleNamespace>>()
     #CycleRoot: Module | undefined
     #HasTLA: boolean
     #AsyncEvaluation = false
@@ -785,13 +787,30 @@ export class Module<T extends ModuleNamespace = any> {
         referrer: Module,
         specifier: string,
         hostDefined: Task,
-        payload: GraphLoadingState | PromiseCapability<ModuleNamespace>,
+        state: GraphLoadingState | PromiseCapability<ModuleNamespace>,
     ) {
+        if (referrer.#LoadedModules.has(specifier)) {
+            const module = referrer.#LoadedModules.get(specifier)!
+            this.#FinishLoadingImportedModule(referrer, specifier, NormalCompletion(module), hostDefined)
+            return
+        }
+        if (referrer.#LoadingModules.has(specifier)) {
+            referrer.#LoadingModules.get(specifier)!.add(state)
+            return
+        }
+        referrer.#LoadingModules.set(specifier, new Set([state]))
+        // Skipped spec:
+        // 4. If referrer is not a Source Text Module Record, referrer.[[ModuleInstance]] is undefined, or referrer.[[ModuleInstance]].[[ImportHook]] is undefined, then
+        //     a. Perform HostLoadImportedModule(referrer, specifier, hostDefined).
+        //     b. Return unused.
+        // Reason: we cannot call HostLoadImportedModule and we always have a importHook.
         try {
             const importHookResult = referrer.#ImportHook
                 ? Reflect.apply(referrer.#ImportHook, referrer.#HandlerValue, [specifier])
                 : Reflect.apply(referrer.#ParentImportHook, undefined, [specifier])
+            // unwrap importHookResult here
             const importHookPromise = Promise.resolve(importHookResult)
+            // unwrap PromiseResolve(%Promise%, importHookResult.[[Value]]) here
             const onFulfilled = (result: any) => {
                 let completion: Completion<Module>
                 try {
@@ -800,21 +819,20 @@ export class Module<T extends ModuleNamespace = any> {
                 } catch (error) {
                     completion = ThrowCompletion(new TypeError('importHook must return a Module instance'))
                 }
-                this.#FinishLoadingImportedModule(referrer, specifier, payload, completion, hostDefined)
+                this.#FinishLoadingImportedModule(referrer, specifier, completion, hostDefined)
             }
             const onRejected = (error: any) => {
-                this.#FinishLoadingImportedModule(referrer, specifier, payload, ThrowCompletion(error), hostDefined)
+                this.#FinishLoadingImportedModule(referrer, specifier, ThrowCompletion(error), hostDefined)
             }
             importHookPromise.then(onFulfilled, onRejected)
         } catch (error) {
-            this.#FinishLoadingImportedModule(referrer, specifier, payload, ThrowCompletion(error), hostDefined)
+            this.#FinishLoadingImportedModule(referrer, specifier, ThrowCompletion(error), hostDefined)
         }
     }
 
     static #FinishLoadingImportedModule(
         referrer: Module,
         specifier: string,
-        payload: GraphLoadingState | PromiseCapability<ModuleNamespace>,
         result: Completion<Module>,
         hostDefined: Task,
     ) {
@@ -826,10 +844,12 @@ export class Module<T extends ModuleNamespace = any> {
                 referrer.#LoadedModules.set(specifier, result.Value)
             }
         }
-        if ('Visited' in payload) {
-            Module.#ContinueModuleLoading(payload, result)
-        } else {
-            Module.#ContinueDynamicImport(payload, result, hostDefined)
+        const loading = referrer.#LoadingModules.get(specifier)!
+        if (!loading) assertFailed()
+        referrer.#LoadingModules.delete(specifier)
+        for (const state of loading) {
+            if ('Visited' in state) this.#ContinueModuleLoading(state, result)
+            else this.#ContinueDynamicImport(state, result, hostDefined)
         }
     }
 
