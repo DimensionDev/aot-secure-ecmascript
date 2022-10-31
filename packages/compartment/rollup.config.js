@@ -7,11 +7,12 @@ export default defineConfig({
     output: {
         file: './dist/bundle.js',
         format: 'esm',
-        sourcemapFile: './dist/bundle.js.map',
+        sourcemap: true,
     },
     plugins: [
         swc(
             defineRollupSwcOption({
+                sourceMaps: true,
                 jsc: { target: 'es2022' },
             }),
         ),
