@@ -1,10 +1,4 @@
-import {
-    Module,
-    Module as TopModule,
-    setParentGlobalThis,
-    setParentImportHook,
-    setParentImportMetaHook,
-} from './Module.js'
+import { Module, setParentGlobalThis, setParentImportHook, setParentImportMetaHook } from './Module.js'
 import type { ModuleSource } from './ModuleSource.js'
 import type { ImportHook, ModuleHandler, VirtualModuleRecord } from './types.js'
 
@@ -85,6 +79,7 @@ export class Evaluators {
     }
 }
 const TopEvaluators = Evaluators
+const TopModule = Module
 const realGlobalThis = globalThis
 
 /** @internal */
