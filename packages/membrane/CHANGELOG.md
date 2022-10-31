@@ -1,5 +1,11 @@
 # @masknet/membrane
 
+## 0.1.5
+
+### Patch Changes
+
+-   8d80a6a: feat: add devtools debugger entry point
+
 ## 0.1.4
 
 ### Patch Changes
