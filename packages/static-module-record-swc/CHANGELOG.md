@@ -1,5 +1,11 @@
 # @masknet/static-module-record-swc
 
+## 0.4.1
+
+### Patch Changes
+
+-   04e8825: update swc
+
 ## 0.4.0
 
 ### Minor Changes
