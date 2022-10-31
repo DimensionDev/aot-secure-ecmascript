@@ -1,5 +1,11 @@
 # @masknet/compartment
 
+## 0.4.2
+
+### Patch Changes
+
+-   05d5513: rollup bug https://github.com/rollup/rollup/issues/4696 workaround
+
 ## 0.4.1
 
 ### Patch Changes
