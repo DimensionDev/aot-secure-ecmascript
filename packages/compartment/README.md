@@ -69,7 +69,7 @@ const virtualModule: VirtualModuleRecord = {
         environment.x = globalThis.answer // 42
     },
 }
-const module = new Evaluators.Module(virtualModule, import.meta.url, () => null)
+const module = new evaluators.Module(virtualModule, import.meta.url, () => null)
 const moduleNamespace = await imports(module)
 moduleNamespace.x // 42
 ```
