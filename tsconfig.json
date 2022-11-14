@@ -1,4 +1,5 @@
 {
+    "extends": "@masknet/config/tsconfig.json",
     "references": [
         { "path": "./packages/compartment" },
         { "path": "./packages/compartment/test" },
@@ -7,56 +8,11 @@
         { "path": "./packages/web-endowments" }
     ],
     "compilerOptions": {
-        // Classification follows https://www.typescriptlang.org/tsconfig
-
-        // Type Checking
-        "strict": true,
         "exactOptionalPropertyTypes": true,
-        "noFallthroughCasesInSwitch": true,
-        "noImplicitAny": true,
-        "noImplicitOverride": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
         "noPropertyAccessFromIndexSignature": true,
         "noUncheckedIndexedAccess": true,
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "useUnknownInCatchVariables": true,
-
-        // Modules
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
         // Exclude everything by default. Include them in each project on-demand
-        "types": [],
-
-        // Emit
-        "declaration": true,
-        "declarationMap": true,
-        "importsNotUsedAsValues": "error",
-        "noEmitOnError": true,
-        "preserveValueImports": true,
-        "sourceMap": true,
-        "stripInternal": true, // skip type emit for @internal types
-
-        // JavaScript Support
-        "allowJs": true,
-        "checkJs": false,
-
-        // Interop Constraints
-        "forceConsistentCasingInFileNames": true,
-        "isolatedModules": true,
-
-        // Language and Environment
-        "lib": ["ES2022"],
-        "target": "ES2022",
-        "useDefineForClassFields": true,
-
-        // Projects
-        "composite": true,
-        "incremental": true,
-
-        // Completeness
-        "skipLibCheck": true // skip all type checks for .d.ts files
+        "types": []
     },
     "files": []
 }

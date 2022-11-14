@@ -72,7 +72,7 @@ export class Evaluators {
         if (this.#ParentEvaluator) return this.#ParentEvaluator.#GetImportHook()
         return defaultImportHook
     }
-    #GetImportMeta(): ImportMeta | null {
+    #GetImportMeta(): object | null {
         if (this.#AssignedImportMeta) return this.#AssignedImportMeta
         if (this.#ParentEvaluator) return this.#ParentEvaluator.#GetImportMeta()
         return null
