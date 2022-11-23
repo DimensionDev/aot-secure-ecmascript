@@ -20,11 +20,8 @@ mod test;
 
 #[plugin_transform]
 pub fn process_transform(program: Program, metadata: TransformPluginProgramMetadata) -> Program {
-    let config = serde_json::from_str::<Config>(
-        &metadata
-            .get_transform_plugin_config()
-            .unwrap_or_else(|| "".to_string()),
-    );
+    let config =
+        serde_json::from_str::<Config>(&metadata.get_transform_plugin_config().unwrap_or_default());
     let filename = metadata.get_context(&TransformPluginMetadataContextKind::Filename);
     match config {
         Ok(config) => match &program {
