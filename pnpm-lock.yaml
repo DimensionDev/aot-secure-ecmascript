@@ -54,7 +54,10 @@ importers:
       '@swc/core': 1.3.19
 
   packages/static-module-record-swc:
-    specifiers: {}
+    specifiers:
+      cjs-module-lexer: ^1.2.2
+    dependencies:
+      cjs-module-lexer: 1.2.2
 
   packages/web-endowments:
     specifiers: {}
@@ -736,6 +739,10 @@ packages:
     resolution: {integrity: sha512-lVZdhvbEudris15CLytp2u6Y0p5EKfztae9Fqa189MfNmln9F33XuH69v5fvNfiRN5/0eAUz2yJL3mo+nhaRKg==}
     engines: {node: '>=8'}
     dev: true
+
+  /cjs-module-lexer/1.2.2:
+    resolution: {integrity: sha512-cOU9usZw8/dXIXKtwa8pM0OTJQuJkxMN6w30csNRUerHfeQ5R6U3kkU/FtJeIf3M202OHfY2U8ccInBG7/xogA==}
+    dev: false
 
   /cliui/6.0.0:
     resolution: {integrity: sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==}

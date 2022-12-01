@@ -883,7 +883,6 @@ export class Module<T extends ModuleNamespace = any> {
         loadPromise.then(linkAndEvaluate, onRejected)
     }
     //#endregion
-    /** @internal */
     static {
         imports = async (module, options) => {
             const promiseCapability = PromiseCapability<ModuleNamespace>()

@@ -26,5 +26,8 @@
     "@swc/core": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "cjs-module-lexer": "^1.2.2"
   }
 }
