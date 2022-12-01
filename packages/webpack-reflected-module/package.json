@@ -1,0 +1,32 @@
+{
+  "name": "@masknet/webpack-reflect-module-plugin",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "devDependencies": {
+    "@swc/core": "^1.3.19",
+    "@types/estree": "^1.0.0",
+    "@types/loader-runner": "^2.2.4",
+    "esbuild": "^0.15.15",
+    "html-webpack-plugin": "^5.5.0",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.0"
+  },
+  "scripts": {},
+  "files": [
+    "dist",
+    "!dist/.tsbuildinfo",
+    "src"
+  ],
+  "peerDependencies": {
+    "@swc/core": "^1.3.19",
+    "esbuild": "^0.15.15",
+    "webpack": "^5.75.0"
+  },
+  "dependencies": {
+    "@masknet/static-module-record-swc": "workspace:^",
+    "loader-runner": "^4.3.0"
+  }
+}

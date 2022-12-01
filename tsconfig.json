@@ -5,7 +5,8 @@
         { "path": "./packages/compartment/test" },
         { "path": "./packages/intrinsic-snapshot" },
         { "path": "./packages/membrane" },
-        { "path": "./packages/web-endowments" }
+        { "path": "./packages/web-endowments" },
+        { "path": "./packages/webpack-reflected-module" }
     ],
     "compilerOptions": {
         "exactOptionalPropertyTypes": true,
