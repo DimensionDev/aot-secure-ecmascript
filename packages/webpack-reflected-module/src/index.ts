@@ -7,10 +7,7 @@ import type { JavascriptParserOptions } from './webpack'
 export = class ImportReflectionPlugin {
     apply(compiler: Compiler) {
         compiler.hooks.compilation.tap(ImportReflectionPlugin.name, (compilation, { normalModuleFactory }) => {
-            compilation.dependencyTemplates.set(
-                ReflectedModuleDependency,
-                new ReflectedModuleDependency.Template(),
-            )
+            compilation.dependencyTemplates.set(ReflectedModuleDependency, new ReflectedModuleDependency.Template())
             compilation.dependencyFactories.set(
                 ReflectedModuleDependency,
                 new ReflectedModuleFactory(normalModuleFactory),
@@ -29,12 +26,7 @@ export = class ImportReflectionPlugin {
                     const { request, exclude } = result
                     // TODO: support magic comments: chunkName, prefetchOrder, preloadOrder, exports
                     const dependencyBlock = new AsyncDependenciesBlock({}, expression.loc, request)
-                    const dependency = new ReflectedModuleDependency(
-                        request,
-                        expression.loc,
-                        expression.range,
-                        exclude,
-                    )
+                    const dependency = new ReflectedModuleDependency(request, expression.loc, expression.range, exclude)
                     dependencyBlock.addDependency(dependency)
                     parser.state.current.addBlock(dependencyBlock)
                     return true
