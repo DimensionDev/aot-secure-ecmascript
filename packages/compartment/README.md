@@ -6,8 +6,7 @@ This package implements a user-land [Virtual Module Source][layer-2] evaluator.
 
 This package currently implements the following specs/API explainers:
 
--   [ECMA262 Normative PR: Layering: Add HostLoadImportedModule hook](https://github.com/tc39/ecma262/pull/2905/)
--   [Module Block proposal](https://tc39.es/proposal-js-module-blocks/)
+-   [Module Expressions proposal](https://tc39.es/proposal-module-expressions/)
 -   [Compartment proposal: Layer 0: Module and ModuleSource constructor][layer-0]
 -   [Compartment proposal: Layer 1: ModuleSource reflection][layer-1]
 -   [Compartment proposal: Layer 2: Virtual Module Source][layer-2]
