@@ -106,12 +106,14 @@ export default {
                       }),
                       _.globalThis)
             const IS_IN_SHADOW_REALM = typeof globalObject !== 'object' || globalObject === null
-            const LOCKER_DEBUG_MODE_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerDebugMode') : undefined
+            const IS_NOT_IN_SHADOW_REALM = !IS_IN_SHADOW_REALM
+            const LOCKER_DEBUG_MODE_SYMBOL = IS_NOT_IN_SHADOW_REALM ? SymbolFor('@@lockerDebugMode') : undefined
             const LOCKER_IDENTIFIER_MARKER = '$LWS'
-            const LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL = !IS_IN_SHADOW_REALM
+            const LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL = SymbolFor('@@lockerNearMembraneProxyMasked')
+            const LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL = IS_NOT_IN_SHADOW_REALM
                 ? SymbolFor('@@lockerNearMembraneSerializedValue')
                 : undefined
-            const LOCKER_NEAR_MEMBRANE_SYMBOL = !IS_IN_SHADOW_REALM ? SymbolFor('@@lockerNearMembrane') : undefined
+            const LOCKER_NEAR_MEMBRANE_SYMBOL = IS_NOT_IN_SHADOW_REALM ? SymbolFor('@@lockerNearMembrane') : undefined
             const LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL = SymbolFor('@@lockerNearMembraneUndefinedValue') // The default stack trace limit in Chrome is 10.
             // Set to 20 to account for stack trace filtering.
             const LOCKER_STACK_TRACE_LIMIT = 20 // This package is bundled by third-parties that have their own build time
@@ -121,12 +123,14 @@ export default {
             // phase two, the user opted-in to custom devtools formatters. Phase one
             // is used for light weight initialization time debug while phase two is
             // reserved for post initialization runtime.
-            const LOCKER_UNMINIFIED_FLAG = `${() => /* $LWS */ 1}`.includes('*') // Indicate whether debug support is available.
-            const LOCKER_DEBUGGABLE_FLAG = LOCKER_UNMINIFIED_FLAG && !IS_IN_SHADOW_REALM // BigInt is not supported in Safari 13.1.
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            const LOCKER_UNMINIFIED_FLAG = `${(function LOCKER_UNMINIFIED_FLAG1() {
+                return LOCKER_UNMINIFIED_FLAG1.name
+            })()}`.includes('LOCKER_UNMINIFIED_FLAG') // Indicate whether debug support is available.
+            const LOCKER_DEBUGGABLE_FLAG = LOCKER_UNMINIFIED_FLAG && IS_NOT_IN_SHADOW_REALM
+            const ERR_ILLEGAL_PROPERTY_ACCESS = 'Illegal property access.' // BigInt is not supported in Safari 13.1.
             // https://caniuse.com/bigint
-            const FLAGS_REG_EXP = IS_IN_SHADOW_REALM ? /\w*$/ : undefined // Minification safe reference to the private `BoundaryProxyHandler`
-            // 'serializedValue' property name.
-            let MINIFICATION_SAFE_SERIALIZED_VALUE_PROPERTY_NAME // Minification safe references to the private `BoundaryProxyHandler`
+            const FLAGS_REG_EXP = IS_IN_SHADOW_REALM ? /\w*$/ : undefined // Minification safe references to the private `BoundaryProxyHandler`
             // 'apply' and 'construct' trap variant's property names.
             let MINIFICATION_SAFE_TRAP_PROPERTY_NAMES
             const SUPPORTS_BIG_INT = typeof _.BigInt === 'function'
@@ -139,6 +143,9 @@ export default {
             const { isView: ArrayBufferIsView } = ArrayBufferCtor
             const BigIntProtoValueOf = SUPPORTS_BIG_INT ? _.BigInt.prototype.valueOf : undefined
             const { valueOf: BooleanProtoValueOf } = _.Boolean.prototype
+            const {
+                prototype: { toJSON: DateProtoToJSON },
+            } = _.Date
             const { toString: ErrorProtoToString } = ErrorCtor.prototype
             const { bind: FunctionProtoBind, toString: FunctionProtoToString } = _.Function.prototype
             const { stringify: JSONStringify } = _.JSON
@@ -194,13 +201,124 @@ export default {
                 [SymbolToStringTag]: WeakSetProtoSymbolToStringTag,
             } = WeakSetProto
             const consoleObject =
-                !IS_IN_SHADOW_REALM && typeof _.console === 'object' && _.console !== null ? _.console : undefined
+                IS_NOT_IN_SHADOW_REALM && typeof _.console === 'object' && _.console !== null ? _.console : undefined
             const consoleInfo = consoleObject == null ? void 0 : consoleObject.info
             const localEval = IS_IN_SHADOW_REALM ? _.eval : undefined // Install flags to ensure things are installed once per realm.
+            let installedDateProtoToJSONFlag = false
             let installedErrorPrepareStackTraceFlag = false
+            let installedJSONStringifyFlag = false
             let installedPropertyDescriptorMethodWrappersFlag = false
             function alwaysFalse() {
                 return false
+            }
+            function proxyMaskFunction(func, maskFunc) {
+                let nearMembraneSymbolFlag = false
+                let lastProxyTrapCalled = 0 /* ProxyHandlerTraps.None */
+                const proxy = new ProxyCtor(maskFunc, {
+                    apply(_target, thisArg, args) {
+                        lastProxyTrapCalled = 1 /* ProxyHandlerTraps.Apply */
+                        if (thisArg === proxy || thisArg === maskFunc) {
+                            thisArg = func
+                        }
+                        return ReflectApply(func, thisArg, args)
+                    },
+                    construct(_target, args, newTarget) {
+                        lastProxyTrapCalled = 2 /* ProxyHandlerTraps.Construct */
+                        if (newTarget === proxy || newTarget === maskFunc) {
+                            newTarget = func
+                        }
+                        return ReflectConstruct(func, args, newTarget)
+                    },
+                    defineProperty(target, key, desc) {
+                        lastProxyTrapCalled = 4 /* ProxyHandlerTraps.DefineProperty */ // Defining forgeries of `LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL`
+                        // properties is not allowed.
+                        if (key === LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL) {
+                            throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
+                        }
+                        return ReflectDefineProperty(target, key, desc)
+                    },
+                    deleteProperty(target, key) {
+                        lastProxyTrapCalled = 32 /* ProxyHandlerTraps.GetOwnPropertyDescriptor */
+                        return ReflectDeleteProperty(target, key)
+                    },
+                    get(target, key, receiver) {
+                        // Only allow accessing near-membrane symbol values if the
+                        // BoundaryProxyHandler.has trap has been called immediately
+                        // before and the symbol does not exist.
+                        nearMembraneSymbolFlag && (nearMembraneSymbolFlag = lastProxyTrapCalled === 128)
+                        lastProxyTrapCalled = 16 /* ProxyHandlerTraps.Get */
+                        const isProxyMaskedSymbol = key === LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL
+                        if (nearMembraneSymbolFlag) {
+                            // Exit without performing a [[Get]] for near-membrane symbols
+                            // because we know when the nearMembraneSymbolFlag is ON that
+                            // there is no shadowed symbol value.
+                            if (isProxyMaskedSymbol) {
+                                return true
+                            }
+                        }
+                        const result = ReflectGet(target, key, receiver) // Getting forged values of `LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL`
+                        // properties is not allowed.
+                        if (result !== undefined && isProxyMaskedSymbol) {
+                            throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
+                        }
+                        return result
+                    },
+                    getOwnPropertyDescriptor(target, key) {
+                        lastProxyTrapCalled = 32 /* ProxyHandlerTraps.GetOwnPropertyDescriptor */
+                        const result = ReflectGetOwnPropertyDescriptor(target, key) // Getting forged descriptors of `LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL`
+                        // properties is not allowed.
+                        if (result && key === LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL) {
+                            throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
+                        }
+                        return result
+                    },
+                    getPrototypeOf(target) {
+                        lastProxyTrapCalled = 64 /* ProxyHandlerTraps.GetPrototypeOf */
+                        return ReflectGetPrototypeOf(target)
+                    },
+                    has(target, key) {
+                        lastProxyTrapCalled = 128 /* ProxyHandlerTraps.Has */
+                        const result = ReflectHas(target, key)
+                        const isProxyMaskedSymbol = key === LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL
+                        if (result) {
+                            nearMembraneSymbolFlag = false // Checking the existence of forged `LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL`
+                            // properties is not allowed.
+                            if (isProxyMaskedSymbol) {
+                                throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
+                            }
+                        } else {
+                            // The near-membrane symbol flag is on if the symbol does
+                            // not exist on the object or its [[Prototype]].
+                            nearMembraneSymbolFlag = isProxyMaskedSymbol
+                        }
+                        return result
+                    },
+                    isExtensible(target) {
+                        lastProxyTrapCalled = 256 /* ProxyHandlerTraps.IsExtensible */
+                        return ReflectIsExtensible(target)
+                    },
+                    ownKeys(target) {
+                        lastProxyTrapCalled = 512 /* ProxyHandlerTraps.OwnKeys */
+                        return ReflectOwnKeys(target)
+                    },
+                    preventExtensions(target) {
+                        lastProxyTrapCalled = 1024 /* ProxyHandlerTraps.PreventExtensions */
+                        return ReflectPreventExtensions(target)
+                    },
+                    set(target, key, value, receiver) {
+                        lastProxyTrapCalled = 2048 /* ProxyHandlerTraps.Set */ // Setting forged values of `LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL`
+                        // properties is not allowed.
+                        if (key === LOCKER_NEAR_MEMBRANE_PROXY_MASKED_SYMBOL) {
+                            throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
+                        }
+                        return ReflectSet(target, key, value, receiver)
+                    },
+                    setPrototypeOf(target, proto) {
+                        lastProxyTrapCalled = 4096 /* ProxyHandlerTraps.SetPrototypeOf */
+                        return ReflectSetPrototypeOf(target, proto)
+                    },
+                })
+                return proxy
             }
             const installErrorPrepareStackTrace = LOCKER_UNMINIFIED_FLAG
                 ? () => {
@@ -476,7 +594,8 @@ export default {
                 const {
                     distortionCallback,
                     instrumentation,
-                    liveTargetCallback, // eslint-disable-next-line prefer-object-spread
+                    liveTargetCallback,
+                    revokedProxyCallback, // eslint-disable-next-line prefer-object-spread
                 } = ObjectAssign(
                     {
                         __proto__: null,
@@ -485,8 +604,8 @@ export default {
                 )
                 const LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG = // definition with a LOCKER_UNMINIFIED_FLAG check to have instrumentation
                     // removed in minified production builds.
-                    !IS_IN_SHADOW_REALM && typeof instrumentation === 'object' && instrumentation !== null
-                const arityToApplyTrapNameRegistry = {
+                    IS_NOT_IN_SHADOW_REALM && typeof instrumentation === 'object' && instrumentation !== null
+                const applyTrapNameRegistry = {
                     // Populated in the returned connector function below.
                     __proto__: null,
                     0: undefined,
@@ -496,7 +615,7 @@ export default {
                     4: undefined,
                     n: undefined,
                 }
-                const arityToConstructTrapNameRegistry = {
+                const constructTrapNameRegistry = {
                     // Populated in the returned connector function below.
                     __proto__: null,
                     0: undefined,
@@ -506,8 +625,8 @@ export default {
                     4: undefined,
                     n: undefined,
                 }
-                const localProxyTargetToLazyPropertyDescriptorStateMap = toSafeWeakMap(new WeakMapCtor())
-                const proxyTargetToPointerMap = toSafeWeakMap(new WeakMapCtor())
+                const lazyPropertyDescriptorStateCache = toSafeWeakMap(new WeakMapCtor())
+                const proxyPointerCache = toSafeWeakMap(new WeakMapCtor())
                 const startActivity = LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG ? instrumentation.startActivity : undefined
                 let foreignCallablePushErrorTarget
                 let foreignCallablePushTarget
@@ -554,7 +673,7 @@ export default {
                 let useFastForeignTargetPath = IS_IN_SHADOW_REALM
                 let useFastForeignTargetPathForTypedArrays = IS_IN_SHADOW_REALM
                 let nearMembraneSymbolFlag = false
-                let lastProxyTrapCalled = 0
+                let lastProxyTrapCalled = 0 /* ProxyHandlerTraps.None */
                 const activateLazyOwnPropertyDefinition = IS_IN_SHADOW_REALM
                     ? (target, key, state) => {
                           state[key] = false
@@ -670,8 +789,8 @@ export default {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}()`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? arityToApplyTrapNameRegistry
-                        : arityToConstructTrapNameRegistry
+                        ? applyTrapNameRegistry
+                        : constructTrapNameRegistry
                     const foreignCallableApplyOrConstruct = isApplyTrap
                         ? foreignCallableApply
                         : foreignCallableConstruct
@@ -732,8 +851,8 @@ export default {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(1)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? arityToApplyTrapNameRegistry
-                        : arityToConstructTrapNameRegistry
+                        ? applyTrapNameRegistry
+                        : constructTrapNameRegistry
                     const foreignCallableApplyOrConstruct = isApplyTrap
                         ? foreignCallableApply
                         : foreignCallableConstruct
@@ -801,8 +920,8 @@ export default {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(2)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? arityToApplyTrapNameRegistry
-                        : arityToConstructTrapNameRegistry
+                        ? applyTrapNameRegistry
+                        : constructTrapNameRegistry
                     const foreignCallableApplyOrConstruct = isApplyTrap
                         ? foreignCallableApply
                         : foreignCallableConstruct
@@ -876,8 +995,8 @@ export default {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(3)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? arityToApplyTrapNameRegistry
-                        : arityToConstructTrapNameRegistry
+                        ? applyTrapNameRegistry
+                        : constructTrapNameRegistry
                     const foreignCallableApplyOrConstruct = isApplyTrap
                         ? foreignCallableApply
                         : foreignCallableConstruct
@@ -957,8 +1076,8 @@ export default {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(4)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? arityToApplyTrapNameRegistry
-                        : arityToConstructTrapNameRegistry
+                        ? applyTrapNameRegistry
+                        : constructTrapNameRegistry
                     const foreignCallableApplyOrConstruct = isApplyTrap
                         ? foreignCallableApply
                         : foreignCallableConstruct
@@ -1044,8 +1163,8 @@ export default {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
                     const activityName = `Reflect.${isApplyTrap ? 'apply' : 'construct'}(5)`
                     const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? arityToApplyTrapNameRegistry
-                        : arityToConstructTrapNameRegistry
+                        ? applyTrapNameRegistry
+                        : constructTrapNameRegistry
                     const foreignCallableApplyOrConstruct = isApplyTrap
                         ? foreignCallableApply
                         : foreignCallableConstruct
@@ -1266,7 +1385,7 @@ export default {
                     : noop
                 const getLazyPropertyDescriptorStateByTarget = IS_IN_SHADOW_REALM
                     ? (target) => {
-                          let state = localProxyTargetToLazyPropertyDescriptorStateMap.get(target)
+                          let state = lazyPropertyDescriptorStateCache.get(target)
                           if (state === undefined) {
                               const statePointerOrUndefined = foreignCallableGetLazyPropertyDescriptorStateByTarget(
                                   getTransferablePointer(target),
@@ -1276,7 +1395,7 @@ export default {
                                   state = selectedTarget
                                   selectedTarget = undefined
                                   if (state) {
-                                      localProxyTargetToLazyPropertyDescriptorStateMap.set(target, state)
+                                      lazyPropertyDescriptorStateCache.set(target, state)
                                   }
                               }
                           }
@@ -1342,11 +1461,26 @@ export default {
                                   : foreignPointerBigUint64ArrayProto)
                     : alwaysFalse
                 function getTransferablePointer(originalTarget, foreignCallablePusher = foreignCallablePushTarget) {
-                    let proxyPointer = proxyTargetToPointerMap.get(originalTarget)
+                    let proxyPointer = proxyPointerCache.get(originalTarget)
                     if (proxyPointer) {
                         return proxyPointer
                     }
+                    let targetFunctionArity = 0
+                    let targetFunctionName = ''
+                    let targetTypedArrayLength = 0
+                    if (revokedProxyCallback && revokedProxyCallback(originalTarget)) {
+                        proxyPointer = foreignCallablePusher(
+                            createPointer(originalTarget),
+                            64,
+                            targetFunctionArity,
+                            targetFunctionName,
+                            targetTypedArrayLength,
+                        )
+                        proxyPointerCache.set(originalTarget, proxyPointer)
+                        return proxyPointer
+                    }
                     let distortionTarget
+                    let targetTraits = 16 /* TargetTraits.IsObject */
                     if (distortionCallback) {
                         distortionTarget = distortionCallback(originalTarget) // If a distortion entry is found, it must be a valid proxy target.
                         if (distortionTarget !== originalTarget && typeof distortionTarget !== typeof originalTarget) {
@@ -1356,10 +1490,6 @@ export default {
                         distortionTarget = originalTarget
                     }
                     let isPossiblyRevoked = true
-                    let targetFunctionArity = 0
-                    let targetFunctionName = ''
-                    let targetTypedArrayLength = 0
-                    let targetTraits = 16 /* TargetTraits.IsObject */
                     if (typeof distortionTarget === 'function') {
                         isPossiblyRevoked = false
                         targetFunctionArity = 0
@@ -1410,16 +1540,8 @@ export default {
                         targetFunctionArity,
                         targetFunctionName,
                         targetTypedArrayLength,
-                    ) // The WeakMap is populated with the original target rather then the
-                    // distorted one while the pointer always uses the distorted one.
-                    // TODO: This mechanism poses another issue, which is that the return
-                    // value of selectedTarget! can never be used to call across the
-                    // membrane because that will cause a wrapping around the potential
-                    // distorted value instead of the original value. This is not fatal,
-                    // but implies that for every distorted value where are two proxies
-                    // that are not ===, which is weird. Guaranteeing this is not easy
-                    // because it means auditing the code.
-                    proxyTargetToPointerMap.set(originalTarget, proxyPointer)
+                    )
+                    proxyPointerCache.set(originalTarget, proxyPointer)
                     return proxyPointer
                 }
                 const installPropertyDescriptorMethodWrappers = IS_IN_SHADOW_REALM
@@ -1474,6 +1596,7 @@ export default {
                                         ? {
                                               configurable: false,
                                               enumerable: ReflectApply(ObjectProtoPropertyIsEnumerable, target, [key]),
+                                              // eslint-disable-next-line @typescript-eslint/no-use-before-define
                                               get: getUnforgeableGlobalThisGetter(key),
                                               set: undefined,
                                           }
@@ -1483,7 +1606,9 @@ export default {
                               ? (key) => {
                                     let globalThisGetter = keyToGlobalThisGetterRegistry[key]
                                     if (globalThisGetter === undefined) {
-                                        // Wrap `unboundGlobalThisGetter` in bound function
+                                        // We can't access the original getter to mask
+                                        // with `proxyMaskFunction()`, so instead we wrap
+                                        // `unboundGlobalThisGetter` in bound function
                                         // to obscure the getter source as "[native code]".
                                         globalThisGetter = ReflectApply(FunctionProtoBind, unboundGlobalThisGetter, []) // Preserve identity continuity of getters.
                                         keyToGlobalThisGetterRegistry[key] = globalThisGetter
@@ -1593,15 +1718,15 @@ export default {
                                       }
                                       const state = getLazyPropertyDescriptorStateByTarget(target)
                                       const isFixingChromeBug = target === globalThisRef && shouldFixChromeBug
-                                      const unsafeDescMap = isFixingChromeBug // to populate with curated descriptors.
+                                      const unsafeDescs = isFixingChromeBug // to populate with curated descriptors.
                                           ? {} // safe to use the native method.
                                           : ReflectApply(originalFunc, thisArg, args)
                                       if (!isFixingChromeBug && state === undefined) {
                                           // Exit early if the target is not a global
                                           // object and there are no lazy descriptors.
-                                          return unsafeDescMap
+                                          return unsafeDescs
                                       }
-                                      const ownKeys = ReflectOwnKeys(isFixingChromeBug ? target : unsafeDescMap)
+                                      const ownKeys = ReflectOwnKeys(isFixingChromeBug ? target : unsafeDescs)
                                       for (let i = 0, { length } = ownKeys; i < length; i += 1) {
                                           const ownKey = ownKeys[i]
                                           const isLazyProp = !!(state != null && state[ownKey])
@@ -1616,13 +1741,13 @@ export default {
                                                   ? getFixedDescriptor(target, ownKey)
                                                   : ReflectGetOwnPropertyDescriptor(target, ownKey) // Update the descriptor map entry.
                                               if (unsafeDesc) {
-                                                  unsafeDescMap[ownKey] = unsafeDesc
+                                                  unsafeDescs[ownKey] = unsafeDesc
                                               } else if (!isFixingChromeBug) {
-                                                  ReflectDeleteProperty(unsafeDescMap, ownKey)
+                                                  ReflectDeleteProperty(unsafeDescs, ownKey)
                                               }
                                           }
                                       }
-                                      return unsafeDescMap
+                                      return unsafeDescs
                                   },
                               })
                           try {
@@ -1769,7 +1894,7 @@ export default {
                             safeDesc.foreign =
                                 ((typeof possibleProxy === 'object' && possibleProxy !== null) ||
                                     typeof possibleProxy === 'function') &&
-                                proxyTargetToPointerMap.get(possibleProxy) !== undefined
+                                proxyPointerCache.get(possibleProxy) !== undefined
                         }
                     }
                     if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
@@ -1867,19 +1992,20 @@ export default {
                     foreignTargetFunctionName,
                     foreignTargetTypedArrayLength,
                 ) {
-                    const { proxy } = new BoundaryProxyHandler(
+                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                    const { proxy: proxy1 } = new BoundaryProxyHandler(
                         foreignTargetPointer,
                         foreignTargetTraits,
                         foreignTargetFunctionArity,
                         foreignTargetFunctionName,
                         foreignTargetTypedArrayLength,
                     )
-                    proxyTargetToPointerMap.set(proxy, foreignTargetPointer)
-                    return createPointer(proxy)
+                    proxyPointerCache.set(proxy1, foreignTargetPointer)
+                    return createPointer(proxy1)
                 }
                 const setLazyPropertyDescriptorStateByTarget = IS_IN_SHADOW_REALM
                     ? (target, state) => {
-                          localProxyTargetToLazyPropertyDescriptorStateMap.set(target, state)
+                          lazyPropertyDescriptorStateCache.set(target, state)
                           foreignCallableSetLazyPropertyDescriptorStateByTarget(
                               getTransferablePointer(target),
                               getTransferablePointer(state),
@@ -1894,6 +2020,94 @@ export default {
                         foreignTargetFunctionName,
                         foreignTargetTypedArrayLength,
                     ) {
+                        // Internal red/shadow realm side utilities:
+                        this.makeProxyLive = IS_IN_SHADOW_REALM
+                            ? function () {
+                                  // Replace pending traps with live traps that can work with the
+                                  // target without taking snapshots.
+                                  this.deleteProperty = BoundaryProxyHandler.passthruDeletePropertyTrap
+                                  this.defineProperty = BoundaryProxyHandler.passthruDefinePropertyTrap
+                                  this.preventExtensions = BoundaryProxyHandler.passthruPreventExtensionsTrap
+                                  this.set = BoundaryProxyHandler.passthruSetTrap
+                                  this.setPrototypeOf = BoundaryProxyHandler.passthruSetPrototypeOfTrap
+                              }
+                            : noop
+                        this.makeProxyStatic = IS_IN_SHADOW_REALM
+                            ? function () {
+                                  // Reset all traps except apply and construct for static proxies
+                                  // since the proxy target is the shadow target and all operations
+                                  // are going to be applied to it rather than the real target.
+                                  this.defineProperty = BoundaryProxyHandler.staticDefinePropertyTrap
+                                  this.deleteProperty = BoundaryProxyHandler.staticDeletePropertyTrap
+                                  this.get = BoundaryProxyHandler.staticGetTrap
+                                  this.getOwnPropertyDescriptor =
+                                      BoundaryProxyHandler.staticGetOwnPropertyDescriptorTrap
+                                  this.getPrototypeOf = BoundaryProxyHandler.staticGetPrototypeOfTrap
+                                  this.has = BoundaryProxyHandler.staticHasTrap
+                                  this.isExtensible = BoundaryProxyHandler.staticIsExtensibleTrap
+                                  this.ownKeys = BoundaryProxyHandler.staticOwnKeysTrap
+                                  this.preventExtensions = BoundaryProxyHandler.staticPreventExtensionsTrap
+                                  this.set = BoundaryProxyHandler.staticSetTrap
+                                  this.setPrototypeOf = BoundaryProxyHandler.staticSetPrototypeOfTrap
+                                  const {
+                                      foreignTargetPointer: foreignTargetPointer1,
+                                      foreignTargetTraits: foreignTargetTraits1,
+                                      shadowTarget: shadowTarget1,
+                                  } = this
+                                  if (useFastForeignTargetPath) {
+                                      fastForeignTargetPointers.delete(foreignTargetPointer1)
+                                  } // We don't wrap `foreignCallableGetTargetIntegrityTraits()`
+                                  // in a try-catch because it cannot throw.
+                                  const targetIntegrityTraits =
+                                      foreignCallableGetTargetIntegrityTraits(foreignTargetPointer1)
+                                  if (targetIntegrityTraits & 8) {
+                                      // the target is a revoked proxy, in which case we revoke
+                                      // this proxy as well.
+                                      this.revoke()
+                                      return
+                                  } // A proxy can revoke itself when traps are triggered and break
+                                  // the membrane, therefore we need protection.
+                                  try {
+                                      copyForeignOwnPropertyDescriptorsAndPrototypeToShadowTarget(
+                                          foreignTargetPointer1,
+                                          shadowTarget1,
+                                      )
+                                  } catch (_unused27) {
+                                      // We don't wrap `foreignCallableIsTargetRevoked()` in a
+                                      // try-catch because it cannot throw.
+                                      if (foreignCallableIsTargetRevoked(foreignTargetPointer1)) {
+                                          this.revoke()
+                                          return
+                                      }
+                                  }
+                                  if (foreignTargetTraits1 & 16 && !(SymbolToStringTag in shadowTarget1)) {
+                                      let toStringTag = 'Object'
+                                      try {
+                                          toStringTag = foreignCallableGetToStringTagOfTarget(foreignTargetPointer1) // eslint-disable-next-line no-empty
+                                      } catch (_unused28) {}
+                                      this.staticToStringTag = toStringTag
+                                  } // Preserve the semantics of the target.
+                                  if (targetIntegrityTraits & 4) {
+                                      ObjectFreeze(shadowTarget1)
+                                  } else {
+                                      if (targetIntegrityTraits & 2) {
+                                          ObjectSeal(shadowTarget1)
+                                      } else if (targetIntegrityTraits & 1) {
+                                          ReflectPreventExtensions(shadowTarget1)
+                                      }
+                                      if (LOCKER_UNMINIFIED_FLAG) {
+                                          // We don't wrap `foreignCallableDebugInfo()` in a try-catch
+                                          // because it cannot throw.
+                                          foreignCallableDebugInfo(
+                                              'Mutations on the membrane of an object originating ' +
+                                                  'outside of the sandbox will not be reflected on ' +
+                                                  'the object itself:',
+                                              foreignTargetPointer1,
+                                          )
+                                      }
+                                  }
+                              }
+                            : noop
                         let shadowTarget
                         const isForeignTargetArray = foreignTargetTraits & 1 /* TargetTraits.IsArray */
                         const isForeignTargetFunction = foreignTargetTraits & 4 /* TargetTraits.IsFunction */
@@ -1909,8 +2123,8 @@ export default {
                         } else {
                             shadowTarget = {}
                         }
-                        const { proxy, revoke } = ProxyRevocable(shadowTarget, this)
-                        __.attachDebuggerTarget?.(proxy, foreignTargetPointer)
+                        const { proxy: proxy1, revoke } = ProxyRevocable(shadowTarget, this)
+                        __.attachDebuggerTarget?.(proxy1, foreignTargetPointer)
                         this.foreignTargetPointer = foreignTargetPointer
                         this.foreignTargetTraits = foreignTargetTraits
                         this.foreignTargetTypedArrayLength = foreignTargetTypedArrayLength // Define in the BoundaryProxyHandler constructor so it is bound
@@ -1939,26 +2153,25 @@ export default {
                                 ),
                             )
                         }
-                        this.proxy = proxy
+                        this.proxy = proxy1
                         this.revoke = revoke
-                        this.serializedValue = undefined
+                        this.serialize = noop
                         this.shadowTarget = shadowTarget
                         this.staticToStringTag = 'Object' // Define traps.
                         if (isForeignTargetFunction) {
-                            var _arityToApplyTrapName, _arityToConstructTrap
+                            var _applyTrapNameRegistr, _constructTrapNameReg
                             this.apply =
                                 this[
-                                    (_arityToApplyTrapName =
-                                        arityToApplyTrapNameRegistry[foreignTargetFunctionArity]) != null
-                                        ? _arityToApplyTrapName
-                                        : arityToApplyTrapNameRegistry.n
+                                    (_applyTrapNameRegistr = applyTrapNameRegistry[foreignTargetFunctionArity]) != null
+                                        ? _applyTrapNameRegistr
+                                        : applyTrapNameRegistry.n
                                 ]
                             this.construct =
                                 this[
-                                    (_arityToConstructTrap =
-                                        arityToConstructTrapNameRegistry[foreignTargetFunctionArity]) != null
-                                        ? _arityToConstructTrap
-                                        : arityToConstructTrapNameRegistry.n
+                                    (_constructTrapNameReg = constructTrapNameRegistry[foreignTargetFunctionArity]) !=
+                                    null
+                                        ? _constructTrapNameReg
+                                        : constructTrapNameRegistry.n
                                 ]
                         }
                         this.defineProperty = BoundaryProxyHandler.defaultDefinePropertyTrap
@@ -1976,9 +2189,6 @@ export default {
                         this.setPrototypeOf = BoundaryProxyHandler.defaultSetPrototypeOfTrap
                         this.set = BoundaryProxyHandler.defaultSetTrap
                         if (foreignTargetTraits & 64) {
-                            // Future optimization: Hoping proxies with frozen handlers
-                            // can be faster.
-                            ObjectFreeze(this)
                             this.revoke()
                         } else if (IS_IN_SHADOW_REALM) {
                             if (isForeignTargetArray || foreignTargetTraits & 2) {
@@ -1986,123 +2196,18 @@ export default {
                             }
                         } else {
                             if (foreignTargetTraits & 16) {
-                                // Lazily define serializedValue.
+                                // Lazily define serialize method.
                                 let cachedSerializedValue = LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
-                                const { serializedValue } = this
-                                if (MINIFICATION_SAFE_SERIALIZED_VALUE_PROPERTY_NAME === undefined) {
-                                    // A minification safe way to get the 'serializedValue'
-                                    // property name.
-                                    ;({ 0: MINIFICATION_SAFE_SERIALIZED_VALUE_PROPERTY_NAME } = ObjectKeys({
-                                        serializedValue,
-                                    }))
+                                this.serialize = () => {
+                                    if (cachedSerializedValue === LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL) {
+                                        cachedSerializedValue = foreignCallableSerializeTarget(
+                                            this.foreignTargetPointer,
+                                        )
+                                    }
+                                    return cachedSerializedValue
                                 }
-                                ReflectApply(ObjectProtoDefineGetter, this, [
-                                    MINIFICATION_SAFE_SERIALIZED_VALUE_PROPERTY_NAME,
-                                    () => {
-                                        if (cachedSerializedValue === LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL) {
-                                            cachedSerializedValue = foreignCallableSerializeTarget(
-                                                this.foreignTargetPointer,
-                                            )
-                                        }
-                                        return cachedSerializedValue
-                                    },
-                                ])
-                            } // Future optimization: Hoping proxies with frozen handlers
-                            // can be faster. If local mutations are not trapped, then
-                            // freezing the handler is ok because it is not expecting to
-                            // change in the future.
-                            ObjectFreeze(this)
-                        }
-                    }
-                    makeProxyLive() {
-                        // Replace pending traps with live traps that can work with the
-                        // target without taking snapshots.
-                        this.deleteProperty = BoundaryProxyHandler.passthruDeletePropertyTrap
-                        this.defineProperty = BoundaryProxyHandler.passthruDefinePropertyTrap
-                        this.preventExtensions = BoundaryProxyHandler.passthruPreventExtensionsTrap
-                        this.set = BoundaryProxyHandler.passthruSetTrap
-                        this.setPrototypeOf = BoundaryProxyHandler.passthruSetPrototypeOfTrap // Future optimization: Hoping proxies with frozen handlers can
-                        // be faster.
-                        ObjectFreeze(this)
-                    }
-                    makeProxyStatic() {
-                        // Reset all traps except apply and construct for static proxies
-                        // since the proxy target is the shadow target and all operations
-                        // are going to be applied to it rather than the real target.
-                        this.defineProperty = BoundaryProxyHandler.staticDefinePropertyTrap
-                        this.deleteProperty = BoundaryProxyHandler.staticDeletePropertyTrap
-                        this.get = BoundaryProxyHandler.staticGetTrap
-                        this.getOwnPropertyDescriptor = BoundaryProxyHandler.staticGetOwnPropertyDescriptorTrap
-                        this.getPrototypeOf = BoundaryProxyHandler.staticGetPrototypeOfTrap
-                        this.has = BoundaryProxyHandler.staticHasTrap
-                        this.isExtensible = BoundaryProxyHandler.staticIsExtensibleTrap
-                        this.ownKeys = BoundaryProxyHandler.staticOwnKeysTrap
-                        this.preventExtensions = BoundaryProxyHandler.staticPreventExtensionsTrap
-                        this.set = BoundaryProxyHandler.staticSetTrap
-                        this.setPrototypeOf = BoundaryProxyHandler.staticSetPrototypeOfTrap
-                        const {
-                            foreignTargetPointer: foreignTargetPointer1,
-                            foreignTargetTraits: foreignTargetTraits1,
-                            shadowTarget: shadowTarget1,
-                        } = this
-                        if (useFastForeignTargetPath) {
-                            fastForeignTargetPointers.delete(foreignTargetPointer1)
-                        } // We don't wrap `foreignCallableGetTargetIntegrityTraits()`
-                        // in a try-catch because it cannot throw.
-                        const targetIntegrityTraits = foreignCallableGetTargetIntegrityTraits(foreignTargetPointer1)
-                        if (targetIntegrityTraits & 8) {
-                            // Future optimization: Hoping proxies with frozen
-                            // handlers can be faster.
-                            ObjectFreeze(this) // the target is a revoked proxy, in which case we revoke
-                            // this proxy as well.
-                            this.revoke()
-                            return
-                        } // A proxy can revoke itself when traps are triggered and break
-                        // the membrane, therefore we need protection.
-                        try {
-                            copyForeignOwnPropertyDescriptorsAndPrototypeToShadowTarget(
-                                foreignTargetPointer1,
-                                shadowTarget1,
-                            )
-                        } catch (_unused27) {
-                            // We don't wrap `foreignCallableIsTargetRevoked()` in a
-                            // try-catch because it cannot throw.
-                            if (foreignCallableIsTargetRevoked(foreignTargetPointer1)) {
-                                // Future optimization: Hoping proxies with frozen
-                                // handlers can be faster.
-                                ObjectFreeze(this)
-                                this.revoke()
-                                return
                             }
                         }
-                        if (foreignTargetTraits1 & 16 && !(SymbolToStringTag in shadowTarget1)) {
-                            let toStringTag = 'Object'
-                            try {
-                                toStringTag = foreignCallableGetToStringTagOfTarget(foreignTargetPointer1) // eslint-disable-next-line no-empty
-                            } catch (_unused28) {}
-                            this.staticToStringTag = toStringTag
-                        } // Preserve the semantics of the target.
-                        if (targetIntegrityTraits & 4) {
-                            ObjectFreeze(shadowTarget1)
-                        } else {
-                            if (targetIntegrityTraits & 2) {
-                                ObjectSeal(shadowTarget1)
-                            } else if (targetIntegrityTraits & 1) {
-                                ReflectPreventExtensions(shadowTarget1)
-                            }
-                            if (LOCKER_UNMINIFIED_FLAG) {
-                                // We don't wrap `foreignCallableDebugInfo()` in a try-catch
-                                // because it cannot throw.
-                                foreignCallableDebugInfo(
-                                    'Mutations on the membrane of an object originating ' +
-                                        'outside of the sandbox will not be reflected on ' +
-                                        'the object itself:',
-                                    foreignTargetPointer1,
-                                )
-                            }
-                        } // Future optimization: Hoping proxies with frozen handlers can
-                        // be faster.
-                        ObjectFreeze(this)
                     }
                     static passthruDefinePropertyTrap(_shadowTarget, key, unsafePartialDesc) {
                         lastProxyTrapCalled = 4 /* ProxyHandlerTraps.DefineProperty */
@@ -2342,6 +2447,15 @@ export default {
                         }
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity.stop()
+                        } // Getting forged descriptors of near-membrane symbol properties
+                        // is not allowed.
+                        if (
+                            IS_NOT_IN_SHADOW_REALM &&
+                            safeDesc &&
+                            (key === LOCKER_NEAR_MEMBRANE_SYMBOL ||
+                                key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL)
+                        ) {
+                            throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
                         }
                         return safeDesc
                     }
@@ -2414,16 +2528,28 @@ export default {
                     }
                     static passthruSetTrap(_shadowTarget, key, value, receiver) {
                         lastProxyTrapCalled = 2048 /* ProxyHandlerTraps.Set */
-                        const { foreignTargetPointer: foreignTargetPointer1, proxy, shadowTarget: shadowTarget1 } = this // Intentionally ignoring `document.all`.
+                        const {
+                            foreignTargetPointer: foreignTargetPointer1,
+                            proxy: proxy1,
+                            shadowTarget: shadowTarget1,
+                        } = this // Intentionally ignoring `document.all`.
                         // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                         if (typeof value === 'undefined') {
                             value = undefined
                         }
                         if (typeof receiver === 'undefined') {
-                            receiver = proxy
+                            receiver = proxy1
+                        } // Setting forged values of near-membrane symbol properties
+                        // is not allowed.
+                        if (
+                            IS_NOT_IN_SHADOW_REALM &&
+                            (key === LOCKER_NEAR_MEMBRANE_SYMBOL ||
+                                key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL)
+                        ) {
+                            throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
                         }
-                        const isFastPath = proxy === receiver
+                        const isFastPath = proxy1 === receiver
                         let activity
                         if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                             activity = startActivity(isFastPath ? 'Reflect.set' : 'passthruForeignTraversedSet')
@@ -2473,7 +2599,7 @@ export default {
                           const {
                               foreignTargetPointer: foreignTargetPointer1,
                               foreignTargetTraits: foreignTargetTraits1,
-                              proxy,
+                              proxy: proxy1,
                               shadowTarget: shadowTarget1,
                           } = this
                           let safeDesc
@@ -2507,7 +2633,7 @@ export default {
                                       if (safeDesc.foreign) {
                                           const foreignGetterPointer = getTransferablePointer(getter)
                                           const transferableReceiver =
-                                              proxy === receiver
+                                              proxy1 === receiver
                                                   ? foreignTargetPointer1
                                                   : (typeof receiver === 'object' && receiver !== null) ||
                                                     typeof receiver === 'function'
@@ -2551,7 +2677,7 @@ export default {
                                   }
                               } else {
                                   const transferableReceiver =
-                                      proxy === receiver
+                                      proxy1 === receiver
                                           ? foreignTargetPointer1
                                           : (typeof receiver === 'object' && receiver !== null) ||
                                             typeof receiver === 'function'
@@ -2625,7 +2751,7 @@ export default {
                           const {
                               foreignTargetPointer: foreignTargetPointer1,
                               foreignTargetTypedArrayLength: foreignTargetTypedArrayLength1,
-                              proxy,
+                              proxy: proxy1,
                               shadowTarget: shadowTarget1,
                           } = this
                           let useFastPath = useFastForeignTargetPathForTypedArrays
@@ -2638,8 +2764,9 @@ export default {
                           }
                           let result
                           if (useFastPath) {
+                              let pointerOrPrimitive
                               try {
-                                  result = foreignCallableGetPropertyValue(foreignTargetPointer1, key)
+                                  pointerOrPrimitive = foreignCallableGetPropertyValue(foreignTargetPointer1, key)
                               } catch (error) {
                                   var _selectedTarget24
                                   const errorToThrow =
@@ -2650,6 +2777,13 @@ export default {
                                   }
                                   throw errorToThrow
                               }
+                              if (typeof pointerOrPrimitive === 'function') {
+                                  pointerOrPrimitive()
+                                  result = selectedTarget
+                                  selectedTarget = undefined
+                              } else {
+                                  result = pointerOrPrimitive
+                              }
                           } else {
                               const safeDesc = lookupForeignDescriptor(foreignTargetPointer1, shadowTarget1, key)
                               if (safeDesc) {
@@ -2658,7 +2792,7 @@ export default {
                                       if (safeDesc.foreign) {
                                           const foreignGetterPointer = getTransferablePointer(getter)
                                           const transferableReceiver =
-                                              proxy === receiver
+                                              proxy1 === receiver
                                                   ? foreignTargetPointer1
                                                   : (typeof receiver === 'object' && receiver !== null) ||
                                                     typeof receiver === 'function'
@@ -2758,22 +2892,25 @@ export default {
                           return result
                       }
                     : alwaysFalse
-                BoundaryProxyHandler.passthruGetTrap = !IS_IN_SHADOW_REALM
+                BoundaryProxyHandler.passthruGetTrap = IS_NOT_IN_SHADOW_REALM
                     ? function (_shadowTarget, key, receiver) {
                           // Only allow accessing near-membrane symbol values if the
                           // BoundaryProxyHandler.has trap has been called immediately
                           // before and the symbol does not exist.
                           nearMembraneSymbolFlag && (nearMembraneSymbolFlag = lastProxyTrapCalled === 128)
                           lastProxyTrapCalled = 16 /* ProxyHandlerTraps.Get */
+                          const isNearMembraneSymbol = key === LOCKER_NEAR_MEMBRANE_SYMBOL
+                          const isNearMembraneSerializedValueSymbol =
+                              key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL
                           if (nearMembraneSymbolFlag) {
                               // Exit without performing a [[Get]] for near-membrane
                               // symbols because we know when the nearMembraneSymbolFlag
-                              // is on that there is no shadowed symbol value.
-                              if (key === LOCKER_NEAR_MEMBRANE_SYMBOL) {
+                              // is ON that there is no shadowed symbol value.
+                              if (isNearMembraneSymbol) {
                                   return true
                               }
-                              if (key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL) {
-                                  return this.serializedValue
+                              if (isNearMembraneSerializedValueSymbol) {
+                                  return this.serialize()
                               }
                           }
                           let activity
@@ -2783,13 +2920,13 @@ export default {
                           const {
                               foreignTargetPointer: foreignTargetPointer1,
                               foreignTargetTraits: foreignTargetTraits1,
-                              proxy,
+                              proxy: proxy1,
                           } = this
                           if (typeof receiver === 'undefined') {
-                              receiver = proxy
+                              receiver = proxy1
                           }
                           const transferableReceiver =
-                              proxy === receiver
+                              proxy1 === receiver
                                   ? LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                                   : (typeof receiver === 'object' && receiver !== null) ||
                                     typeof receiver === 'function'
@@ -2823,11 +2960,15 @@ export default {
                           }
                           if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                               activity.stop()
+                          } // Getting forged values of near-membrane symbol properties
+                          // is not allowed.
+                          if (result !== undefined && (isNearMembraneSymbol || isNearMembraneSerializedValueSymbol)) {
+                              throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
                           }
                           return result
                       }
                     : noop
-                BoundaryProxyHandler.passthruHasTrap = !IS_IN_SHADOW_REALM
+                BoundaryProxyHandler.passthruHasTrap = IS_NOT_IN_SHADOW_REALM
                     ? function (_shadowTarget, key) {
                           lastProxyTrapCalled = 128 /* ProxyHandlerTraps.Has */
                           let activity
@@ -2846,12 +2987,21 @@ export default {
                                   activity.error(errorToThrow)
                               }
                               throw errorToThrow
-                          } // The near-membrane symbol flag is on if the symbol does not
-                          // exist on the object or its [[Prototype]].
-                          nearMembraneSymbolFlag =
-                              !result &&
-                              (key === LOCKER_NEAR_MEMBRANE_SYMBOL ||
-                                  key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL)
+                          }
+                          const isNearMembraneSymbol = key === LOCKER_NEAR_MEMBRANE_SYMBOL
+                          const isNearMembraneSerializedValueSymbol =
+                              key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL
+                          if (result) {
+                              nearMembraneSymbolFlag = false // Checking the existence of forged near-membrane
+                              // symbol properties is not allowed.
+                              if (isNearMembraneSymbol || isNearMembraneSerializedValueSymbol) {
+                                  throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
+                              }
+                          } else {
+                              // The near-membrane symbol flag is on if the symbol
+                              // does not exist on the object or its [[Prototype]].
+                              nearMembraneSymbolFlag = isNearMembraneSymbol || isNearMembraneSerializedValueSymbol
+                          }
                           if (LOCKER_DEBUG_MODE_INSTRUMENTATION_FLAG) {
                               activity.stop()
                           }
@@ -3010,12 +3160,13 @@ export default {
                     ? BoundaryProxyHandler.pendingSetPrototypeOfTrap
                     : BoundaryProxyHandler.passthruSetPrototypeOfTrap
                 if (IS_IN_SHADOW_REALM) {
+                    // Initialize `fastForeignTargetPointers` weak map.
                     clearFastForeignTargetPointers()
                 } // Export callable hooks to a foreign realm.
                 foreignCallableHooksCallback(
                     // When crossing, should be mapped to the foreign globalThis
                     createPointer(globalThisRef),
-                    !IS_IN_SHADOW_REALM
+                    IS_NOT_IN_SHADOW_REALM
                         ? () => {
                               const result = selectedTarget
                               selectedTarget = undefined
@@ -3059,7 +3210,7 @@ export default {
                         const target = selectedTarget
                         selectedTarget = undefined
                         if ((typeof target === 'object' && target !== null) || typeof target === 'function') {
-                            proxyTargetToPointerMap.set(target, newPointer)
+                            proxyPointerCache.set(target, newPointer)
                         }
                     },
                     LOCKER_DEBUGGABLE_FLAG
@@ -3475,7 +3626,7 @@ export default {
                               }
                           }
                         : noop,
-                    !IS_IN_SHADOW_REALM
+                    IS_NOT_IN_SHADOW_REALM
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
@@ -3485,19 +3636,23 @@ export default {
                               return state ? getTransferablePointer(state) : state
                           }
                         : noop,
-                    !IS_IN_SHADOW_REALM
-                        ? (targetPointer, index) => {
+                    IS_NOT_IN_SHADOW_REALM
+                        ? (targetPointer, key) => {
                               targetPointer()
                               const target = selectedTarget
                               selectedTarget = undefined
+                              let value
                               try {
-                                  return target[index]
+                                  value = target[key]
                               } catch (error) {
                                   throw pushErrorAcrossBoundary(error)
                               }
+                              return (typeof value === 'object' && value !== null) || typeof value === 'function'
+                                  ? getTransferablePointer(value)
+                                  : value
                           }
                         : noop,
-                    !IS_IN_SHADOW_REALM
+                    IS_NOT_IN_SHADOW_REALM
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
@@ -3538,7 +3693,43 @@ export default {
                             throw pushErrorAcrossBoundary(error)
                         }
                     },
+                    IS_IN_SHADOW_REALM
+                        ? (DateProtoPointer, DataProtoToJSONPointer) => {
+                              if (installedDateProtoToJSONFlag) {
+                                  return
+                              }
+                              installedDateProtoToJSONFlag = true
+                              DateProtoPointer()
+                              const dateProto = selectedTarget
+                              selectedTarget = undefined
+                              DataProtoToJSONPointer()
+                              const toJSON = selectedTarget
+                              selectedTarget = undefined // eslint-disable-next-line no-extend-native
+                              dateProto.toJSON = proxyMaskFunction(toJSON, DateProtoToJSON)
+                              selectedTarget = undefined
+                          }
+                        : noop,
                     installErrorPrepareStackTrace,
+                    IS_IN_SHADOW_REALM
+                        ? (WindowJSONPointer) => {
+                              if (installedJSONStringifyFlag) {
+                                  return
+                              }
+                              installedJSONStringifyFlag = true
+                              WindowJSONPointer()
+                              const WindowJSON = selectedTarget
+                              selectedTarget = undefined
+                              WindowJSON.stringify = proxyMaskFunction(
+                                  (
+                                      ...args // `JSON.stringify` method so that properties added
+                                  ) =>
+                                      // to red proxied values are included in the
+                                      // stringified result.
+                                      ReflectApply(JSONStringify, _.JSON, args),
+                                  JSONStringify,
+                              )
+                          }
+                        : noop,
                     IS_IN_SHADOW_REALM
                         ? (targetPointer, ...ownKeysAndUnforgeableGlobalThisKeys) => {
                               const sliceIndex = ReflectApply(ArrayProtoIndexOf, ownKeysAndUnforgeableGlobalThisKeys, [
@@ -3602,7 +3793,7 @@ export default {
                               installPropertyDescriptorMethodWrappers(unforgeableGlobalThisKeys)
                           }
                         : noop,
-                    !IS_IN_SHADOW_REALM && liveTargetCallback
+                    IS_NOT_IN_SHADOW_REALM && liveTargetCallback
                         ? (targetPointer, targetTraits) => {
                               targetPointer()
                               const target = selectedTarget
@@ -3615,7 +3806,7 @@ export default {
                               return false
                           }
                         : alwaysFalse,
-                    !IS_IN_SHADOW_REALM
+                    IS_NOT_IN_SHADOW_REALM
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
@@ -3640,7 +3831,7 @@ export default {
                               return undefined
                           }
                         : noop,
-                    !IS_IN_SHADOW_REALM
+                    IS_NOT_IN_SHADOW_REALM
                         ? (targetPointer, statePointer) => {
                               targetPointer()
                               const target = selectedTarget
@@ -3652,7 +3843,7 @@ export default {
                               __.proxyTargetToLazyPropertyDescriptorStateMap.set(target, state)
                           }
                         : noop,
-                    !IS_IN_SHADOW_REALM
+                    IS_IN_SHADOW_REALM
                         ? (targetPointer) => {
                               targetPointer()
                               const target = selectedTarget
@@ -3666,18 +3857,18 @@ export default {
                         targetPointer()
                         const target = selectedTarget
                         selectedTarget = undefined
-                        let unsafeDescMap
+                        let unsafeDescs
                         try {
-                            unsafeDescMap = ObjectGetOwnPropertyDescriptors(target)
+                            unsafeDescs = ObjectGetOwnPropertyDescriptors(target)
                         } catch (error) {
                             throw pushErrorAcrossBoundary(error)
                         }
-                        const ownKeys = ReflectOwnKeys(unsafeDescMap)
+                        const ownKeys = ReflectOwnKeys(unsafeDescs)
                         const { length } = ownKeys
                         const descriptorTuples = new ArrayCtor(length * 7)
                         for (let i = 0, j = 0; i < length; i += 1, j += 7) {
                             const ownKey = ownKeys[i]
-                            const safeDesc = unsafeDescMap[ownKey]
+                            const safeDesc = unsafeDescs[ownKey]
                             ReflectSetPrototypeOf(safeDesc, null)
                             const { get: getter, set: setter, value: value1 } = safeDesc
                             descriptorTuples[j] = ownKey
@@ -3835,15 +4026,16 @@ export default {
                         23: foreignCallableGetLazyPropertyDescriptorStateByTarget,
                         24: foreignCallableGetPropertyValue,
                         25: foreignCallableGetTargetIntegrityTraits,
-                        26: foreignCallableGetToStringTagOfTarget,
-                        27: foreignCallableInstallErrorPrepareStackTrace, // 28: callableInstallLazyPropertyDescriptors,
-                        29: foreignCallableIsTargetLive,
-                        30: foreignCallableIsTargetRevoked,
-                        31: foreignCallableSerializeTarget,
-                        32: foreignCallableSetLazyPropertyDescriptorStateByTarget, // 33: foreignCallableTrackAsFastTarget,
-                        34: foreignCallableBatchGetPrototypeOfAndGetOwnPropertyDescriptors,
-                        35: foreignCallableBatchGetPrototypeOfWhenHasNoOwnProperty,
-                        36: foreignCallableBatchGetPrototypeOfWhenHasNoOwnPropertyDescriptor,
+                        26: foreignCallableGetToStringTagOfTarget, // 27: callableInstallDateProtoToJSON,
+                        28: foreignCallableInstallErrorPrepareStackTrace, // 29: callableInstallJSONStringify,
+                        // 30: callableInstallLazyPropertyDescriptors,
+                        31: foreignCallableIsTargetLive,
+                        32: foreignCallableIsTargetRevoked,
+                        33: foreignCallableSerializeTarget,
+                        34: foreignCallableSetLazyPropertyDescriptorStateByTarget, // 35: callableTrackAsFastTarget,
+                        36: foreignCallableBatchGetPrototypeOfAndGetOwnPropertyDescriptors,
+                        37: foreignCallableBatchGetPrototypeOfWhenHasNoOwnProperty,
+                        38: foreignCallableBatchGetPrototypeOfWhenHasNoOwnPropertyDescriptor,
                     } = hooks)
                     const applyTrapForZeroOrMoreArgs = createApplyOrConstructTrapForZeroOrMoreArgs(1)
                     const applyTrapForOneOrMoreArgs = createApplyOrConstructTrapForOneOrMoreArgs(1)
@@ -3879,37 +4071,36 @@ export default {
                             constructTrapForAnyNumberOfArgs,
                         })
                     }
-                    arityToApplyTrapNameRegistry[0] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[0]
-                    arityToApplyTrapNameRegistry[1] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[1]
-                    arityToApplyTrapNameRegistry[2] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[2]
-                    arityToApplyTrapNameRegistry[3] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[3]
-                    arityToApplyTrapNameRegistry[4] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[4]
-                    arityToApplyTrapNameRegistry[5] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[5]
-                    arityToApplyTrapNameRegistry.n = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[6]
-                    arityToConstructTrapNameRegistry[0] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[7]
-                    arityToConstructTrapNameRegistry[1] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[8]
-                    arityToConstructTrapNameRegistry[2] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[9]
-                    arityToConstructTrapNameRegistry[3] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[10]
-                    arityToConstructTrapNameRegistry[4] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[11]
-                    arityToConstructTrapNameRegistry[5] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[12]
-                    arityToConstructTrapNameRegistry.n = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[13]
+                    applyTrapNameRegistry[0] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[0]
+                    applyTrapNameRegistry[1] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[1]
+                    applyTrapNameRegistry[2] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[2]
+                    applyTrapNameRegistry[3] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[3]
+                    applyTrapNameRegistry[4] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[4]
+                    applyTrapNameRegistry[5] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[5]
+                    applyTrapNameRegistry.n = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[6]
+                    constructTrapNameRegistry[0] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[7]
+                    constructTrapNameRegistry[1] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[8]
+                    constructTrapNameRegistry[2] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[9]
+                    constructTrapNameRegistry[3] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[10]
+                    constructTrapNameRegistry[4] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[11]
+                    constructTrapNameRegistry[5] = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[12]
+                    constructTrapNameRegistry.n = MINIFICATION_SAFE_TRAP_PROPERTY_NAMES[13]
                     const { prototype: BoundaryProxyHandlerProto } = BoundaryProxyHandler
-                    BoundaryProxyHandlerProto[arityToApplyTrapNameRegistry[0]] = applyTrapForZeroOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToApplyTrapNameRegistry[1]] = applyTrapForOneOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToApplyTrapNameRegistry[2]] = applyTrapForTwoOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToApplyTrapNameRegistry[3]] = applyTrapForThreeOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToApplyTrapNameRegistry[4]] = applyTrapForFourOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToApplyTrapNameRegistry[5]] = applyTrapForFiveOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToApplyTrapNameRegistry.n] = applyTrapForAnyNumberOfArgs
-                    BoundaryProxyHandlerProto[arityToConstructTrapNameRegistry[0]] = constructTrapForZeroOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToConstructTrapNameRegistry[1]] = constructTrapForOneOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToConstructTrapNameRegistry[2]] = constructTrapForTwoOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToConstructTrapNameRegistry[3]] = constructTrapForThreeOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToConstructTrapNameRegistry[4]] = constructTrapForFourOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToConstructTrapNameRegistry[5]] = constructTrapForFiveOrMoreArgs
-                    BoundaryProxyHandlerProto[arityToConstructTrapNameRegistry.n] = constructTrapForAnyNumberOfArgs
-                    ReflectSetPrototypeOf(BoundaryProxyHandlerProto, null) // Future optimization: Hoping proxies with frozen handlers can be faster.
-                    ObjectFreeze(BoundaryProxyHandlerProto)
+                    BoundaryProxyHandlerProto[applyTrapNameRegistry[0]] = applyTrapForZeroOrMoreArgs
+                    BoundaryProxyHandlerProto[applyTrapNameRegistry[1]] = applyTrapForOneOrMoreArgs
+                    BoundaryProxyHandlerProto[applyTrapNameRegistry[2]] = applyTrapForTwoOrMoreArgs
+                    BoundaryProxyHandlerProto[applyTrapNameRegistry[3]] = applyTrapForThreeOrMoreArgs
+                    BoundaryProxyHandlerProto[applyTrapNameRegistry[4]] = applyTrapForFourOrMoreArgs
+                    BoundaryProxyHandlerProto[applyTrapNameRegistry[5]] = applyTrapForFiveOrMoreArgs
+                    BoundaryProxyHandlerProto[applyTrapNameRegistry.n] = applyTrapForAnyNumberOfArgs
+                    BoundaryProxyHandlerProto[constructTrapNameRegistry[0]] = constructTrapForZeroOrMoreArgs
+                    BoundaryProxyHandlerProto[constructTrapNameRegistry[1]] = constructTrapForOneOrMoreArgs
+                    BoundaryProxyHandlerProto[constructTrapNameRegistry[2]] = constructTrapForTwoOrMoreArgs
+                    BoundaryProxyHandlerProto[constructTrapNameRegistry[3]] = constructTrapForThreeOrMoreArgs
+                    BoundaryProxyHandlerProto[constructTrapNameRegistry[4]] = constructTrapForFourOrMoreArgs
+                    BoundaryProxyHandlerProto[constructTrapNameRegistry[5]] = constructTrapForFiveOrMoreArgs
+                    BoundaryProxyHandlerProto[constructTrapNameRegistry.n] = constructTrapForAnyNumberOfArgs
+                    ReflectSetPrototypeOf(BoundaryProxyHandlerProto, null)
                 }
             }
             /* eslint-enable prefer-object-spread */
