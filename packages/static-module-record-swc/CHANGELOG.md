@@ -1,5 +1,16 @@
 # @masknet/static-module-record-swc
 
+## 0.5.0
+
+### Minor Changes
+
+-   da873b1: add commonjs support
+
+### Patch Changes
+
+-   be3ac75: upgrade to swc latest
+-   63dfba3: upgrade dependencies
+
 ## 0.4.1
 
 ### Patch Changes

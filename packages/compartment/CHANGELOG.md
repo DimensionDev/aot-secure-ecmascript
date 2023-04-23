@@ -1,5 +1,15 @@
 # @masknet/compartment
 
+## 0.5.0
+
+### Minor Changes
+
+-   da873b1: add commonjs support
+
+### Patch Changes
+
+-   63dfba3: upgrade dependencies
+
 ## 0.4.2
 
 ### Patch Changes
