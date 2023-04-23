@@ -7,15 +7,15 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-serde = "1.0.147"
-serde_json = "1.0.87"
-swc_core = { version = "0.40.13", features = [
+serde = "1.0.160"
+serde_json = "1.0.96"
+swc_core = { version = "0.75.31", features = [
     "ecma_ast",
     "ecma_utils",
     "ecma_visit",
-    "plugin_transform",
+    "ecma_plugin_transform",
     "swc_atoms",
     "swc_plugin",
     "testing_transform",
 ] }
-testing = "0.31.0"
+testing = "0.33.5"

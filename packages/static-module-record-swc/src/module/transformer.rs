@@ -178,7 +178,7 @@ impl VirtualModuleRecordTransformer {
                         ),
                         left: node.left.fold_children_with(self),
                         right: node.right.fold_children_with(self),
-                        await_token: node.await_token,
+                        is_await: node.is_await,
                         span: node.span,
                     }
                     .into()]
