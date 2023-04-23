@@ -8,6 +8,10 @@
   "type": "module",
   "author": "Jack Works",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DimensionDev/aot-secure-ecmascript"
+  },
   "keywords": [
     "swc-plugin"
   ],

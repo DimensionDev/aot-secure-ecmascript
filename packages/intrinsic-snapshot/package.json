@@ -4,6 +4,10 @@
   "type": "module",
   "main": "./dist/index.js",
   "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DimensionDev/aot-secure-ecmascript"
+  },
   "exports": {
     "default": "./dist/index.js"
   },
