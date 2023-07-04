@@ -110,6 +110,8 @@ impl Visit for ScannerSecondPass {
                 }
             }
             ModuleDecl::ExportDecl(export) => match &export.decl {
+                // export using x = expr is illegal
+                Decl::Using(_) => (),
                 Decl::Class(class) => {
                     self.bindings.push(ExportBinding::local(&class.ident));
                     self.live_export_tracing_bindings

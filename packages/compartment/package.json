@@ -20,7 +20,7 @@
     "build": "rollup -c"
   },
   "devDependencies": {
-    "@swc/core": "^1.3.53"
+    "@swc/core": "^1.3.67"
   },
   "files": [
     "dist/bundle.js",

@@ -9,7 +9,7 @@ export default {
             a: _.a
         };
         _.a = 1;
-        ({ a: _.a  } = {
+        ({ a: _.a } = {
             a: 2
         });
         [_.a, _.b] = [
@@ -19,7 +19,7 @@ export default {
         ({ ..._.a } = _.expr);
         _.a *= 4;
         _.a++;
-        function yy({ a =_.x  }) {}
+        function yy({ a = _.x }) {}
         (0, _.css)`
     body {}
 `;

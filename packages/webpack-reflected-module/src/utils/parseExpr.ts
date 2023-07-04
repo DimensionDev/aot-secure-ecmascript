@@ -22,7 +22,7 @@ export function getImportReflectionOptions(
     const [importCallOptions, ...rest] = expression.arguments as Expression[]
     if (!importCallOptions || rest.length) return null
     const optionsExpression = evaluateExpression(importCallOptions)
-    if (optionsExpression.expression.type !== 'ObjectExpression') return null
+    if (optionsExpression.expression?.type !== 'ObjectExpression') return null
 
     let request: string | undefined = undefined
     let exclude: ImportReflectionOptions['exclude'] = undefined

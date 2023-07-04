@@ -144,7 +144,7 @@ export class ReflectedModule extends Module {
     override codeGeneration(context: Parameters<Module['codeGeneration']>[0]): any {
         const runtimeRequirements: Set<string> = new Set()
 
-        if (!this.buildInfo['parsed']) {
+        if (!this.buildInfo?.['parsed']) {
             runtimeRequirements.add(RuntimeGlobals.module)
             runtimeRequirements.add(RuntimeGlobals.exports)
             runtimeRequirements.add(RuntimeGlobals.thisAsExports)
