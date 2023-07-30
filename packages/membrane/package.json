@@ -20,7 +20,7 @@
     "@locker/near-membrane-dom": "0.12.15"
   },
   "devDependencies": {
-    "@swc/core": "1.3.69"
+    "@swc/core": "1.3.72"
   },
   "scripts": {
     "update": "node ./build.mjs"
