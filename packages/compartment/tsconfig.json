@@ -5,8 +5,7 @@
         "outDir": "./dist/",
         "tsBuildInfoFile": "./dist/.tsbuildinfo",
         "allowJs": true,
-        "sourceMap": false,
-        "emitDeclarationOnly": true
+        "sourceMap": false
     },
     "include": ["./src"],
     "references": []
