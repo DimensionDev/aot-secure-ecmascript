@@ -13,7 +13,9 @@ export class ReflectedModule extends Module {
     /**
      * @param {Parameters<typeof import('webpack').IgnorePlugin['prototype']['checkIgnore']>[0]['createData']} data
      */
-    constructor(data: Parameters<typeof import('webpack').IgnorePlugin['prototype']['checkIgnore']>[0]['createData']) {
+    constructor(
+        data: Parameters<(typeof import('webpack').IgnorePlugin)['prototype']['checkIgnore']>[0]['createData'],
+    ) {
         const { resource, request, context = getContext(resource!), layer, userRequest } = data
         super('javascript/esm/reflection', context, layer)
         if (!request) throw new Error('No request')

@@ -5,8 +5,8 @@ export type ModuleFactoryCreateData = Parameters<NormalModuleFactory['create']>[
 export type ModuleFactoryCreateDataCallback = Parameters<NormalModuleFactory['create']>[1]
 export type CodeGenerationResult = ReturnType<Module['codeGeneration']>
 export type EvaluateExpression = javascript.JavascriptParser['evaluateExpression']
-export type ResolveData = Parameters<typeof import('webpack').IgnorePlugin['prototype']['checkIgnore']>[0]
+export type ResolveData = Parameters<(typeof import('webpack').IgnorePlugin)['prototype']['checkIgnore']>[0]
 export type DependencyTemplateContext = Parameters<
-    typeof dependencies.ModuleDependency.Template['prototype']['apply']
+    (typeof dependencies.ModuleDependency.Template)['prototype']['apply']
 >[2]
 export type JavascriptParserOptions = NonNullable<ModuleOptions['parser']>['javascript/auto']
