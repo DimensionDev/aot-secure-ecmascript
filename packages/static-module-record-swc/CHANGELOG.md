@@ -1,5 +1,11 @@
 # @masknet/static-module-record-swc
 
+## 0.6.0
+
+### Minor Changes
+
+-   6dd3bed: update dependencies
+
 ## 0.5.0
 
 ### Minor Changes
