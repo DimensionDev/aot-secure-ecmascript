@@ -36,9 +36,9 @@ export class ReflectedModuleDependency extends Dependency {
             const content = runtimeTemplate.moduleNamespacePromise({
                 chunkGraph,
                 block,
-                module: moduleGraph.getModule(dep),
+                module: moduleGraph.getModule(dep)!,
                 request: dep.request,
-                strict: module.buildMeta.strictHarmonyModule!,
+                strict: module.buildMeta?.strictHarmonyModule!,
                 message: 'import() reflected',
                 runtimeRequirements,
             })

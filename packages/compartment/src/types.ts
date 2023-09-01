@@ -37,7 +37,7 @@ export interface ExportAllBinding {
 }
 export interface VirtualModuleRecord {
     bindings?: Array<Binding> | undefined
-    execute?(environment: any, context: VirtualModuleRecordExecuteContext): void | Promise<void>
+    execute?: ((environment: any, context: VirtualModuleRecordExecuteContext) => void | Promise<void>) | undefined
     needsImportMeta?: boolean | undefined
     needsImport?: boolean | undefined
     isAsync?: boolean | undefined

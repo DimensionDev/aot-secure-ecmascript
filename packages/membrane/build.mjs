@@ -39,7 +39,7 @@ await writeFile(
 // This file is built from '@locker/near-membrane-base'.createMembraneMarshall.
 // DO NOT edit it manually.
 ` +
-        format(code.replaceAll('_.undefined', 'undefined'), {
+        (await format(code.replaceAll('_.undefined', 'undefined'), {
             trailingComma: 'all',
             printWidth: 120,
             semi: false,
@@ -47,5 +47,5 @@ await writeFile(
             bracketSameLine: true,
             tabWidth: 4,
             parser: 'babel',
-        }),
+        })),
 )

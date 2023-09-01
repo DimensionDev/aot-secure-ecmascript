@@ -25,8 +25,9 @@ impl VirtualModuleRecordTransformer {
                     Decl::Class(x) => self.fold_declaration_to_multiple(x.into()),
                     Decl::Fn(x) => self.fold_declaration_to_multiple(x.into()),
                     Decl::Var(x) => self.fold_declaration_to_multiple(x.into()),
-                    Decl::TsInterface(_) => unimplemented![],
-                    Decl::TsTypeAlias(_) => unimplemented![],
+                    Decl::Using(x) => self.fold_declaration_to_multiple(x.into()),
+                    Decl::TsInterface(_) => unimplemented!(),
+                    Decl::TsTypeAlias(_) => unimplemented!(),
                     Decl::TsEnum(_) => unimplemented!(),
                     Decl::TsModule(_) => unimplemented!(),
                 },
@@ -125,15 +126,15 @@ impl VirtualModuleRecordTransformer {
             Stmt::ForIn(node) => {
                 let mut tracing = vec![];
                 match &node.left {
-                    // let and const has their own block-level scope.
-                    VarDeclOrPat::VarDecl(decl) => {
+                    ForHead::VarDecl(decl) => {
                         if decl.kind == VarDeclKind::Var {
                             for item in &decl.decls {
                                 self.trace_live_export_pat(&item.name, &mut tracing);
                             }
                         }
                     }
-                    VarDeclOrPat::Pat(pat) => {
+                    ForHead::UsingDecl(_) => (),
+                    ForHead::Pat(pat) => {
                         self.trace_live_export_pat(pat, &mut tracing);
                     }
                 };
@@ -157,14 +158,15 @@ impl VirtualModuleRecordTransformer {
                 let mut tracing = vec![];
                 match &node.left {
                     // let and const has their own block-level scope.
-                    VarDeclOrPat::VarDecl(decl) => {
+                    ForHead::VarDecl(decl) => {
                         if decl.kind == VarDeclKind::Var {
                             for item in &decl.decls {
                                 self.trace_live_export_pat(&item.name, &mut tracing);
                             }
                         }
                     }
-                    VarDeclOrPat::Pat(pat) => {
+                    ForHead::UsingDecl(_) => (),
+                    ForHead::Pat(pat) => {
                         self.trace_live_export_pat(pat, &mut tracing);
                     }
                 };
@@ -200,10 +202,11 @@ impl VirtualModuleRecordTransformer {
                     self.trace_live_export_pat(&item.name, &mut tracing);
                 }
             }
-            Decl::TsInterface(_) => unimplemented!(),
-            Decl::TsTypeAlias(_) => unimplemented!(),
-            Decl::TsEnum(_) => unimplemented!(),
-            Decl::TsModule(_) => unimplemented!(),
+            Decl::Using(_) => (),
+            Decl::TsInterface(_) => (),
+            Decl::TsTypeAlias(_) => (),
+            Decl::TsEnum(_) => (),
+            Decl::TsModule(_) => (),
         };
         std::iter::once(decl.fold_children_with(self).into())
             .chain(tracing.into_iter().map(expr_to_stmt))
