@@ -1,5 +1,16 @@
 # @masknet/webpack-reflect-module-plugin
 
+## 0.2.0
+
+### Minor Changes
+
+-   6dd3bed: update dependencies
+
+### Patch Changes
+
+-   Updated dependencies [6dd3bed]
+    -   @masknet/static-module-record-swc@0.6.0
+
 ## 0.1.0
 
 ### Minor Changes
