@@ -79,43 +79,44 @@ export default {
                 __lookupSetter__: ObjectProtoLookupSetter,
             } = ObjectProto
             const ObjectHasOwn =
-                typeof OriginalObjectHasOwn === 'function'
-                    ? OriginalObjectHasOwn
-                    : (object, key) => ReflectApply(ObjectProtoHasOwnProperty, object, [key])
+                typeof OriginalObjectHasOwn === 'function' ? OriginalObjectHasOwn : (
+                    (object, key) => ReflectApply(ObjectProtoHasOwnProperty, object, [key])
+                )
             const globalThisRef =
-                (_ref =
-                    (_ref2 =
-                        globalObject != null
-                            ? globalObject // Support for globalThis was added in Chrome 71.
-                            : // https://caniuse.com/mdn-javascript_builtins_globalthisfor
-                            typeof _.globalThis !== 'undefined'
-                            ? _.globalThis
-                            : undefined) != null
-                        ? _ref2 // However, environments like Android emulators are running Chrome 69.
-                        : // eslint-disable-next-line no-restricted-globals
-                        typeof _.self !== 'undefined'
-                        ? _.self
+                (
+                    (_ref =
+                        (
+                            (_ref2 =
+                                globalObject != null ?
+                                    globalObject // Support for globalThis was added in Chrome 71.
+                                    // https://caniuse.com/mdn-javascript_builtins_globalthisfor
+                                : typeof _.globalThis !== 'undefined' ? _.globalThis
+                                : undefined) != null
+                        ) ?
+                            _ref2 // However, environments like Android emulators are running Chrome 69.
+                            // eslint-disable-next-line no-restricted-globals
+                        : typeof _.self !== 'undefined' ? _.self
                         : undefined) != null
-                    ? _ref // See https://mathiasbynens.be/notes/globalthis for more details.
-                    : (ReflectDefineProperty(ObjectProto, 'globalThis', {
-                          __proto__: null,
-                          configurable: true,
-                          get() {
-                              ReflectDeleteProperty(ObjectProto, 'globalThis')
-                              // Safari 12 on iOS 12.1 has a `this` of `undefined` so we
-                              // fallback to `self`.
-                              // eslint-disable-next-line no-restricted-globals
-                              return this != null ? this : _.self
-                          },
-                      }),
-                      _.globalThis)
+                ) ?
+                    _ref // See https://mathiasbynens.be/notes/globalthis for more details.
+                :   (ReflectDefineProperty(ObjectProto, 'globalThis', {
+                        __proto__: null,
+                        configurable: true,
+                        get() {
+                            ReflectDeleteProperty(ObjectProto, 'globalThis')
+                            // Safari 12 on iOS 12.1 has a `this` of `undefined` so we
+                            // fallback to `self`.
+                            // eslint-disable-next-line no-restricted-globals
+                            return this != null ? this : _.self
+                        },
+                    }),
+                    _.globalThis)
             const IS_IN_SHADOW_REALM = typeof globalObject !== 'object' || globalObject === null
             const IS_NOT_IN_SHADOW_REALM = !IS_IN_SHADOW_REALM
             const LOCKER_DEBUG_MODE_SYMBOL = IS_NOT_IN_SHADOW_REALM ? SymbolFor('@@lockerDebugMode') : undefined
             const LOCKER_IDENTIFIER_MARKER = '$LWS'
-            const LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL = IS_NOT_IN_SHADOW_REALM
-                ? SymbolFor('@@lockerNearMembraneSerializedValue')
-                : undefined
+            const LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL =
+                IS_NOT_IN_SHADOW_REALM ? SymbolFor('@@lockerNearMembraneSerializedValue') : undefined
             const LOCKER_NEAR_MEMBRANE_SYMBOL = IS_NOT_IN_SHADOW_REALM ? SymbolFor('@@lockerNearMembrane') : undefined
             const LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL = SymbolFor('@@lockerNearMembraneUndefinedValue')
             // The default stack trace limit in Chrome is 10.
@@ -161,14 +162,15 @@ export default {
             const { exec: RegExpProtoExec, test: RegExpProtoTest, toString: RegExProtoToString } = RegExpProto
             // Edge 15 does not support RegExp.prototype.flags.
             // https://caniuse.com/mdn-javascript_builtins_regexp_flags
-            const RegExpProtoFlagsGetter = IS_IN_SHADOW_REALM
-                ? (_ReflectApply = ReflectApply(ObjectProtoLookupGetter, RegExpProto, ['flags'])) != null
-                    ? _ReflectApply
-                    : function flags() {
-                          const string = ReflectApply(RegExProtoToString, this, [])
-                          return ReflectApply(RegExpProtoExec, FLAGS_REG_EXP, [string])[0]
-                      }
-                : undefined
+            const RegExpProtoFlagsGetter =
+                IS_IN_SHADOW_REALM ?
+                    (_ReflectApply = ReflectApply(ObjectProtoLookupGetter, RegExpProto, ['flags'])) != null ?
+                        _ReflectApply
+                    :   function flags() {
+                            const string = ReflectApply(RegExProtoToString, this, [])
+                            return ReflectApply(RegExpProtoExec, FLAGS_REG_EXP, [string])[0]
+                        }
+                :   undefined
             const RegExpProtoSourceGetter = ReflectApply(ObjectProtoLookupGetter, RegExpProto, ['source'])
             const {
                 replace: StringProtoReplace,
@@ -179,9 +181,9 @@ export default {
             const BigInt64ArrayProto =
                 (_globalThisRef$BigInt = globalThisRef.BigInt64Array) == null ? void 0 : _globalThisRef$BigInt.prototype
             const BigUint64ArrayProto =
-                (_globalThisRef$BigUin = globalThisRef.BigUint64Array) == null
-                    ? void 0
-                    : _globalThisRef$BigUin.prototype
+                (_globalThisRef$BigUin = globalThisRef.BigUint64Array) == null ?
+                    void 0
+                :   _globalThisRef$BigUin.prototype
             const { prototype: Float32ArrayProto } = _.Float32Array
             const { prototype: Float64ArrayProto } = _.Float64Array
             const { prototype: Int8ArrayProto } = _.Int8Array
@@ -217,260 +219,271 @@ export default {
             function alwaysFalse() {
                 return false
             }
-            const installErrorPrepareStackTrace = LOCKER_UNMINIFIED_FLAG
-                ? () => {
-                      if (installedErrorPrepareStackTraceFlag) {
-                          return
-                      }
-                      installedErrorPrepareStackTraceFlag = true
-                      // Feature detect the V8 stack trace API.
-                      // https://v8.dev/docs/stack-trace-api
-                      const CallSite = (() => {
-                          try {
-                              var _callSites$
-                              ErrorCtor.prepareStackTrace = (_error, callSites) => callSites
-                              const callSites = new ErrorCtor().stack
-                              ReflectDeleteProperty(ErrorCtor, 'prepareStackTrace')
-                              return isArrayOrThrowForRevoked(callSites) && callSites.length > 0
-                                  ? (_callSites$ = callSites[0]) == null
-                                      ? void 0
-                                      : _callSites$.constructor
-                                  : undefined
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused) {}
-                          return undefined
-                      })()
-                      if (typeof CallSite !== 'function') {
-                          return
-                      }
-                      const {
-                          getEvalOrigin: CallSiteProtoGetEvalOrigin,
-                          getFunctionName: CallSiteProtoGetFunctionName,
-                          toString: CallSiteProtoToString,
-                      } = CallSite.prototype
-                      // A regexp to detect call sites containing LOCKER_IDENTIFIER_MARKER.
-                      const lockerFunctionNameMarkerRegExp = new RegExpCtor(
-                          `${
-                              // Escape regexp special characters in LOCKER_IDENTIFIER_MARKER.
-                              ReflectApply(StringProtoReplace, LOCKER_IDENTIFIER_MARKER, [
-                                  /[\\^$.*+?()[\]{}|]/g,
-                                  '\\$&',
-                              ])
-                          }(?=\\.|$)`,
-                      )
-                      const formatStackTrace = function formatStackTrace1(error, callSites) {
-                          // Based on V8's default stack trace formatting:
-                          // https://chromium.googlesource.com/v8/v8.git/+/refs/heads/main/src/execution/messages.cc#371
-                          let stackTrace = ''
-                          try {
-                              stackTrace = ReflectApply(ErrorProtoToString, error, [])
-                          } catch (_unused2) {
-                              stackTrace = '<error>'
-                          }
-                          let consecutive = false
-                          for (let i = 0, { length } = callSites; i < length; i += 1) {
-                              const callSite = callSites[i]
-                              const funcName = ReflectApply(CallSiteProtoGetFunctionName, callSite, [])
-                              let isMarked = false
-                              if (
-                                  typeof funcName === 'string' &&
-                                  funcName !== 'eval' &&
-                                  ReflectApply(RegExpProtoTest, lockerFunctionNameMarkerRegExp, [funcName])
-                              ) {
-                                  isMarked = true
-                              }
-                              if (!isMarked) {
-                                  const evalOrigin = ReflectApply(CallSiteProtoGetEvalOrigin, callSite, [])
-                                  if (
-                                      typeof evalOrigin === 'string' &&
-                                      ReflectApply(RegExpProtoTest, lockerFunctionNameMarkerRegExp, [evalOrigin])
-                                  ) {
-                                      isMarked = true
-                                  }
-                              }
-                              // Only write a single LWS entry per consecutive LWS stacks.
-                              if (isMarked) {
-                                  if (!consecutive) {
-                                      consecutive = true
-                                      stackTrace += '\n    at LWS'
-                                  }
-                                  continue
-                              } else {
-                                  consecutive = false
-                              }
-                              try {
-                                  stackTrace += `\n    at ${ReflectApply(CallSiteProtoToString, callSite, [])}`
-                                  // eslint-disable-next-line no-empty
-                              } catch (_unused3) {}
-                          }
-                          return stackTrace
-                      }
-                      try {
-                          // Error.prepareStackTrace cannot be a bound or proxy wrapped
-                          // function, so to obscure its source we wrap the call to
-                          // formatStackTrace().
-                          ErrorCtor.prepareStackTrace = function prepareStackTrace(error, callSites) {
-                              return formatStackTrace(error, callSites)
-                          }
-                          // eslint-disable-next-line no-empty
-                      } catch (_unused4) {}
-                      try {
-                          const { stackTraceLimit } = ErrorCtor
-                          if (typeof stackTraceLimit !== 'number' || stackTraceLimit < LOCKER_STACK_TRACE_LIMIT) {
-                              ErrorCtor.stackTraceLimit = LOCKER_STACK_TRACE_LIMIT
-                          }
-                          // eslint-disable-next-line no-empty
-                      } catch (_unused5) {}
-                  }
-                : noop
+            const installErrorPrepareStackTrace =
+                LOCKER_UNMINIFIED_FLAG ?
+                    () => {
+                        if (installedErrorPrepareStackTraceFlag) {
+                            return
+                        }
+                        installedErrorPrepareStackTraceFlag = true
+                        // Feature detect the V8 stack trace API.
+                        // https://v8.dev/docs/stack-trace-api
+                        const CallSite = (() => {
+                            try {
+                                var _callSites$
+                                ErrorCtor.prepareStackTrace = (_error, callSites) => callSites
+                                const callSites = new ErrorCtor().stack
+                                ReflectDeleteProperty(ErrorCtor, 'prepareStackTrace')
+                                return (
+                                    isArrayOrThrowForRevoked(callSites) && callSites.length > 0 ?
+                                        (_callSites$ = callSites[0]) == null ?
+                                            void 0
+                                        :   _callSites$.constructor
+                                    :   undefined
+                                )
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused) {}
+                            return undefined
+                        })()
+                        if (typeof CallSite !== 'function') {
+                            return
+                        }
+                        const {
+                            getEvalOrigin: CallSiteProtoGetEvalOrigin,
+                            getFunctionName: CallSiteProtoGetFunctionName,
+                            toString: CallSiteProtoToString,
+                        } = CallSite.prototype
+                        // A regexp to detect call sites containing LOCKER_IDENTIFIER_MARKER.
+                        const lockerFunctionNameMarkerRegExp = new RegExpCtor(
+                            `${
+                                // Escape regexp special characters in LOCKER_IDENTIFIER_MARKER.
+                                ReflectApply(StringProtoReplace, LOCKER_IDENTIFIER_MARKER, [
+                                    /[\\^$.*+?()[\]{}|]/g,
+                                    '\\$&',
+                                ])
+                            }(?=\\.|$)`,
+                        )
+                        const formatStackTrace = function formatStackTrace1(error, callSites) {
+                            // Based on V8's default stack trace formatting:
+                            // https://chromium.googlesource.com/v8/v8.git/+/refs/heads/main/src/execution/messages.cc#371
+                            let stackTrace = ''
+                            try {
+                                stackTrace = ReflectApply(ErrorProtoToString, error, [])
+                            } catch (_unused2) {
+                                stackTrace = '<error>'
+                            }
+                            let consecutive = false
+                            for (let i = 0, { length } = callSites; i < length; i += 1) {
+                                const callSite = callSites[i]
+                                const funcName = ReflectApply(CallSiteProtoGetFunctionName, callSite, [])
+                                let isMarked = false
+                                if (
+                                    typeof funcName === 'string' &&
+                                    funcName !== 'eval' &&
+                                    ReflectApply(RegExpProtoTest, lockerFunctionNameMarkerRegExp, [funcName])
+                                ) {
+                                    isMarked = true
+                                }
+                                if (!isMarked) {
+                                    const evalOrigin = ReflectApply(CallSiteProtoGetEvalOrigin, callSite, [])
+                                    if (
+                                        typeof evalOrigin === 'string' &&
+                                        ReflectApply(RegExpProtoTest, lockerFunctionNameMarkerRegExp, [evalOrigin])
+                                    ) {
+                                        isMarked = true
+                                    }
+                                }
+                                // Only write a single LWS entry per consecutive LWS stacks.
+                                if (isMarked) {
+                                    if (!consecutive) {
+                                        consecutive = true
+                                        stackTrace += '\n    at LWS'
+                                    }
+                                    continue
+                                } else {
+                                    consecutive = false
+                                }
+                                try {
+                                    stackTrace += `\n    at ${ReflectApply(CallSiteProtoToString, callSite, [])}`
+                                    // eslint-disable-next-line no-empty
+                                } catch (_unused3) {}
+                            }
+                            return stackTrace
+                        }
+                        try {
+                            // Error.prepareStackTrace cannot be a bound or proxy wrapped
+                            // function, so to obscure its source we wrap the call to
+                            // formatStackTrace().
+                            ErrorCtor.prepareStackTrace = function prepareStackTrace(error, callSites) {
+                                return formatStackTrace(error, callSites)
+                            }
+                            // eslint-disable-next-line no-empty
+                        } catch (_unused4) {}
+                        try {
+                            const { stackTraceLimit } = ErrorCtor
+                            if (typeof stackTraceLimit !== 'number' || stackTraceLimit < LOCKER_STACK_TRACE_LIMIT) {
+                                ErrorCtor.stackTraceLimit = LOCKER_STACK_TRACE_LIMIT
+                            }
+                            // eslint-disable-next-line no-empty
+                        } catch (_unused5) {}
+                    }
+                :   noop
             function noop() {
                 // No-operation.
             }
-            const serializeBigIntObject = IS_IN_SHADOW_REALM
-                ? (
-                      bigIntObject, // Section 21.2.3 Properties of the BigInt Prototype Object
-                  ) =>
-                      // https://tc39.es/ecma262/#thisbigintvalue
-                      // Step 2: If Type(value) is Object and value has a [[BigIntData]] internal slot, then
-                      //     a. Assert: Type(value.[[BigIntData]]) is BigInt.
-                      ReflectApply(BigIntProtoValueOf, bigIntObject, [])
-                : noop
-            const serializeBooleanObject = IS_IN_SHADOW_REALM
-                ? (
-                      booleanObject, // Section 20.3.3 Properties of the Boolean Prototype Object
-                  ) =>
-                      // https://tc39.es/ecma262/#thisbooleanvalue
-                      // Step 2: If Type(value) is Object and value has a [[BooleanData]] internal slot, then
-                      //     a. Let b be value.[[BooleanData]].
-                      //     b. Assert: Type(b) is Boolean.
-                      ReflectApply(BooleanProtoValueOf, booleanObject, [])
-                : noop
-            const serializeNumberObject = IS_IN_SHADOW_REALM
-                ? (
-                      numberObject, // 21.1.3 Properties of the Number Prototype Object
-                  ) =>
-                      // https://tc39.es/ecma262/#thisnumbervalue
-                      // Step 2: If Type(value) is Object and value has a [[NumberData]] internal slot, then
-                      //     a. Let n be value.[[NumberData]].
-                      //     b. Assert: Type(n) is Number.
-                      ReflectApply(NumberProtoValueOf, numberObject, [])
-                : noop
-            const serializeRegExp = IS_IN_SHADOW_REALM
-                ? (value) => {
-                      // 22.2.5.12 get RegExp.prototype.source
-                      // https://tc39.es/ecma262/#sec-get-regexp.prototype.source
-                      // Step 3: If R does not have an [[OriginalSource]] internal slot, then
-                      //     a. If SameValue(R, %RegExp.prototype%) is true, return "(?:)".
-                      //     b. Otherwise, throw a TypeError exception.
-                      if (value !== RegExpProto) {
-                          const source = ReflectApply(RegExpProtoSourceGetter, value, [])
-                          return JSONStringify({
-                              __proto__: null,
-                              flags: ReflectApply(RegExpProtoFlagsGetter, value, []),
-                              source,
-                          })
-                      }
-                      return undefined
-                  }
-                : noop
-            const serializeStringObject = IS_IN_SHADOW_REALM
-                ? (
-                      stringObject, // 22.1.3 Properties of the String Prototype Object
-                  ) =>
-                      // https://tc39.es/ecma262/#thisstringvalue
-                      // Step 2: If Type(value) is Object and value has a [[StringData]] internal slot, then
-                      //     a. Let s be value.[[StringData]].
-                      //     b. Assert: Type(s) is String.
-                      ReflectApply(StringProtoValueOf, stringObject, [])
-                : noop
-            const serializeSymbolObject = IS_IN_SHADOW_REALM
-                ? (
-                      symbolObject, // 20.4.3 Properties of the Symbol Prototype Object
-                  ) =>
-                      // https://tc39.es/ecma262/#thissymbolvalue
-                      // Step 2: If Type(value) is Object and value has a [[SymbolData]] internal slot, then
-                      //     a. Let s be value.[[SymbolData]].
-                      //     b. Assert: Type(s) is Symbol.
-                      ReflectApply(SymbolProtoValueOf, symbolObject, [])
-                : noop
-            const serializeTargetByBrand = IS_IN_SHADOW_REALM
-                ? (target) => {
-                      const brand = ReflectApply(ObjectProtoToString, target, [])
-                      switch (brand) {
-                          // The brand checks below represent boxed primitives of
-                          // `ESGlobalKeys` in packages/near-membrane-base/src/intrinsics.ts
-                          // which are not remapped or reflective.
-                          case '[object Boolean]':
-                              return serializeBooleanObject(target)
-                          case '[object Number]':
-                              return serializeNumberObject(target)
-                          case '[object RegExp]':
-                              return serializeRegExp(target)
-                          case '[object String]':
-                              return serializeStringObject(target)
-                          case '[object Object]':
-                              try {
-                                  // Symbol.prototype[@@toStringTag] is defined by default so
-                                  // must have been removed.
-                                  // https://tc39.es/ecma262/#sec-symbol.prototype-@@tostringtag
-                                  return serializeSymbolObject(target)
-                                  // eslint-disable-next-line no-empty
-                              } catch (_unused6) {}
-                              if (SUPPORTS_BIG_INT) {
-                                  // BigInt.prototype[@@toStringTag] is defined by default so
-                                  // must have been removed.
-                                  // https://tc39.es/ecma262/#sec-bigint.prototype-@@tostringtag
-                                  try {
-                                      return serializeBigIntObject(target)
-                                      // eslint-disable-next-line no-empty
-                                  } catch (_unused7) {}
-                              }
-                          // eslint-disable-next-line no-fallthrough
-                          default:
-                              return undefined
-                      }
-                  }
-                : noop
-            const serializeTargetByTrialAndError = IS_IN_SHADOW_REALM
-                ? (target) => {
-                      // The serialization attempts below represent boxed primitives of
-                      // `ESGlobalKeys` in packages/near-membrane-base/src/intrinsics.ts
-                      // which are not remapped or reflective.
-                      try {
-                          // Symbol.prototype[@@toStringTag] is defined by default so
-                          // attempted before others.
-                          // https://tc39.es/ecma262/#sec-symbol.prototype-@@tostringtag
-                          return serializeSymbolObject(target)
-                          // eslint-disable-next-line no-empty
-                      } catch (_unused8) {}
-                      if (SUPPORTS_BIG_INT) {
-                          // BigInt.prototype[@@toStringTag] is defined by default so
-                          // attempted before others.
-                          // https://tc39.es/ecma262/#sec-bigint.prototype-@@tostringtag
-                          try {
-                              return serializeBigIntObject(target)
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused9) {}
-                      }
-                      try {
-                          return serializeBooleanObject(target)
-                          // eslint-disable-next-line no-empty
-                      } catch (_unused10) {}
-                      try {
-                          return serializeNumberObject(target)
-                          // eslint-disable-next-line no-empty
-                      } catch (_unused11) {}
-                      try {
-                          return serializeRegExp(target)
-                          // eslint-disable-next-line no-empty
-                      } catch (_unused12) {}
-                      try {
-                          return serializeStringObject(target)
-                          // eslint-disable-next-line no-empty
-                      } catch (_unused13) {}
-                      return undefined
-                  }
-                : noop
+            const serializeBigIntObject =
+                IS_IN_SHADOW_REALM ?
+                    (
+                        bigIntObject, // Section 21.2.3 Properties of the BigInt Prototype Object
+                    ) =>
+                        // https://tc39.es/ecma262/#thisbigintvalue
+                        // Step 2: If Type(value) is Object and value has a [[BigIntData]] internal slot, then
+                        //     a. Assert: Type(value.[[BigIntData]]) is BigInt.
+                        ReflectApply(BigIntProtoValueOf, bigIntObject, [])
+                :   noop
+            const serializeBooleanObject =
+                IS_IN_SHADOW_REALM ?
+                    (
+                        booleanObject, // Section 20.3.3 Properties of the Boolean Prototype Object
+                    ) =>
+                        // https://tc39.es/ecma262/#thisbooleanvalue
+                        // Step 2: If Type(value) is Object and value has a [[BooleanData]] internal slot, then
+                        //     a. Let b be value.[[BooleanData]].
+                        //     b. Assert: Type(b) is Boolean.
+                        ReflectApply(BooleanProtoValueOf, booleanObject, [])
+                :   noop
+            const serializeNumberObject =
+                IS_IN_SHADOW_REALM ?
+                    (
+                        numberObject, // 21.1.3 Properties of the Number Prototype Object
+                    ) =>
+                        // https://tc39.es/ecma262/#thisnumbervalue
+                        // Step 2: If Type(value) is Object and value has a [[NumberData]] internal slot, then
+                        //     a. Let n be value.[[NumberData]].
+                        //     b. Assert: Type(n) is Number.
+                        ReflectApply(NumberProtoValueOf, numberObject, [])
+                :   noop
+            const serializeRegExp =
+                IS_IN_SHADOW_REALM ?
+                    (value) => {
+                        // 22.2.5.12 get RegExp.prototype.source
+                        // https://tc39.es/ecma262/#sec-get-regexp.prototype.source
+                        // Step 3: If R does not have an [[OriginalSource]] internal slot, then
+                        //     a. If SameValue(R, %RegExp.prototype%) is true, return "(?:)".
+                        //     b. Otherwise, throw a TypeError exception.
+                        if (value !== RegExpProto) {
+                            const source = ReflectApply(RegExpProtoSourceGetter, value, [])
+                            return JSONStringify({
+                                __proto__: null,
+                                flags: ReflectApply(RegExpProtoFlagsGetter, value, []),
+                                source,
+                            })
+                        }
+                        return undefined
+                    }
+                :   noop
+            const serializeStringObject =
+                IS_IN_SHADOW_REALM ?
+                    (
+                        stringObject, // 22.1.3 Properties of the String Prototype Object
+                    ) =>
+                        // https://tc39.es/ecma262/#thisstringvalue
+                        // Step 2: If Type(value) is Object and value has a [[StringData]] internal slot, then
+                        //     a. Let s be value.[[StringData]].
+                        //     b. Assert: Type(s) is String.
+                        ReflectApply(StringProtoValueOf, stringObject, [])
+                :   noop
+            const serializeSymbolObject =
+                IS_IN_SHADOW_REALM ?
+                    (
+                        symbolObject, // 20.4.3 Properties of the Symbol Prototype Object
+                    ) =>
+                        // https://tc39.es/ecma262/#thissymbolvalue
+                        // Step 2: If Type(value) is Object and value has a [[SymbolData]] internal slot, then
+                        //     a. Let s be value.[[SymbolData]].
+                        //     b. Assert: Type(s) is Symbol.
+                        ReflectApply(SymbolProtoValueOf, symbolObject, [])
+                :   noop
+            const serializeTargetByBrand =
+                IS_IN_SHADOW_REALM ?
+                    (target) => {
+                        const brand = ReflectApply(ObjectProtoToString, target, [])
+                        switch (brand) {
+                            // The brand checks below represent boxed primitives of
+                            // `ESGlobalKeys` in packages/near-membrane-base/src/intrinsics.ts
+                            // which are not remapped or reflective.
+                            case '[object Boolean]':
+                                return serializeBooleanObject(target)
+                            case '[object Number]':
+                                return serializeNumberObject(target)
+                            case '[object RegExp]':
+                                return serializeRegExp(target)
+                            case '[object String]':
+                                return serializeStringObject(target)
+                            case '[object Object]':
+                                try {
+                                    // Symbol.prototype[@@toStringTag] is defined by default so
+                                    // must have been removed.
+                                    // https://tc39.es/ecma262/#sec-symbol.prototype-@@tostringtag
+                                    return serializeSymbolObject(target)
+                                    // eslint-disable-next-line no-empty
+                                } catch (_unused6) {}
+                                if (SUPPORTS_BIG_INT) {
+                                    // BigInt.prototype[@@toStringTag] is defined by default so
+                                    // must have been removed.
+                                    // https://tc39.es/ecma262/#sec-bigint.prototype-@@tostringtag
+                                    try {
+                                        return serializeBigIntObject(target)
+                                        // eslint-disable-next-line no-empty
+                                    } catch (_unused7) {}
+                                }
+                            // eslint-disable-next-line no-fallthrough
+                            default:
+                                return undefined
+                        }
+                    }
+                :   noop
+            const serializeTargetByTrialAndError =
+                IS_IN_SHADOW_REALM ?
+                    (target) => {
+                        // The serialization attempts below represent boxed primitives of
+                        // `ESGlobalKeys` in packages/near-membrane-base/src/intrinsics.ts
+                        // which are not remapped or reflective.
+                        try {
+                            // Symbol.prototype[@@toStringTag] is defined by default so
+                            // attempted before others.
+                            // https://tc39.es/ecma262/#sec-symbol.prototype-@@tostringtag
+                            return serializeSymbolObject(target)
+                            // eslint-disable-next-line no-empty
+                        } catch (_unused8) {}
+                        if (SUPPORTS_BIG_INT) {
+                            // BigInt.prototype[@@toStringTag] is defined by default so
+                            // attempted before others.
+                            // https://tc39.es/ecma262/#sec-bigint.prototype-@@tostringtag
+                            try {
+                                return serializeBigIntObject(target)
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused9) {}
+                        }
+                        try {
+                            return serializeBooleanObject(target)
+                            // eslint-disable-next-line no-empty
+                        } catch (_unused10) {}
+                        try {
+                            return serializeNumberObject(target)
+                            // eslint-disable-next-line no-empty
+                        } catch (_unused11) {}
+                        try {
+                            return serializeRegExp(target)
+                            // eslint-disable-next-line no-empty
+                        } catch (_unused12) {}
+                        try {
+                            return serializeStringObject(target)
+                            // eslint-disable-next-line no-empty
+                        } catch (_unused13) {}
+                        return undefined
+                    }
+                :   noop
             function toSafeTemplateStringValue(value) {
                 if (typeof value === 'string') {
                     return value
@@ -588,66 +601,70 @@ export default {
                 let handshakePropertyFlag = false
                 let useFastForeignTargetPath = IS_IN_SHADOW_REALM
                 let useFastForeignTargetPathForTypedArrays = IS_IN_SHADOW_REALM
-                const activateLazyOwnPropertyDefinition = IS_IN_SHADOW_REALM
-                    ? (target, key, state) => {
-                          state[key] = false
-                          const foreignTargetPointer = getTransferablePointer(target)
-                          let safeDesc
-                          try {
-                              foreignCallableGetOwnPropertyDescriptor(
-                                  foreignTargetPointer,
-                                  key,
-                                  (
-                                      _key,
-                                      configurable,
-                                      enumerable,
-                                      writable,
-                                      valuePointer,
-                                      getterPointer,
-                                      setterPointer,
-                                  ) => {
-                                      safeDesc = createDescriptorFromMeta(
-                                          configurable,
-                                          enumerable,
-                                          writable,
-                                          valuePointer,
-                                          getterPointer,
-                                          setterPointer,
-                                      )
-                                  },
-                              )
-                          } catch (error) {
-                              var _selectedTarget
-                              const errorToThrow = (_selectedTarget = selectedTarget) != null ? _selectedTarget : error
-                              selectedTarget = undefined
-                              throw errorToThrow
-                          }
-                          if (safeDesc) {
-                              ReflectDefineProperty(target, key, safeDesc)
-                          } else {
-                              ReflectDeleteProperty(target, key)
-                          }
-                      }
-                    : noop
-                let checkDebugMode = LOCKER_DEBUGGABLE_FLAG
-                    ? () => {
-                          try {
-                              if (ObjectHasOwn(globalThisRef, LOCKER_DEBUG_MODE_SYMBOL)) {
-                                  checkDebugMode = () => true
-                                  installErrorPrepareStackTrace()
-                                  foreignCallableInstallErrorPrepareStackTrace()
-                              }
-                          } catch (_unused15) {
-                              checkDebugMode = alwaysFalse
-                          }
-                          return false
-                      }
-                    : alwaysFalse
-                const clearFastForeignTargetPointers = IS_IN_SHADOW_REALM
-                    ? () => {
-                          fastForeignTargetPointers = toSafeWeakSet(new WeakSetCtor())
-                      }
-                    : noop
+                const activateLazyOwnPropertyDefinition =
+                    IS_IN_SHADOW_REALM ?
+                        (target, key, state) => {
+                            state[key] = false
+                            const foreignTargetPointer = getTransferablePointer(target)
+                            let safeDesc
+                            try {
+                                foreignCallableGetOwnPropertyDescriptor(
+                                    foreignTargetPointer,
+                                    key,
+                                    (
+                                        _key,
+                                        configurable,
+                                        enumerable,
+                                        writable,
+                                        valuePointer,
+                                        getterPointer,
+                                        setterPointer,
+                                    ) => {
+                                        safeDesc = createDescriptorFromMeta(
+                                            configurable,
+                                            enumerable,
+                                            writable,
+                                            valuePointer,
+                                            getterPointer,
+                                            setterPointer,
+                                        )
+                                    },
+                                )
+                            } catch (error) {
+                                var _selectedTarget
+                                const errorToThrow =
+                                    (_selectedTarget = selectedTarget) != null ? _selectedTarget : error
+                                selectedTarget = undefined
+                                throw errorToThrow
+                            }
+                            if (safeDesc) {
+                                ReflectDefineProperty(target, key, safeDesc)
+                            } else {
+                                ReflectDeleteProperty(target, key)
+                            }
+                        }
+                    :   noop
+                let checkDebugMode =
+                    LOCKER_DEBUGGABLE_FLAG ?
+                        () => {
+                            try {
+                                if (ObjectHasOwn(globalThisRef, LOCKER_DEBUG_MODE_SYMBOL)) {
+                                    checkDebugMode = () => true
+                                    installErrorPrepareStackTrace()
+                                    foreignCallableInstallErrorPrepareStackTrace()
+                                }
+                            } catch (_unused15) {
+                                checkDebugMode = alwaysFalse
+                            }
+                            return false
+                        }
+                    :   alwaysFalse
+                const clearFastForeignTargetPointers =
+                    IS_IN_SHADOW_REALM ?
+                        () => {
+                            fastForeignTargetPointers = toSafeWeakSet(new WeakSetCtor())
+                        }
+                    :   noop
                 function copyForeignOwnPropertyDescriptorsAndPrototypeToShadowTarget(
                     foreignTargetPointer,
                     shadowTarget,
@@ -692,12 +709,10 @@ export default {
                 }
                 function createApplyOrConstructTrapForZeroOrMoreArgs(proxyTrapEnum) {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
-                    const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? applyTrapNameRegistry
-                        : constructTrapNameRegistry
-                    const foreignCallableApplyOrConstruct = isApplyTrap
-                        ? foreignCallableApply
-                        : foreignCallableConstruct
+                    const arityToApplyOrConstructTrapNameRegistry =
+                        isApplyTrap ? applyTrapNameRegistry : constructTrapNameRegistry
+                    const foreignCallableApplyOrConstruct =
+                        isApplyTrap ? foreignCallableApply : foreignCallableConstruct
                     return function applyOrConstructTrap(_shadowTarget, thisArgOrArgs, argsOrNewTarget) {
                         lastProxyTrapCalled = proxyTrapEnum
                         const args = isApplyTrap ? argsOrNewTarget : thisArgOrArgs
@@ -705,9 +720,9 @@ export default {
                         if (length !== 0) {
                             var _arityToApplyOrConstr
                             return this[
-                                (_arityToApplyOrConstr = arityToApplyOrConstructTrapNameRegistry[length]) != null
-                                    ? _arityToApplyOrConstr
-                                    : arityToApplyOrConstructTrapNameRegistry.n
+                                (_arityToApplyOrConstr = arityToApplyOrConstructTrapNameRegistry[length]) != null ?
+                                    _arityToApplyOrConstr
+                                :   arityToApplyOrConstructTrapNameRegistry.n
                             ](_shadowTarget, thisArgOrArgs, argsOrNewTarget)
                         }
                         // @ts-ignore: Prevent private property access error.
@@ -717,14 +732,15 @@ export default {
                         try {
                             pointerOrPrimitive = foreignCallableApplyOrConstruct(
                                 foreignTargetPointer1, // Inline getTransferableValue().
-                                (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
-                                    typeof thisArgOrNewTarget === 'function'
-                                    ? getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                (
+                                    (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
+                                        typeof thisArgOrNewTarget === 'function'
+                                ) ?
+                                    getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof thisArgOrNewTarget === 'undefined'
-                                    ? undefined
-                                    : thisArgOrNewTarget,
+                                : typeof thisArgOrNewTarget === 'undefined' ? undefined
+                                : thisArgOrNewTarget,
                             )
                         } catch (error) {
                             var _selectedTarget3
@@ -745,12 +761,10 @@ export default {
                 }
                 function createApplyOrConstructTrapForOneOrMoreArgs(proxyTrapEnum) {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
-                    const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? applyTrapNameRegistry
-                        : constructTrapNameRegistry
-                    const foreignCallableApplyOrConstruct = isApplyTrap
-                        ? foreignCallableApply
-                        : foreignCallableConstruct
+                    const arityToApplyOrConstructTrapNameRegistry =
+                        isApplyTrap ? applyTrapNameRegistry : constructTrapNameRegistry
+                    const foreignCallableApplyOrConstruct =
+                        isApplyTrap ? foreignCallableApply : foreignCallableConstruct
                     return function applyOrConstructTrapForOneOrMoreArgs(
                         _shadowTarget,
                         thisArgOrArgs,
@@ -762,9 +776,9 @@ export default {
                         if (length !== 1) {
                             var _arityToApplyOrConstr2
                             return this[
-                                (_arityToApplyOrConstr2 = arityToApplyOrConstructTrapNameRegistry[length]) != null
-                                    ? _arityToApplyOrConstr2
-                                    : arityToApplyOrConstructTrapNameRegistry.n
+                                (_arityToApplyOrConstr2 = arityToApplyOrConstructTrapNameRegistry[length]) != null ?
+                                    _arityToApplyOrConstr2
+                                :   arityToApplyOrConstructTrapNameRegistry.n
                             ](_shadowTarget, thisArgOrArgs, argsOrNewTarget)
                         }
                         // @ts-ignore: Prevent private property access error.
@@ -775,21 +789,21 @@ export default {
                             const { 0: arg0 } = args
                             pointerOrPrimitive = foreignCallableApplyOrConstruct(
                                 foreignTargetPointer1, // Inline getTransferableValue().
-                                (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
-                                    typeof thisArgOrNewTarget === 'function'
-                                    ? getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                (
+                                    (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
+                                        typeof thisArgOrNewTarget === 'function'
+                                ) ?
+                                    getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof thisArgOrNewTarget === 'undefined'
-                                    ? undefined
-                                    : thisArgOrNewTarget, // Inline getTransferableValue().
-                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
-                                    ? getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof thisArgOrNewTarget === 'undefined' ? undefined
+                                : thisArgOrNewTarget, // Inline getTransferableValue().
+                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function' ?
+                                    getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg0 === 'undefined'
-                                    ? undefined
-                                    : arg0,
+                                : typeof arg0 === 'undefined' ? undefined
+                                : arg0,
                             )
                         } catch (error) {
                             var _selectedTarget4
@@ -810,12 +824,10 @@ export default {
                 }
                 function createApplyOrConstructTrapForTwoOrMoreArgs(proxyTrapEnum) {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
-                    const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? applyTrapNameRegistry
-                        : constructTrapNameRegistry
-                    const foreignCallableApplyOrConstruct = isApplyTrap
-                        ? foreignCallableApply
-                        : foreignCallableConstruct
+                    const arityToApplyOrConstructTrapNameRegistry =
+                        isApplyTrap ? applyTrapNameRegistry : constructTrapNameRegistry
+                    const foreignCallableApplyOrConstruct =
+                        isApplyTrap ? foreignCallableApply : foreignCallableConstruct
                     return function applyOrConstructTrapForTwoOrMoreArgs(
                         _shadowTarget,
                         thisArgOrArgs,
@@ -827,9 +839,9 @@ export default {
                         if (length !== 2) {
                             var _arityToApplyOrConstr3
                             return this[
-                                (_arityToApplyOrConstr3 = arityToApplyOrConstructTrapNameRegistry[length]) != null
-                                    ? _arityToApplyOrConstr3
-                                    : arityToApplyOrConstructTrapNameRegistry.n
+                                (_arityToApplyOrConstr3 = arityToApplyOrConstructTrapNameRegistry[length]) != null ?
+                                    _arityToApplyOrConstr3
+                                :   arityToApplyOrConstructTrapNameRegistry.n
                             ](_shadowTarget, thisArgOrArgs, argsOrNewTarget)
                         }
                         // @ts-ignore: Prevent private property access error.
@@ -840,28 +852,27 @@ export default {
                             const { 0: arg0, 1: arg1 } = args
                             pointerOrPrimitive = foreignCallableApplyOrConstruct(
                                 foreignTargetPointer1, // Inline getTransferableValue().
-                                (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
-                                    typeof thisArgOrNewTarget === 'function'
-                                    ? getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                (
+                                    (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
+                                        typeof thisArgOrNewTarget === 'function'
+                                ) ?
+                                    getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof thisArgOrNewTarget === 'undefined'
-                                    ? undefined
-                                    : thisArgOrNewTarget, // Inline getTransferableValue().
-                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
-                                    ? getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof thisArgOrNewTarget === 'undefined' ? undefined
+                                : thisArgOrNewTarget, // Inline getTransferableValue().
+                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function' ?
+                                    getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg0 === 'undefined'
-                                    ? undefined
-                                    : arg0, // Inline getTransferableValue().
-                                (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function'
-                                    ? getTransferablePointer(arg1) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg0 === 'undefined' ? undefined
+                                : arg0, // Inline getTransferableValue().
+                                (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function' ?
+                                    getTransferablePointer(arg1) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg1 === 'undefined'
-                                    ? undefined
-                                    : arg1,
+                                : typeof arg1 === 'undefined' ? undefined
+                                : arg1,
                             )
                         } catch (error) {
                             var _selectedTarget5
@@ -882,12 +893,10 @@ export default {
                 }
                 function createApplyOrConstructTrapForThreeOrMoreArgs(proxyTrapEnum) {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
-                    const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? applyTrapNameRegistry
-                        : constructTrapNameRegistry
-                    const foreignCallableApplyOrConstruct = isApplyTrap
-                        ? foreignCallableApply
-                        : foreignCallableConstruct
+                    const arityToApplyOrConstructTrapNameRegistry =
+                        isApplyTrap ? applyTrapNameRegistry : constructTrapNameRegistry
+                    const foreignCallableApplyOrConstruct =
+                        isApplyTrap ? foreignCallableApply : foreignCallableConstruct
                     return function applyOrConstructTrapForTwoOrMoreArgs(
                         _shadowTarget,
                         thisArgOrArgs,
@@ -899,9 +908,9 @@ export default {
                         if (length !== 3) {
                             var _arityToApplyOrConstr4
                             return this[
-                                (_arityToApplyOrConstr4 = arityToApplyOrConstructTrapNameRegistry[length]) != null
-                                    ? _arityToApplyOrConstr4
-                                    : arityToApplyOrConstructTrapNameRegistry.n
+                                (_arityToApplyOrConstr4 = arityToApplyOrConstructTrapNameRegistry[length]) != null ?
+                                    _arityToApplyOrConstr4
+                                :   arityToApplyOrConstructTrapNameRegistry.n
                             ](_shadowTarget, thisArgOrArgs, argsOrNewTarget)
                         }
                         // @ts-ignore: Prevent private property access error.
@@ -912,35 +921,33 @@ export default {
                             const { 0: arg0, 1: arg1, 2: arg2 } = args
                             pointerOrPrimitive = foreignCallableApplyOrConstruct(
                                 foreignTargetPointer1, // Inline getTransferableValue().
-                                (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
-                                    typeof thisArgOrNewTarget === 'function'
-                                    ? getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                (
+                                    (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
+                                        typeof thisArgOrNewTarget === 'function'
+                                ) ?
+                                    getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof thisArgOrNewTarget === 'undefined'
-                                    ? undefined
-                                    : thisArgOrNewTarget, // Inline getTransferableValue().
-                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
-                                    ? getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof thisArgOrNewTarget === 'undefined' ? undefined
+                                : thisArgOrNewTarget, // Inline getTransferableValue().
+                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function' ?
+                                    getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg0 === 'undefined'
-                                    ? undefined
-                                    : arg0, // Inline getTransferableValue().
-                                (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function'
-                                    ? getTransferablePointer(arg1) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg0 === 'undefined' ? undefined
+                                : arg0, // Inline getTransferableValue().
+                                (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function' ?
+                                    getTransferablePointer(arg1) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg1 === 'undefined'
-                                    ? undefined
-                                    : arg1, // Inline getTransferableValue().
-                                (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function'
-                                    ? getTransferablePointer(arg2) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg1 === 'undefined' ? undefined
+                                : arg1, // Inline getTransferableValue().
+                                (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function' ?
+                                    getTransferablePointer(arg2) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg2 === 'undefined'
-                                    ? undefined
-                                    : arg2,
+                                : typeof arg2 === 'undefined' ? undefined
+                                : arg2,
                             )
                         } catch (error) {
                             var _selectedTarget6
@@ -961,12 +968,10 @@ export default {
                 }
                 function createApplyOrConstructTrapForFourOrMoreArgs(proxyTrapEnum) {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
-                    const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? applyTrapNameRegistry
-                        : constructTrapNameRegistry
-                    const foreignCallableApplyOrConstruct = isApplyTrap
-                        ? foreignCallableApply
-                        : foreignCallableConstruct
+                    const arityToApplyOrConstructTrapNameRegistry =
+                        isApplyTrap ? applyTrapNameRegistry : constructTrapNameRegistry
+                    const foreignCallableApplyOrConstruct =
+                        isApplyTrap ? foreignCallableApply : foreignCallableConstruct
                     return function applyOrConstructTrapForTwoOrMoreArgs(
                         _shadowTarget,
                         thisArgOrArgs,
@@ -978,9 +983,9 @@ export default {
                         if (length !== 4) {
                             var _arityToApplyOrConstr5
                             return this[
-                                (_arityToApplyOrConstr5 = arityToApplyOrConstructTrapNameRegistry[length]) != null
-                                    ? _arityToApplyOrConstr5
-                                    : arityToApplyOrConstructTrapNameRegistry.n
+                                (_arityToApplyOrConstr5 = arityToApplyOrConstructTrapNameRegistry[length]) != null ?
+                                    _arityToApplyOrConstr5
+                                :   arityToApplyOrConstructTrapNameRegistry.n
                             ](_shadowTarget, thisArgOrArgs, argsOrNewTarget)
                         }
                         // @ts-ignore: Prevent private property access error.
@@ -991,42 +996,39 @@ export default {
                             const { 0: arg0, 1: arg1, 2: arg2, 3: arg3 } = args
                             pointerOrPrimitive = foreignCallableApplyOrConstruct(
                                 foreignTargetPointer1, // Inline getTransferableValue().
-                                (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
-                                    typeof thisArgOrNewTarget === 'function'
-                                    ? getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                (
+                                    (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
+                                        typeof thisArgOrNewTarget === 'function'
+                                ) ?
+                                    getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof thisArgOrNewTarget === 'undefined'
-                                    ? undefined
-                                    : thisArgOrNewTarget, // Inline getTransferableValue().
-                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
-                                    ? getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof thisArgOrNewTarget === 'undefined' ? undefined
+                                : thisArgOrNewTarget, // Inline getTransferableValue().
+                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function' ?
+                                    getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg0 === 'undefined'
-                                    ? undefined
-                                    : arg0, // Inline getTransferableValue().
-                                (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function'
-                                    ? getTransferablePointer(arg1) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg0 === 'undefined' ? undefined
+                                : arg0, // Inline getTransferableValue().
+                                (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function' ?
+                                    getTransferablePointer(arg1) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg1 === 'undefined'
-                                    ? undefined
-                                    : arg1, // Inline getTransferableValue().
-                                (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function'
-                                    ? getTransferablePointer(arg2) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg1 === 'undefined' ? undefined
+                                : arg1, // Inline getTransferableValue().
+                                (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function' ?
+                                    getTransferablePointer(arg2) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg2 === 'undefined'
-                                    ? undefined
-                                    : arg2, // Inline getTransferableValue().
-                                (typeof arg3 === 'object' && arg3 !== null) || typeof arg3 === 'function'
-                                    ? getTransferablePointer(arg3) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg2 === 'undefined' ? undefined
+                                : arg2, // Inline getTransferableValue().
+                                (typeof arg3 === 'object' && arg3 !== null) || typeof arg3 === 'function' ?
+                                    getTransferablePointer(arg3) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg3 === 'undefined'
-                                    ? undefined
-                                    : arg3,
+                                : typeof arg3 === 'undefined' ? undefined
+                                : arg3,
                             )
                         } catch (error) {
                             var _selectedTarget7
@@ -1047,12 +1049,10 @@ export default {
                 }
                 function createApplyOrConstructTrapForFiveOrMoreArgs(proxyTrapEnum) {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
-                    const arityToApplyOrConstructTrapNameRegistry = isApplyTrap
-                        ? applyTrapNameRegistry
-                        : constructTrapNameRegistry
-                    const foreignCallableApplyOrConstruct = isApplyTrap
-                        ? foreignCallableApply
-                        : foreignCallableConstruct
+                    const arityToApplyOrConstructTrapNameRegistry =
+                        isApplyTrap ? applyTrapNameRegistry : constructTrapNameRegistry
+                    const foreignCallableApplyOrConstruct =
+                        isApplyTrap ? foreignCallableApply : foreignCallableConstruct
                     return function applyOrConstructTrapForTwoOrMoreArgs(
                         _shadowTarget,
                         thisArgOrArgs,
@@ -1064,9 +1064,9 @@ export default {
                         if (length !== 5) {
                             var _arityToApplyOrConstr6
                             return this[
-                                (_arityToApplyOrConstr6 = arityToApplyOrConstructTrapNameRegistry[length]) != null
-                                    ? _arityToApplyOrConstr6
-                                    : arityToApplyOrConstructTrapNameRegistry.n
+                                (_arityToApplyOrConstr6 = arityToApplyOrConstructTrapNameRegistry[length]) != null ?
+                                    _arityToApplyOrConstr6
+                                :   arityToApplyOrConstructTrapNameRegistry.n
                             ](_shadowTarget, thisArgOrArgs, argsOrNewTarget)
                         }
                         // @ts-ignore: Prevent private property access error.
@@ -1077,49 +1077,45 @@ export default {
                             const { 0: arg0, 1: arg1, 2: arg2, 3: arg3, 4: arg4 } = args
                             pointerOrPrimitive = foreignCallableApplyOrConstruct(
                                 foreignTargetPointer1, // Inline getTransferableValue().
-                                (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
-                                    typeof thisArgOrNewTarget === 'function'
-                                    ? getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                (
+                                    (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
+                                        typeof thisArgOrNewTarget === 'function'
+                                ) ?
+                                    getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof thisArgOrNewTarget === 'undefined'
-                                    ? undefined
-                                    : thisArgOrNewTarget, // Inline getTransferableValue().
-                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function'
-                                    ? getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof thisArgOrNewTarget === 'undefined' ? undefined
+                                : thisArgOrNewTarget, // Inline getTransferableValue().
+                                (typeof arg0 === 'object' && arg0 !== null) || typeof arg0 === 'function' ?
+                                    getTransferablePointer(arg0) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg0 === 'undefined'
-                                    ? undefined
-                                    : arg0, // Inline getTransferableValue().
-                                (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function'
-                                    ? getTransferablePointer(arg1) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg0 === 'undefined' ? undefined
+                                : arg0, // Inline getTransferableValue().
+                                (typeof arg1 === 'object' && arg1 !== null) || typeof arg1 === 'function' ?
+                                    getTransferablePointer(arg1) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg1 === 'undefined'
-                                    ? undefined
-                                    : arg1, // Inline getTransferableValue().
-                                (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function'
-                                    ? getTransferablePointer(arg2) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg1 === 'undefined' ? undefined
+                                : arg1, // Inline getTransferableValue().
+                                (typeof arg2 === 'object' && arg2 !== null) || typeof arg2 === 'function' ?
+                                    getTransferablePointer(arg2) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg2 === 'undefined'
-                                    ? undefined
-                                    : arg2, // Inline getTransferableValue().
-                                (typeof arg3 === 'object' && arg3 !== null) || typeof arg3 === 'function'
-                                    ? getTransferablePointer(arg3) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg2 === 'undefined' ? undefined
+                                : arg2, // Inline getTransferableValue().
+                                (typeof arg3 === 'object' && arg3 !== null) || typeof arg3 === 'function' ?
+                                    getTransferablePointer(arg3) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg3 === 'undefined'
-                                    ? undefined
-                                    : arg3, // Inline getTransferableValue().
-                                (typeof arg4 === 'object' && arg4 !== null) || typeof arg4 === 'function'
-                                    ? getTransferablePointer(arg4) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                : typeof arg3 === 'undefined' ? undefined
+                                : arg3, // Inline getTransferableValue().
+                                (typeof arg4 === 'object' && arg4 !== null) || typeof arg4 === 'function' ?
+                                    getTransferablePointer(arg4) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof arg4 === 'undefined'
-                                    ? undefined
-                                    : arg4,
+                                : typeof arg4 === 'undefined' ? undefined
+                                : arg4,
                             )
                         } catch (error) {
                             var _selectedTarget8
@@ -1140,9 +1136,8 @@ export default {
                 }
                 function createApplyOrConstructTrapForAnyNumberOfArgs(proxyTrapEnum) {
                     const isApplyTrap = proxyTrapEnum & 1 /* ProxyHandlerTraps.Apply */
-                    const foreignCallableApplyOrConstruct = isApplyTrap
-                        ? foreignCallableApply
-                        : foreignCallableConstruct
+                    const foreignCallableApplyOrConstruct =
+                        isApplyTrap ? foreignCallableApply : foreignCallableConstruct
                     return function applyOrConstructTrapForAnyNumberOfArgs(
                         _shadowTarget,
                         thisArgOrArgs,
@@ -1160,25 +1155,25 @@ export default {
                         let pointerOrPrimitive
                         try {
                             combinedArgs[1] =
-                                (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
-                                typeof thisArgOrNewTarget === 'function'
-                                    ? getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                (
+                                    (typeof thisArgOrNewTarget === 'object' && thisArgOrNewTarget !== null) ||
+                                    typeof thisArgOrNewTarget === 'function'
+                                ) ?
+                                    getTransferablePointer(thisArgOrNewTarget) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof thisArgOrNewTarget === 'undefined'
-                                    ? undefined
-                                    : thisArgOrNewTarget
+                                : typeof thisArgOrNewTarget === 'undefined' ? undefined
+                                : thisArgOrNewTarget
                             for (let i = 0; i < length; i += 1) {
                                 const arg = args[i]
                                 // Inlining `getTransferableValue()`.
                                 combinedArgs[combinedOffset++] =
-                                    (typeof arg === 'object' && arg !== null) || typeof arg === 'function'
-                                        ? getTransferablePointer(arg) // Intentionally ignoring `document.all`.
-                                        : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                    (typeof arg === 'object' && arg !== null) || typeof arg === 'function' ?
+                                        getTransferablePointer(arg) // Intentionally ignoring `document.all`.
+                                        // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                        typeof arg === 'undefined'
-                                        ? undefined
-                                        : arg
+                                    : typeof arg === 'undefined' ? undefined
+                                    : arg
                             }
                             pointerOrPrimitive = ReflectApply(foreignCallableApplyOrConstruct, undefined, combinedArgs)
                         } catch (error) {
@@ -1255,90 +1250,96 @@ export default {
                     __.debugTargetBookkeeping?.(pointer, originalTarget)
                     return pointer
                 }
-                const disableFastForeignTargetPointers = IS_IN_SHADOW_REALM
-                    ? () => {
-                          useFastForeignTargetPath = false
-                          useFastForeignTargetPathForTypedArrays = false
-                          clearFastForeignTargetPointers()
-                      }
-                    : noop
-                const getLazyPropertyDescriptorStateByTarget = IS_IN_SHADOW_REALM
-                    ? (target) => {
-                          let state = lazyPropertyDescriptorStateCache.get(target)
-                          if (state === undefined) {
-                              const statePointerOrUndefined = foreignCallableGetLazyPropertyDescriptorStateByTarget(
-                                  getTransferablePointer(target),
-                              )
-                              if (typeof statePointerOrUndefined === 'function') {
-                                  statePointerOrUndefined()
-                                  state = selectedTarget
-                                  selectedTarget = undefined
-                                  if (state) {
-                                      lazyPropertyDescriptorStateCache.set(target, state)
-                                  }
-                              }
-                          }
-                          return state
-                      }
-                    : noop
-                const isForeignPointerOfObjectProto = IS_IN_SHADOW_REALM // eslint-disable-next-line no-return-assign
-                    ? (foreignTargetPointer) =>
-                          foreignTargetPointer ===
-                          (foreignPointerObjectProto === undefined
-                              ? (foreignPointerObjectProto = getTransferablePointer(ObjectProto))
-                              : foreignPointerObjectProto)
-                    : alwaysFalse
-                const isForeignPointerOfTypedArrayProto = IS_IN_SHADOW_REALM // eslint-disable-next-line no-return-assign
-                    ? (foreignTargetPointer) =>
-                          foreignTargetPointer ===
-                              (foreignPointerFloat32ArrayProto === undefined
-                                  ? (foreignPointerFloat32ArrayProto = getTransferablePointer(Float32ArrayProto))
-                                  : foreignPointerFloat32ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerFloat64ArrayProto === undefined
-                                  ? (foreignPointerFloat64ArrayProto = getTransferablePointer(Float64ArrayProto))
-                                  : foreignPointerFloat64ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerInt8ArrayProto === undefined
-                                  ? (foreignPointerInt8ArrayProto = getTransferablePointer(Int8ArrayProto))
-                                  : foreignPointerInt8ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerInt16ArrayProto === undefined
-                                  ? (foreignPointerInt16ArrayProto = getTransferablePointer(Int16ArrayProto))
-                                  : foreignPointerInt16ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerInt32ArrayProto === undefined
-                                  ? (foreignPointerInt32ArrayProto = getTransferablePointer(Int32ArrayProto))
-                                  : foreignPointerInt32ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerUint8ArrayProto === undefined
-                                  ? (foreignPointerUint8ArrayProto = getTransferablePointer(Uint8ArrayProto))
-                                  : foreignPointerUint8ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerUint16ArrayProto === undefined
-                                  ? (foreignPointerUint16ArrayProto = getTransferablePointer(Uint16ArrayProto))
-                                  : foreignPointerUint16ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerUint32ArrayProto === undefined
-                                  ? (foreignPointerUint32ArrayProto = getTransferablePointer(Uint32ArrayProto))
-                                  : foreignPointerUint32ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerTypedArrayProto === undefined
-                                  ? (foreignPointerTypedArrayProto = getTransferablePointer(TypedArrayProto))
-                                  : foreignPointerTypedArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerBigInt64ArrayProto === undefined
-                                  ? (foreignPointerBigInt64ArrayProto = BigInt64ArrayProto
-                                        ? getTransferablePointer(BigInt64ArrayProto)
-                                        : noop)
-                                  : foreignPointerBigInt64ArrayProto) ||
-                          foreignTargetPointer ===
-                              (foreignPointerBigUint64ArrayProto === undefined
-                                  ? (foreignPointerBigUint64ArrayProto = BigUint64ArrayProto
-                                        ? getTransferablePointer(BigUint64ArrayProto)
-                                        : noop)
-                                  : foreignPointerBigUint64ArrayProto)
-                    : alwaysFalse
+                const disableFastForeignTargetPointers =
+                    IS_IN_SHADOW_REALM ?
+                        () => {
+                            useFastForeignTargetPath = false
+                            useFastForeignTargetPathForTypedArrays = false
+                            clearFastForeignTargetPointers()
+                        }
+                    :   noop
+                const getLazyPropertyDescriptorStateByTarget =
+                    IS_IN_SHADOW_REALM ?
+                        (target) => {
+                            let state = lazyPropertyDescriptorStateCache.get(target)
+                            if (state === undefined) {
+                                const statePointerOrUndefined = foreignCallableGetLazyPropertyDescriptorStateByTarget(
+                                    getTransferablePointer(target),
+                                )
+                                if (typeof statePointerOrUndefined === 'function') {
+                                    statePointerOrUndefined()
+                                    state = selectedTarget
+                                    selectedTarget = undefined
+                                    if (state) {
+                                        lazyPropertyDescriptorStateCache.set(target, state)
+                                    }
+                                }
+                            }
+                            return state
+                        }
+                    :   noop
+                const isForeignPointerOfObjectProto =
+                    (
+                        IS_IN_SHADOW_REALM // eslint-disable-next-line no-return-assign
+                    ) ?
+                        (foreignTargetPointer) =>
+                            foreignTargetPointer ===
+                            (foreignPointerObjectProto === undefined ?
+                                (foreignPointerObjectProto = getTransferablePointer(ObjectProto))
+                            :   foreignPointerObjectProto)
+                    :   alwaysFalse
+                const isForeignPointerOfTypedArrayProto =
+                    (
+                        IS_IN_SHADOW_REALM // eslint-disable-next-line no-return-assign
+                    ) ?
+                        (foreignTargetPointer) =>
+                            foreignTargetPointer ===
+                                (foreignPointerFloat32ArrayProto === undefined ?
+                                    (foreignPointerFloat32ArrayProto = getTransferablePointer(Float32ArrayProto))
+                                :   foreignPointerFloat32ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerFloat64ArrayProto === undefined ?
+                                    (foreignPointerFloat64ArrayProto = getTransferablePointer(Float64ArrayProto))
+                                :   foreignPointerFloat64ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerInt8ArrayProto === undefined ?
+                                    (foreignPointerInt8ArrayProto = getTransferablePointer(Int8ArrayProto))
+                                :   foreignPointerInt8ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerInt16ArrayProto === undefined ?
+                                    (foreignPointerInt16ArrayProto = getTransferablePointer(Int16ArrayProto))
+                                :   foreignPointerInt16ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerInt32ArrayProto === undefined ?
+                                    (foreignPointerInt32ArrayProto = getTransferablePointer(Int32ArrayProto))
+                                :   foreignPointerInt32ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerUint8ArrayProto === undefined ?
+                                    (foreignPointerUint8ArrayProto = getTransferablePointer(Uint8ArrayProto))
+                                :   foreignPointerUint8ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerUint16ArrayProto === undefined ?
+                                    (foreignPointerUint16ArrayProto = getTransferablePointer(Uint16ArrayProto))
+                                :   foreignPointerUint16ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerUint32ArrayProto === undefined ?
+                                    (foreignPointerUint32ArrayProto = getTransferablePointer(Uint32ArrayProto))
+                                :   foreignPointerUint32ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerTypedArrayProto === undefined ?
+                                    (foreignPointerTypedArrayProto = getTransferablePointer(TypedArrayProto))
+                                :   foreignPointerTypedArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerBigInt64ArrayProto === undefined ?
+                                    (foreignPointerBigInt64ArrayProto =
+                                        BigInt64ArrayProto ? getTransferablePointer(BigInt64ArrayProto) : noop)
+                                :   foreignPointerBigInt64ArrayProto) ||
+                            foreignTargetPointer ===
+                                (foreignPointerBigUint64ArrayProto === undefined ?
+                                    (foreignPointerBigUint64ArrayProto =
+                                        BigUint64ArrayProto ? getTransferablePointer(BigUint64ArrayProto) : noop)
+                                :   foreignPointerBigUint64ArrayProto)
+                    :   alwaysFalse
                 function getTransferablePointer(originalTarget, foreignCallablePusher = foreignCallablePushTarget) {
                     let proxyPointer = proxyPointerCache.get(originalTarget)
                     if (proxyPointer) {
@@ -1387,9 +1388,8 @@ export default {
                                     targetFunctionArity = safeLengthDescValue
                                 }
                             }
-                            const safeNameDesc = false
-                                ? ReflectGetOwnPropertyDescriptor(originalTarget, 'name')
-                                : undefined
+                            const safeNameDesc =
+                                false ? ReflectGetOwnPropertyDescriptor(originalTarget, 'name') : undefined
                             if (safeNameDesc);
                         } catch (_unused16) {
                             isPossiblyRevoked = true
@@ -1425,272 +1425,283 @@ export default {
                     proxyPointerCache.set(originalTarget, proxyPointer)
                     return proxyPointer
                 }
-                const installPropertyDescriptorMethodWrappers = IS_IN_SHADOW_REALM
-                    ? (unforgeableGlobalThisKeys) => {
-                          if (installedPropertyDescriptorMethodWrappersFlag) {
-                              return
-                          }
-                          installedPropertyDescriptorMethodWrappersFlag = true
-                          // We wrap property descriptor methods to activate lazy
-                          // descriptors and/or workaround browser bugs. The following
-                          // methods are wrapped:
-                          //   Object.getOwnPropertyDescriptors()
-                          //   Object.getOwnPropertyDescriptor()
-                          //   Reflect.defineProperty()
-                          //   Reflect.getOwnPropertyDescriptor()
-                          //   Object.prototype.__defineGetter__()
-                          //   Object.prototype.__defineSetter__()
-                          //   Object.prototype.__lookupGetter__()
-                          //   Object.prototype.__lookupSetter__()
-                          //
-                          // Chromium based browsers have a bug that nulls the result
-                          // of `window` getters in detached iframes when the property
-                          // descriptor of `window.window` is retrieved.
-                          // https://bugs.chromium.org/p/chromium/issues/detail?id=1305302
-                          //
-                          // Methods may be poisoned when they interact with the `window`
-                          // object and retrieve property descriptors, like 'window',
-                          // that contain the `window` object itself. The following
-                          // built-in methods are susceptible to this issue:
-                          //     console.log(window);
-                          //     Object.getOwnPropertyDescriptors(window);
-                          //     Object.getOwnPropertyDescriptor(window, 'window');
-                          //     Reflect.getOwnPropertyDescriptor(window, 'window');
-                          //     window.__lookupGetter__('window');
-                          //     window.__lookupSetter__('window');
-                          //
-                          // We side step issues with `console` by mapping it to the
-                          // primary realm's `console`. Since we're already wrapping
-                          // property descriptor methods to activate lazy descriptors
-                          // we use the wrapper to workaround the `window` getter
-                          // nulling bug.
-                          const shouldFixChromeBug =
-                              isArrayOrThrowForRevoked(unforgeableGlobalThisKeys) &&
-                              unforgeableGlobalThisKeys.length > 0
-                          // Lazily populated by `getUnforgeableGlobalThisGetter()`;
-                          const keyToGlobalThisGetterRegistry = shouldFixChromeBug
-                              ? {
-                                    __proto__: null,
-                                }
-                              : undefined
-                          const getFixedDescriptor = shouldFixChromeBug
-                              ? (target, key) =>
-                                    ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key])
-                                        ? {
-                                              configurable: false,
-                                              enumerable: ReflectApply(ObjectProtoPropertyIsEnumerable, target, [key]),
-                                              // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                                              get: getUnforgeableGlobalThisGetter(key),
-                                              set: undefined,
-                                          }
-                                        : ReflectGetOwnPropertyDescriptor(target, key)
-                              : undefined
-                          const getUnforgeableGlobalThisGetter = shouldFixChromeBug
-                              ? (key) => {
-                                    let globalThisGetter = keyToGlobalThisGetterRegistry[key]
-                                    if (globalThisGetter === undefined) {
-                                        // We can't access the original getter to mask
-                                        // with `proxyMaskFunction()`, so instead we wrap
-                                        // `unboundGlobalThisGetter` in bound function
-                                        // to obscure the getter source as "[native code]".
-                                        globalThisGetter = ReflectApply(
-                                            FunctionProtoBind, // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                                            unboundGlobalThisGetter,
-                                            [],
-                                        )
-                                        // Preserve identity continuity of getters.
-                                        keyToGlobalThisGetterRegistry[key] = globalThisGetter
+                const installPropertyDescriptorMethodWrappers =
+                    IS_IN_SHADOW_REALM ?
+                        (unforgeableGlobalThisKeys) => {
+                            if (installedPropertyDescriptorMethodWrappersFlag) {
+                                return
+                            }
+                            installedPropertyDescriptorMethodWrappersFlag = true
+                            // We wrap property descriptor methods to activate lazy
+                            // descriptors and/or workaround browser bugs. The following
+                            // methods are wrapped:
+                            //   Object.getOwnPropertyDescriptors()
+                            //   Object.getOwnPropertyDescriptor()
+                            //   Reflect.defineProperty()
+                            //   Reflect.getOwnPropertyDescriptor()
+                            //   Object.prototype.__defineGetter__()
+                            //   Object.prototype.__defineSetter__()
+                            //   Object.prototype.__lookupGetter__()
+                            //   Object.prototype.__lookupSetter__()
+                            //
+                            // Chromium based browsers have a bug that nulls the result
+                            // of `window` getters in detached iframes when the property
+                            // descriptor of `window.window` is retrieved.
+                            // https://bugs.chromium.org/p/chromium/issues/detail?id=1305302
+                            //
+                            // Methods may be poisoned when they interact with the `window`
+                            // object and retrieve property descriptors, like 'window',
+                            // that contain the `window` object itself. The following
+                            // built-in methods are susceptible to this issue:
+                            //     console.log(window);
+                            //     Object.getOwnPropertyDescriptors(window);
+                            //     Object.getOwnPropertyDescriptor(window, 'window');
+                            //     Reflect.getOwnPropertyDescriptor(window, 'window');
+                            //     window.__lookupGetter__('window');
+                            //     window.__lookupSetter__('window');
+                            //
+                            // We side step issues with `console` by mapping it to the
+                            // primary realm's `console`. Since we're already wrapping
+                            // property descriptor methods to activate lazy descriptors
+                            // we use the wrapper to workaround the `window` getter
+                            // nulling bug.
+                            const shouldFixChromeBug =
+                                isArrayOrThrowForRevoked(unforgeableGlobalThisKeys) &&
+                                unforgeableGlobalThisKeys.length > 0
+                            // Lazily populated by `getUnforgeableGlobalThisGetter()`;
+                            const keyToGlobalThisGetterRegistry =
+                                shouldFixChromeBug ?
+                                    {
+                                        __proto__: null,
                                     }
-                                    return globalThisGetter
-                                }
-                              : undefined
-                          const lookupFixedGetter = shouldFixChromeBug
-                              ? (target, key) =>
-                                    ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key])
-                                        ? getUnforgeableGlobalThisGetter(key)
-                                        : ReflectApply(ObjectProtoLookupGetter, target, [key])
-                              : undefined
-                          const lookupFixedSetter = shouldFixChromeBug
-                              ? (target, key) =>
-                                    ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key])
-                                        ? undefined
-                                        : ReflectApply(ObjectProtoLookupSetter, target, [key])
-                              : undefined
-                          const unboundGlobalThisGetter = shouldFixChromeBug ? () => globalThisRef : undefined
-                          const wrapDefineAccessOrProperty = (originalFunc) => {
-                              const { length: originalFuncLength } = originalFunc
-                              // `__defineGetter__()` and `__defineSetter__()` have
-                              // function lengths of 2 while `Reflect.defineProperty()`
-                              // has a function length of 3.
-                              const useThisArgAsTarget = originalFuncLength === 2
-                              return new ProxyCtor(originalFunc, {
-                                  apply(_originalFunc, thisArg, args) {
-                                      if (args.length >= originalFuncLength) {
-                                          const target = useThisArgAsTarget ? thisArg : args[0]
-                                          if (
-                                              (typeof target === 'object' && target !== null) ||
-                                              typeof target === 'function'
-                                          ) {
-                                              const key = useThisArgAsTarget ? args[0] : args[1]
-                                              const state = getLazyPropertyDescriptorStateByTarget(target)
-                                              if (state != null && state[key]) {
-                                                  // Activate the descriptor by triggering
-                                                  // its getter.
-                                                  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                                                  target[key]
-                                              }
-                                          }
-                                      }
-                                      return ReflectApply(originalFunc, thisArg, args)
-                                  },
-                              })
-                          }
-                          const wrapLookupAccessor = (originalFunc, lookupFixedAccessor) =>
-                              new ProxyCtor(originalFunc, {
-                                  apply(_originalFunc, thisArg, args) {
-                                      if (
-                                          args.length &&
-                                          ((typeof thisArg === 'object' && thisArg !== null) ||
-                                              typeof thisArg === 'function')
-                                      ) {
-                                          const { 0: key } = args
-                                          const state = getLazyPropertyDescriptorStateByTarget(thisArg)
-                                          if (state != null && state[key]) {
-                                              // Activate the descriptor by triggering
-                                              // its getter.
-                                              // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                                              thisArg[key]
-                                          }
-                                          if (shouldFixChromeBug && thisArg === globalThisRef) {
-                                              return lookupFixedAccessor(thisArg, key)
-                                          }
-                                      }
-                                      return ReflectApply(originalFunc, thisArg, args)
-                                  },
-                              })
-                          const wrapGetOwnPropertyDescriptor = (originalFunc) =>
-                              new ProxyCtor(originalFunc, {
-                                  apply(_originalFunc, thisArg, args) {
-                                      if (args.length > 1) {
-                                          const { 0: target, 1: key } = args
-                                          if (
-                                              (typeof target === 'object' && target !== null) ||
-                                              typeof target === 'function'
-                                          ) {
-                                              const state = getLazyPropertyDescriptorStateByTarget(target)
-                                              if (state != null && state[key]) {
-                                                  // Activate the descriptor by triggering
-                                                  // its getter.
-                                                  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                                                  target[key]
-                                              }
-                                              if (shouldFixChromeBug && target === globalThisRef) {
-                                                  return getFixedDescriptor(target, key)
-                                              }
-                                          }
-                                      }
-                                      return ReflectApply(originalFunc, thisArg, args)
-                                  },
-                              })
-                          const wrapGetOwnPropertyDescriptors = (originalFunc) =>
-                              new ProxyCtor(originalFunc, {
-                                  apply(_originalFunc, thisArg, args) {
-                                      const target = args.length ? args[0] : undefined
-                                      if (
-                                          !(
-                                              (typeof target === 'object' && target !== null) ||
-                                              typeof target === 'function'
-                                          )
-                                      ) {
-                                          // Defer to native method to throw exception.
-                                          return ReflectApply(originalFunc, thisArg, args)
-                                      }
-                                      const state = getLazyPropertyDescriptorStateByTarget(target)
-                                      const isFixingChromeBug = target === globalThisRef && shouldFixChromeBug
-                                      const unsafeDescs = isFixingChromeBug // Create an empty property descriptor map
-                                          ? // to populate with curated descriptors.
-                                            {} // Since this is not a global object it is
-                                          : // safe to use the native method.
-                                            ReflectApply(originalFunc, thisArg, args)
-                                      if (!isFixingChromeBug && state === undefined) {
-                                          // Exit early if the target is not a global
-                                          // object and there are no lazy descriptors.
-                                          return unsafeDescs
-                                      }
-                                      const ownKeys = ReflectOwnKeys(isFixingChromeBug ? target : unsafeDescs)
-                                      for (let i = 0, { length } = ownKeys; i < length; i += 1) {
-                                          const ownKey = ownKeys[i]
-                                          const isLazyProp = !!(state != null && state[ownKey])
-                                          if (isLazyProp) {
-                                              // Activate the descriptor by triggering
-                                              // its getter.
-                                              // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                                              target[ownKey]
-                                          }
-                                          if (isLazyProp || isFixingChromeBug) {
-                                              const unsafeDesc = isFixingChromeBug
-                                                  ? getFixedDescriptor(target, ownKey)
-                                                  : ReflectGetOwnPropertyDescriptor(target, ownKey)
-                                              // Update the descriptor map entry.
-                                              if (unsafeDesc) {
-                                                  unsafeDescs[ownKey] = unsafeDesc
-                                              } else if (!isFixingChromeBug) {
-                                                  ReflectDeleteProperty(unsafeDescs, ownKey)
-                                              }
-                                          }
-                                      }
-                                      return unsafeDescs
-                                  },
-                              })
-                          try {
-                              ReflectRef.defineProperty = wrapDefineAccessOrProperty(ReflectDefineProperty)
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused19) {}
-                          try {
-                              ReflectRef.getOwnPropertyDescriptor = wrapGetOwnPropertyDescriptor(
-                                  ReflectGetOwnPropertyDescriptor,
-                              )
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused20) {}
-                          try {
-                              ObjectCtor.getOwnPropertyDescriptor =
-                                  wrapGetOwnPropertyDescriptor(ObjectGetOwnPropertyDescriptor)
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused21) {}
-                          try {
-                              ObjectCtor.getOwnPropertyDescriptors = wrapGetOwnPropertyDescriptors(
-                                  ObjectGetOwnPropertyDescriptors,
-                              )
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused22) {}
-                          try {
-                              // eslint-disable-next-line @typescript-eslint/naming-convention, no-restricted-properties, no-underscore-dangle
-                              ObjectProto.__defineGetter__ = wrapDefineAccessOrProperty(ObjectProtoDefineGetter)
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused23) {}
-                          try {
-                              // eslint-disable-next-line @typescript-eslint/naming-convention, no-restricted-properties, no-underscore-dangle
-                              ObjectProto.__defineSetter__ = wrapDefineAccessOrProperty(ObjectProtoDefineSetter)
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused24) {}
-                          try {
-                              // eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle
-                              ObjectProto.__lookupGetter__ = wrapLookupAccessor(
-                                  ObjectProtoLookupGetter,
-                                  lookupFixedGetter,
-                              )
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused25) {}
-                          try {
-                              // eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle
-                              ObjectProto.__lookupSetter__ = wrapLookupAccessor(
-                                  ObjectProtoLookupSetter,
-                                  lookupFixedSetter,
-                              )
-                              // eslint-disable-next-line no-empty
-                          } catch (_unused26) {}
-                      }
-                    : noop
+                                :   undefined
+                            const getFixedDescriptor =
+                                shouldFixChromeBug ?
+                                    (target, key) =>
+                                        ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key]) ?
+                                            {
+                                                configurable: false,
+                                                enumerable: ReflectApply(ObjectProtoPropertyIsEnumerable, target, [
+                                                    key,
+                                                ]),
+                                                // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                                                get: getUnforgeableGlobalThisGetter(key),
+                                                set: undefined,
+                                            }
+                                        :   ReflectGetOwnPropertyDescriptor(target, key)
+                                :   undefined
+                            const getUnforgeableGlobalThisGetter =
+                                shouldFixChromeBug ?
+                                    (key) => {
+                                        let globalThisGetter = keyToGlobalThisGetterRegistry[key]
+                                        if (globalThisGetter === undefined) {
+                                            // We can't access the original getter to mask
+                                            // with `proxyMaskFunction()`, so instead we wrap
+                                            // `unboundGlobalThisGetter` in bound function
+                                            // to obscure the getter source as "[native code]".
+                                            globalThisGetter = ReflectApply(
+                                                FunctionProtoBind, // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                                                unboundGlobalThisGetter,
+                                                [],
+                                            )
+                                            // Preserve identity continuity of getters.
+                                            keyToGlobalThisGetterRegistry[key] = globalThisGetter
+                                        }
+                                        return globalThisGetter
+                                    }
+                                :   undefined
+                            const lookupFixedGetter =
+                                shouldFixChromeBug ?
+                                    (target, key) =>
+                                        ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key]) ?
+                                            getUnforgeableGlobalThisGetter(key)
+                                        :   ReflectApply(ObjectProtoLookupGetter, target, [key])
+                                :   undefined
+                            const lookupFixedSetter =
+                                shouldFixChromeBug ?
+                                    (target, key) =>
+                                        ReflectApply(ArrayProtoIncludes, unforgeableGlobalThisKeys, [key]) ? undefined
+                                        :   ReflectApply(ObjectProtoLookupSetter, target, [key])
+                                :   undefined
+                            const unboundGlobalThisGetter = shouldFixChromeBug ? () => globalThisRef : undefined
+                            const wrapDefineAccessOrProperty = (originalFunc) => {
+                                const { length: originalFuncLength } = originalFunc
+                                // `__defineGetter__()` and `__defineSetter__()` have
+                                // function lengths of 2 while `Reflect.defineProperty()`
+                                // has a function length of 3.
+                                const useThisArgAsTarget = originalFuncLength === 2
+                                return new ProxyCtor(originalFunc, {
+                                    apply(_originalFunc, thisArg, args) {
+                                        if (args.length >= originalFuncLength) {
+                                            const target = useThisArgAsTarget ? thisArg : args[0]
+                                            if (
+                                                (typeof target === 'object' && target !== null) ||
+                                                typeof target === 'function'
+                                            ) {
+                                                const key = useThisArgAsTarget ? args[0] : args[1]
+                                                const state = getLazyPropertyDescriptorStateByTarget(target)
+                                                if (state != null && state[key]) {
+                                                    // Activate the descriptor by triggering
+                                                    // its getter.
+                                                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                                                    target[key]
+                                                }
+                                            }
+                                        }
+                                        return ReflectApply(originalFunc, thisArg, args)
+                                    },
+                                })
+                            }
+                            const wrapLookupAccessor = (originalFunc, lookupFixedAccessor) =>
+                                new ProxyCtor(originalFunc, {
+                                    apply(_originalFunc, thisArg, args) {
+                                        if (
+                                            args.length &&
+                                            ((typeof thisArg === 'object' && thisArg !== null) ||
+                                                typeof thisArg === 'function')
+                                        ) {
+                                            const { 0: key } = args
+                                            const state = getLazyPropertyDescriptorStateByTarget(thisArg)
+                                            if (state != null && state[key]) {
+                                                // Activate the descriptor by triggering
+                                                // its getter.
+                                                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                                                thisArg[key]
+                                            }
+                                            if (shouldFixChromeBug && thisArg === globalThisRef) {
+                                                return lookupFixedAccessor(thisArg, key)
+                                            }
+                                        }
+                                        return ReflectApply(originalFunc, thisArg, args)
+                                    },
+                                })
+                            const wrapGetOwnPropertyDescriptor = (originalFunc) =>
+                                new ProxyCtor(originalFunc, {
+                                    apply(_originalFunc, thisArg, args) {
+                                        if (args.length > 1) {
+                                            const { 0: target, 1: key } = args
+                                            if (
+                                                (typeof target === 'object' && target !== null) ||
+                                                typeof target === 'function'
+                                            ) {
+                                                const state = getLazyPropertyDescriptorStateByTarget(target)
+                                                if (state != null && state[key]) {
+                                                    // Activate the descriptor by triggering
+                                                    // its getter.
+                                                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                                                    target[key]
+                                                }
+                                                if (shouldFixChromeBug && target === globalThisRef) {
+                                                    return getFixedDescriptor(target, key)
+                                                }
+                                            }
+                                        }
+                                        return ReflectApply(originalFunc, thisArg, args)
+                                    },
+                                })
+                            const wrapGetOwnPropertyDescriptors = (originalFunc) =>
+                                new ProxyCtor(originalFunc, {
+                                    apply(_originalFunc, thisArg, args) {
+                                        const target = args.length ? args[0] : undefined
+                                        if (
+                                            !(
+                                                (typeof target === 'object' && target !== null) ||
+                                                typeof target === 'function'
+                                            )
+                                        ) {
+                                            // Defer to native method to throw exception.
+                                            return ReflectApply(originalFunc, thisArg, args)
+                                        }
+                                        const state = getLazyPropertyDescriptorStateByTarget(target)
+                                        const isFixingChromeBug = target === globalThisRef && shouldFixChromeBug
+                                        const unsafeDescs =
+                                            (
+                                                isFixingChromeBug // Create an empty property descriptor map
+                                            ) ?
+                                                // to populate with curated descriptors.
+                                                {} // Since this is not a global object it is
+                                                // safe to use the native method.
+                                            :   ReflectApply(originalFunc, thisArg, args)
+                                        if (!isFixingChromeBug && state === undefined) {
+                                            // Exit early if the target is not a global
+                                            // object and there are no lazy descriptors.
+                                            return unsafeDescs
+                                        }
+                                        const ownKeys = ReflectOwnKeys(isFixingChromeBug ? target : unsafeDescs)
+                                        for (let i = 0, { length } = ownKeys; i < length; i += 1) {
+                                            const ownKey = ownKeys[i]
+                                            const isLazyProp = !!(state != null && state[ownKey])
+                                            if (isLazyProp) {
+                                                // Activate the descriptor by triggering
+                                                // its getter.
+                                                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                                                target[ownKey]
+                                            }
+                                            if (isLazyProp || isFixingChromeBug) {
+                                                const unsafeDesc =
+                                                    isFixingChromeBug ?
+                                                        getFixedDescriptor(target, ownKey)
+                                                    :   ReflectGetOwnPropertyDescriptor(target, ownKey)
+                                                // Update the descriptor map entry.
+                                                if (unsafeDesc) {
+                                                    unsafeDescs[ownKey] = unsafeDesc
+                                                } else if (!isFixingChromeBug) {
+                                                    ReflectDeleteProperty(unsafeDescs, ownKey)
+                                                }
+                                            }
+                                        }
+                                        return unsafeDescs
+                                    },
+                                })
+                            try {
+                                ReflectRef.defineProperty = wrapDefineAccessOrProperty(ReflectDefineProperty)
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused19) {}
+                            try {
+                                ReflectRef.getOwnPropertyDescriptor = wrapGetOwnPropertyDescriptor(
+                                    ReflectGetOwnPropertyDescriptor,
+                                )
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused20) {}
+                            try {
+                                ObjectCtor.getOwnPropertyDescriptor =
+                                    wrapGetOwnPropertyDescriptor(ObjectGetOwnPropertyDescriptor)
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused21) {}
+                            try {
+                                ObjectCtor.getOwnPropertyDescriptors = wrapGetOwnPropertyDescriptors(
+                                    ObjectGetOwnPropertyDescriptors,
+                                )
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused22) {}
+                            try {
+                                // eslint-disable-next-line @typescript-eslint/naming-convention, no-restricted-properties, no-underscore-dangle
+                                ObjectProto.__defineGetter__ = wrapDefineAccessOrProperty(ObjectProtoDefineGetter)
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused23) {}
+                            try {
+                                // eslint-disable-next-line @typescript-eslint/naming-convention, no-restricted-properties, no-underscore-dangle
+                                ObjectProto.__defineSetter__ = wrapDefineAccessOrProperty(ObjectProtoDefineSetter)
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused24) {}
+                            try {
+                                // eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle
+                                ObjectProto.__lookupGetter__ = wrapLookupAccessor(
+                                    ObjectProtoLookupGetter,
+                                    lookupFixedGetter,
+                                )
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused25) {}
+                            try {
+                                // eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle
+                                ObjectProto.__lookupSetter__ = wrapLookupAccessor(
+                                    ObjectProtoLookupSetter,
+                                    lookupFixedSetter,
+                                )
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused26) {}
+                        }
+                    :   noop
                 function lookupForeignDescriptor(foreignTargetPointer, shadowTarget, key) {
                     let protoPointerOrNull
                     let safeDesc
@@ -1804,21 +1815,21 @@ export default {
                                 if (safeDesc.foreign) {
                                     foreignCallableApply(
                                         getTransferablePointer(setter), // Inline getTransferableValue().
-                                        (typeof receiver === 'object' && receiver !== null) ||
-                                            typeof receiver === 'function'
-                                            ? getTransferablePointer(receiver) // Intentionally ignoring `document.all`.
-                                            : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                        (
+                                            (typeof receiver === 'object' && receiver !== null) ||
+                                                typeof receiver === 'function'
+                                        ) ?
+                                            getTransferablePointer(receiver) // Intentionally ignoring `document.all`.
+                                            // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                             // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                            typeof receiver === 'undefined'
-                                            ? undefined
-                                            : receiver, // Inline getTransferableValue().
-                                        (typeof value === 'object' && value !== null) || typeof value === 'function'
-                                            ? getTransferablePointer(value) // Intentionally ignoring `document.all`.
-                                            : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                        : typeof receiver === 'undefined' ? undefined
+                                        : receiver, // Inline getTransferableValue().
+                                        (typeof value === 'object' && value !== null) || typeof value === 'function' ?
+                                            getTransferablePointer(value) // Intentionally ignoring `document.all`.
+                                            // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                             // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                            typeof value === 'undefined'
-                                            ? undefined
-                                            : value,
+                                        : typeof value === 'undefined' ? undefined
+                                        : value,
                                     )
                                 } else {
                                     // Even though the setter function exists, we can't
@@ -1902,15 +1913,16 @@ export default {
                     proxyPointerCache.set(proxy, foreignTargetPointer)
                     return createPointer(proxy)
                 }
-                const setLazyPropertyDescriptorStateByTarget = IS_IN_SHADOW_REALM
-                    ? (target, state) => {
-                          lazyPropertyDescriptorStateCache.set(target, state)
-                          foreignCallableSetLazyPropertyDescriptorStateByTarget(
-                              getTransferablePointer(target),
-                              getTransferablePointer(state),
-                          )
-                      }
-                    : noop
+                const setLazyPropertyDescriptorStateByTarget =
+                    IS_IN_SHADOW_REALM ?
+                        (target, state) => {
+                            lazyPropertyDescriptorStateCache.set(target, state)
+                            foreignCallableSetLazyPropertyDescriptorStateByTarget(
+                                getTransferablePointer(target),
+                                getTransferablePointer(state),
+                            )
+                        }
+                    :   noop
                 class BoundaryProxyHandler {
                     constructor(
                         foreignTargetPointer,
@@ -1920,102 +1932,104 @@ export default {
                         foreignTargetTypedArrayLength,
                     ) {
                         // Internal red/shadow realm side utilities:
-                        this.makeProxyLive = IS_IN_SHADOW_REALM
-                            ? function () {
-                                  // Replace pending traps with live traps that can work with the
-                                  // target without taking snapshots.
-                                  this.deleteProperty = BoundaryProxyHandler.passthruDeletePropertyTrap
-                                  this.defineProperty = BoundaryProxyHandler.passthruDefinePropertyTrap
-                                  this.preventExtensions = BoundaryProxyHandler.passthruPreventExtensionsTrap
-                                  this.set = BoundaryProxyHandler.passthruSetTrap
-                                  this.setPrototypeOf = BoundaryProxyHandler.passthruSetPrototypeOfTrap
-                              }
-                            : noop
-                        this.makeProxyStatic = IS_IN_SHADOW_REALM
-                            ? function () {
-                                  // Reset all traps except apply and construct for static proxies
-                                  // since the proxy target is the shadow target and all operations
-                                  // are going to be applied to it rather than the real target.
-                                  this.defineProperty = BoundaryProxyHandler.staticDefinePropertyTrap
-                                  this.deleteProperty = BoundaryProxyHandler.staticDeletePropertyTrap
-                                  this.get = BoundaryProxyHandler.staticGetTrap
-                                  this.getOwnPropertyDescriptor =
-                                      BoundaryProxyHandler.staticGetOwnPropertyDescriptorTrap
-                                  this.getPrototypeOf = BoundaryProxyHandler.staticGetPrototypeOfTrap
-                                  this.has = BoundaryProxyHandler.staticHasTrap
-                                  this.isExtensible = BoundaryProxyHandler.staticIsExtensibleTrap
-                                  this.ownKeys = BoundaryProxyHandler.staticOwnKeysTrap
-                                  this.preventExtensions = BoundaryProxyHandler.staticPreventExtensionsTrap
-                                  this.set = BoundaryProxyHandler.staticSetTrap
-                                  this.setPrototypeOf = BoundaryProxyHandler.staticSetPrototypeOfTrap
-                                  const {
-                                      foreignTargetPointer: foreignTargetPointer1,
-                                      foreignTargetTraits: foreignTargetTraits1,
-                                      shadowTarget: shadowTarget1,
-                                  } = this
-                                  if (useFastForeignTargetPath) {
-                                      fastForeignTargetPointers.delete(foreignTargetPointer1)
-                                  }
-                                  // We don't wrap `foreignCallableGetTargetIntegrityTraits()`
-                                  // in a try-catch because it cannot throw.
-                                  const targetIntegrityTraits =
-                                      foreignCallableGetTargetIntegrityTraits(foreignTargetPointer1)
-                                  if (targetIntegrityTraits & 8 /* TargetIntegrityTraits.Revoked */) {
-                                      // the target is a revoked proxy, in which case we revoke
-                                      // this proxy as well.
-                                      this.revoke()
-                                      return
-                                  }
-                                  // A proxy can revoke itself when traps are triggered and break
-                                  // the membrane, therefore we need protection.
-                                  try {
-                                      copyForeignOwnPropertyDescriptorsAndPrototypeToShadowTarget(
-                                          foreignTargetPointer1,
-                                          shadowTarget1,
-                                      )
-                                  } catch (_unused27) {
-                                      // We don't wrap `foreignCallableIsTargetRevoked()` in a
-                                      // try-catch because it cannot throw.
-                                      if (foreignCallableIsTargetRevoked(foreignTargetPointer1)) {
-                                          this.revoke()
-                                          return
-                                      }
-                                  }
-                                  if (
-                                      foreignTargetTraits1 & 16 /* TargetTraits.IsObject */ &&
-                                      !(SymbolToStringTag in shadowTarget1)
-                                  ) {
-                                      let toStringTag = 'Object'
-                                      try {
-                                          toStringTag = foreignCallableGetToStringTagOfTarget(foreignTargetPointer1)
-                                          // eslint-disable-next-line no-empty
-                                      } catch (_unused28) {}
-                                      this.staticToStringTag = toStringTag
-                                  }
-                                  // Preserve the semantics of the target.
-                                  if (targetIntegrityTraits & 4 /* TargetIntegrityTraits.IsFrozen */) {
-                                      ObjectFreeze(shadowTarget1)
-                                  } else {
-                                      if (targetIntegrityTraits & 2 /* TargetIntegrityTraits.IsSealed */) {
-                                          ObjectSeal(shadowTarget1)
-                                      } else if (
-                                          targetIntegrityTraits & 1 /* TargetIntegrityTraits.IsNotExtensible */
-                                      ) {
-                                          ReflectPreventExtensions(shadowTarget1)
-                                      }
-                                      if (LOCKER_UNMINIFIED_FLAG) {
-                                          // We don't wrap `foreignCallableDebugInfo()` in a try-catch
-                                          // because it cannot throw.
-                                          foreignCallableDebugInfo(
-                                              'Mutations on the membrane of an object originating ' +
-                                                  'outside of the sandbox will not be reflected on ' +
-                                                  'the object itself:',
-                                              foreignTargetPointer1,
-                                          )
-                                      }
-                                  }
-                              }
-                            : noop
+                        this.makeProxyLive =
+                            IS_IN_SHADOW_REALM ?
+                                function () {
+                                    // Replace pending traps with live traps that can work with the
+                                    // target without taking snapshots.
+                                    this.deleteProperty = BoundaryProxyHandler.passthruDeletePropertyTrap
+                                    this.defineProperty = BoundaryProxyHandler.passthruDefinePropertyTrap
+                                    this.preventExtensions = BoundaryProxyHandler.passthruPreventExtensionsTrap
+                                    this.set = BoundaryProxyHandler.passthruSetTrap
+                                    this.setPrototypeOf = BoundaryProxyHandler.passthruSetPrototypeOfTrap
+                                }
+                            :   noop
+                        this.makeProxyStatic =
+                            IS_IN_SHADOW_REALM ?
+                                function () {
+                                    // Reset all traps except apply and construct for static proxies
+                                    // since the proxy target is the shadow target and all operations
+                                    // are going to be applied to it rather than the real target.
+                                    this.defineProperty = BoundaryProxyHandler.staticDefinePropertyTrap
+                                    this.deleteProperty = BoundaryProxyHandler.staticDeletePropertyTrap
+                                    this.get = BoundaryProxyHandler.staticGetTrap
+                                    this.getOwnPropertyDescriptor =
+                                        BoundaryProxyHandler.staticGetOwnPropertyDescriptorTrap
+                                    this.getPrototypeOf = BoundaryProxyHandler.staticGetPrototypeOfTrap
+                                    this.has = BoundaryProxyHandler.staticHasTrap
+                                    this.isExtensible = BoundaryProxyHandler.staticIsExtensibleTrap
+                                    this.ownKeys = BoundaryProxyHandler.staticOwnKeysTrap
+                                    this.preventExtensions = BoundaryProxyHandler.staticPreventExtensionsTrap
+                                    this.set = BoundaryProxyHandler.staticSetTrap
+                                    this.setPrototypeOf = BoundaryProxyHandler.staticSetPrototypeOfTrap
+                                    const {
+                                        foreignTargetPointer: foreignTargetPointer1,
+                                        foreignTargetTraits: foreignTargetTraits1,
+                                        shadowTarget: shadowTarget1,
+                                    } = this
+                                    if (useFastForeignTargetPath) {
+                                        fastForeignTargetPointers.delete(foreignTargetPointer1)
+                                    }
+                                    // We don't wrap `foreignCallableGetTargetIntegrityTraits()`
+                                    // in a try-catch because it cannot throw.
+                                    const targetIntegrityTraits =
+                                        foreignCallableGetTargetIntegrityTraits(foreignTargetPointer1)
+                                    if (targetIntegrityTraits & 8 /* TargetIntegrityTraits.Revoked */) {
+                                        // the target is a revoked proxy, in which case we revoke
+                                        // this proxy as well.
+                                        this.revoke()
+                                        return
+                                    }
+                                    // A proxy can revoke itself when traps are triggered and break
+                                    // the membrane, therefore we need protection.
+                                    try {
+                                        copyForeignOwnPropertyDescriptorsAndPrototypeToShadowTarget(
+                                            foreignTargetPointer1,
+                                            shadowTarget1,
+                                        )
+                                    } catch (_unused27) {
+                                        // We don't wrap `foreignCallableIsTargetRevoked()` in a
+                                        // try-catch because it cannot throw.
+                                        if (foreignCallableIsTargetRevoked(foreignTargetPointer1)) {
+                                            this.revoke()
+                                            return
+                                        }
+                                    }
+                                    if (
+                                        foreignTargetTraits1 & 16 /* TargetTraits.IsObject */ &&
+                                        !(SymbolToStringTag in shadowTarget1)
+                                    ) {
+                                        let toStringTag = 'Object'
+                                        try {
+                                            toStringTag = foreignCallableGetToStringTagOfTarget(foreignTargetPointer1)
+                                            // eslint-disable-next-line no-empty
+                                        } catch (_unused28) {}
+                                        this.staticToStringTag = toStringTag
+                                    }
+                                    // Preserve the semantics of the target.
+                                    if (targetIntegrityTraits & 4 /* TargetIntegrityTraits.IsFrozen */) {
+                                        ObjectFreeze(shadowTarget1)
+                                    } else {
+                                        if (targetIntegrityTraits & 2 /* TargetIntegrityTraits.IsSealed */) {
+                                            ObjectSeal(shadowTarget1)
+                                        } else if (
+                                            targetIntegrityTraits & 1 /* TargetIntegrityTraits.IsNotExtensible */
+                                        ) {
+                                            ReflectPreventExtensions(shadowTarget1)
+                                        }
+                                        if (LOCKER_UNMINIFIED_FLAG) {
+                                            // We don't wrap `foreignCallableDebugInfo()` in a try-catch
+                                            // because it cannot throw.
+                                            foreignCallableDebugInfo(
+                                                'Mutations on the membrane of an object originating ' +
+                                                    'outside of the sandbox will not be reflected on ' +
+                                                    'the object itself:',
+                                                foreignTargetPointer1,
+                                            )
+                                        }
+                                    }
+                                }
+                            :   noop
                         let shadowTarget
                         const isForeignTargetArray = foreignTargetTraits & 1 /* TargetTraits.IsArray */
                         const isForeignTargetFunction = foreignTargetTraits & 4 /* TargetTraits.IsFunction */
@@ -2073,16 +2087,21 @@ export default {
                             var _applyTrapNameRegistr, _constructTrapNameReg
                             this.apply =
                                 this[
-                                    (_applyTrapNameRegistr = applyTrapNameRegistry[foreignTargetFunctionArity]) != null
-                                        ? _applyTrapNameRegistr
-                                        : applyTrapNameRegistry.n
+                                    (
+                                        (_applyTrapNameRegistr = applyTrapNameRegistry[foreignTargetFunctionArity]) !=
+                                        null
+                                    ) ?
+                                        _applyTrapNameRegistr
+                                    :   applyTrapNameRegistry.n
                                 ]
                             this.construct =
                                 this[
-                                    (_constructTrapNameReg = constructTrapNameRegistry[foreignTargetFunctionArity]) !=
-                                    null
-                                        ? _constructTrapNameReg
-                                        : constructTrapNameRegistry.n
+                                    (
+                                        (_constructTrapNameReg =
+                                            constructTrapNameRegistry[foreignTargetFunctionArity]) != null
+                                    ) ?
+                                        _constructTrapNameReg
+                                    :   constructTrapNameRegistry.n
                                 ]
                         }
                         this.defineProperty = BoundaryProxyHandler.defaultDefinePropertyTrap
@@ -2091,9 +2110,9 @@ export default {
                         this.getOwnPropertyDescriptor = BoundaryProxyHandler.defaultGetOwnPropertyDescriptorTrap
                         this.getPrototypeOf = BoundaryProxyHandler.defaultGetPrototypeOfTrap
                         this.get =
-                            foreignTargetTraits & 32 /* TargetTraits.IsTypedArray */
-                                ? BoundaryProxyHandler.hybridGetTrapForTypedArray
-                                : BoundaryProxyHandler.defaultGetTrap
+                            foreignTargetTraits & 32 /* TargetTraits.IsTypedArray */ ?
+                                BoundaryProxyHandler.hybridGetTrapForTypedArray
+                            :   BoundaryProxyHandler.defaultGetTrap
                         this.has = BoundaryProxyHandler.defaultHasTrap
                         this.ownKeys = BoundaryProxyHandler.defaultOwnKeysTrap
                         this.preventExtensions = BoundaryProxyHandler.defaultPreventExtensionsTrap
@@ -2128,41 +2147,46 @@ export default {
                         ReflectSetPrototypeOf(safePartialDesc, null)
                         const { get: getter, set: setter, value: value1 } = safePartialDesc
                         const valuePointerOrPrimitive =
-                            'value' in safePartialDesc // Inline getTransferableValue().
-                                ? (typeof value1 === 'object' && value1 !== null) || typeof value1 === 'function'
-                                    ? getTransferablePointer(value1) // Intentionally ignoring `document.all`.
-                                    : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                            (
+                                'value' in safePartialDesc // Inline getTransferableValue().
+                            ) ?
+                                (typeof value1 === 'object' && value1 !== null) || typeof value1 === 'function' ?
+                                    getTransferablePointer(value1) // Intentionally ignoring `document.all`.
+                                    // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                     // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                    typeof value1 === 'undefined'
-                                    ? undefined
-                                    : value1
-                                : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
+                                : typeof value1 === 'undefined' ? undefined
+                                : value1
+                            :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                         const getterPointerOrUndefinedSymbol =
-                            'get' in safePartialDesc // Inline getTransferableValue().
-                                ? typeof getter === 'function'
-                                    ? getTransferablePointer(getter)
-                                    : getter
-                                : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
+                            (
+                                'get' in safePartialDesc // Inline getTransferableValue().
+                            ) ?
+                                typeof getter === 'function' ?
+                                    getTransferablePointer(getter)
+                                :   getter
+                            :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                         const setterPointerOrUndefinedSymbol =
-                            'set' in safePartialDesc // Inline getTransferableValue().
-                                ? typeof setter === 'function'
-                                    ? getTransferablePointer(setter)
-                                    : setter
-                                : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
+                            (
+                                'set' in safePartialDesc // Inline getTransferableValue().
+                            ) ?
+                                typeof setter === 'function' ?
+                                    getTransferablePointer(setter)
+                                :   setter
+                            :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                         let result = false
                         try {
                             result = foreignCallableDefineProperty(
                                 foreignTargetPointer1,
                                 key,
-                                'configurable' in safePartialDesc
-                                    ? !!safePartialDesc.configurable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'enumerable' in safePartialDesc
-                                    ? !!safePartialDesc.enumerable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'writable' in safePartialDesc
-                                    ? !!safePartialDesc.writable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                'configurable' in safePartialDesc ?
+                                    !!safePartialDesc.configurable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                'enumerable' in safePartialDesc ?
+                                    !!safePartialDesc.enumerable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                'writable' in safePartialDesc ?
+                                    !!safePartialDesc.writable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
                                 valuePointerOrPrimitive,
                                 getterPointerOrUndefinedSymbol,
                                 setterPointerOrUndefinedSymbol,
@@ -2384,21 +2408,22 @@ export default {
                         const isFastPath = proxy === receiver
                         let result = false
                         try {
-                            result = isFastPath
-                                ? foreignCallableSet(
-                                      foreignTargetPointer1,
-                                      key, // Inline getTransferableValue().
-                                      (typeof value === 'object' && value !== null) || typeof value === 'function'
-                                          ? getTransferablePointer(value)
-                                          : value,
-                                  )
-                                : passthruForeignTraversedSet(
-                                      foreignTargetPointer1,
-                                      shadowTarget1,
-                                      key,
-                                      value,
-                                      receiver,
-                                  )
+                            result =
+                                isFastPath ?
+                                    foreignCallableSet(
+                                        foreignTargetPointer1,
+                                        key, // Inline getTransferableValue().
+                                        (typeof value === 'object' && value !== null) || typeof value === 'function' ?
+                                            getTransferablePointer(value)
+                                        :   value,
+                                    )
+                                :   passthruForeignTraversedSet(
+                                        foreignTargetPointer1,
+                                        shadowTarget1,
+                                        key,
+                                        value,
+                                        receiver,
+                                    )
                         } catch (error) {
                             var _selectedTarget19
                             const errorToThrow =
@@ -2412,523 +2437,541 @@ export default {
                 // Logic implementation of all traps.
                 // Hybrid traps:
                 // (traps that operate on their shadowTarget, proxy, and foreignTargetPointer):
-                BoundaryProxyHandler.hybridGetTrap = IS_IN_SHADOW_REALM
-                    ? function (_shadowTarget, key, receiver) {
-                          const {
-                              foreignTargetPointer: foreignTargetPointer1,
-                              foreignTargetTraits: foreignTargetTraits1,
-                              proxy,
-                              shadowTarget: shadowTarget1,
-                          } = this
-                          let safeDesc
-                          let result
-                          if (useFastForeignTargetPath && fastForeignTargetPointers.has(foreignTargetPointer1)) {
-                              let pointerOrPrimitive
-                              try {
-                                  pointerOrPrimitive = foreignCallableGetPropertyValue(foreignTargetPointer1, key)
-                              } catch (error) {
-                                  var _selectedTarget20
-                                  const errorToThrow =
-                                      (_selectedTarget20 = selectedTarget) != null ? _selectedTarget20 : error
-                                  selectedTarget = undefined
-                                  throw errorToThrow
-                              }
-                              if (typeof pointerOrPrimitive === 'function') {
-                                  pointerOrPrimitive()
-                                  result = selectedTarget
-                                  selectedTarget = undefined
-                              } else {
-                                  result = pointerOrPrimitive
-                              }
-                          } else {
-                              safeDesc = lookupForeignDescriptor(foreignTargetPointer1, shadowTarget1, key)
-                              if (safeDesc) {
-                                  const { get: getter, value: localValue } = safeDesc
-                                  if (getter) {
-                                      if (safeDesc.foreign) {
-                                          const foreignGetterPointer = getTransferablePointer(getter)
-                                          const transferableReceiver =
-                                              proxy === receiver
-                                                  ? foreignTargetPointer1 // Inline getTransferableValue().
-                                                  : (typeof receiver === 'object' && receiver !== null) ||
+                BoundaryProxyHandler.hybridGetTrap =
+                    IS_IN_SHADOW_REALM ?
+                        function (_shadowTarget, key, receiver) {
+                            const {
+                                foreignTargetPointer: foreignTargetPointer1,
+                                foreignTargetTraits: foreignTargetTraits1,
+                                proxy,
+                                shadowTarget: shadowTarget1,
+                            } = this
+                            let safeDesc
+                            let result
+                            if (useFastForeignTargetPath && fastForeignTargetPointers.has(foreignTargetPointer1)) {
+                                let pointerOrPrimitive
+                                try {
+                                    pointerOrPrimitive = foreignCallableGetPropertyValue(foreignTargetPointer1, key)
+                                } catch (error) {
+                                    var _selectedTarget20
+                                    const errorToThrow =
+                                        (_selectedTarget20 = selectedTarget) != null ? _selectedTarget20 : error
+                                    selectedTarget = undefined
+                                    throw errorToThrow
+                                }
+                                if (typeof pointerOrPrimitive === 'function') {
+                                    pointerOrPrimitive()
+                                    result = selectedTarget
+                                    selectedTarget = undefined
+                                } else {
+                                    result = pointerOrPrimitive
+                                }
+                            } else {
+                                safeDesc = lookupForeignDescriptor(foreignTargetPointer1, shadowTarget1, key)
+                                if (safeDesc) {
+                                    const { get: getter, value: localValue } = safeDesc
+                                    if (getter) {
+                                        if (safeDesc.foreign) {
+                                            const foreignGetterPointer = getTransferablePointer(getter)
+                                            const transferableReceiver =
+                                                proxy === receiver ?
+                                                    foreignTargetPointer1 // Inline getTransferableValue().
+                                                : (
+                                                    (typeof receiver === 'object' && receiver !== null) ||
                                                     typeof receiver === 'function'
-                                                  ? getTransferablePointer(receiver)
-                                                  : receiver
-                                          let pointerOrPrimitive
-                                          try {
-                                              pointerOrPrimitive = foreignCallableApply(
-                                                  foreignGetterPointer,
-                                                  transferableReceiver,
-                                              )
-                                          } catch (error) {
-                                              var _selectedTarget21
-                                              const errorToThrow =
-                                                  (_selectedTarget21 = selectedTarget) != null
-                                                      ? _selectedTarget21
-                                                      : error
-                                              selectedTarget = undefined
-                                              throw errorToThrow
-                                          }
-                                          if (typeof pointerOrPrimitive === 'function') {
-                                              pointerOrPrimitive()
-                                              result = selectedTarget
-                                              selectedTarget = undefined
-                                          } else {
-                                              result = pointerOrPrimitive
-                                          }
-                                      } else {
-                                          // Even though the getter function exists,
-                                          // we can't use `ReflectGet()` because there
-                                          // might be a distortion for that getter function,
-                                          // in which case we must resolve the local getter
-                                          // and call it instead.
-                                          result = ReflectApply(getter, receiver, [])
-                                      }
-                                  } else {
-                                      result = localValue
-                                  }
-                              } else {
-                                  const transferableReceiver =
-                                      proxy === receiver
-                                          ? foreignTargetPointer1 // Inline getTransferableValue().
-                                          : (typeof receiver === 'object' && receiver !== null) ||
+                                                ) ?
+                                                    getTransferablePointer(receiver)
+                                                :   receiver
+                                            let pointerOrPrimitive
+                                            try {
+                                                pointerOrPrimitive = foreignCallableApply(
+                                                    foreignGetterPointer,
+                                                    transferableReceiver,
+                                                )
+                                            } catch (error) {
+                                                var _selectedTarget21
+                                                const errorToThrow =
+                                                    (_selectedTarget21 = selectedTarget) != null ?
+                                                        _selectedTarget21
+                                                    :   error
+                                                selectedTarget = undefined
+                                                throw errorToThrow
+                                            }
+                                            if (typeof pointerOrPrimitive === 'function') {
+                                                pointerOrPrimitive()
+                                                result = selectedTarget
+                                                selectedTarget = undefined
+                                            } else {
+                                                result = pointerOrPrimitive
+                                            }
+                                        } else {
+                                            // Even though the getter function exists,
+                                            // we can't use `ReflectGet()` because there
+                                            // might be a distortion for that getter function,
+                                            // in which case we must resolve the local getter
+                                            // and call it instead.
+                                            result = ReflectApply(getter, receiver, [])
+                                        }
+                                    } else {
+                                        result = localValue
+                                    }
+                                } else {
+                                    const transferableReceiver =
+                                        proxy === receiver ?
+                                            foreignTargetPointer1 // Inline getTransferableValue().
+                                        : (
+                                            (typeof receiver === 'object' && receiver !== null) ||
                                             typeof receiver === 'function'
-                                          ? getTransferablePointer(receiver)
-                                          : receiver
-                                  let pointerOrPrimitive
-                                  try {
-                                      pointerOrPrimitive = foreignCallableGet(
-                                          foreignTargetPointer1,
-                                          foreignTargetTraits1,
-                                          key,
-                                          transferableReceiver,
-                                      )
-                                  } catch (error) {
-                                      var _selectedTarget22
-                                      const errorToThrow =
-                                          (_selectedTarget22 = selectedTarget) != null ? _selectedTarget22 : error
-                                      selectedTarget = undefined
-                                      throw errorToThrow
-                                  }
-                                  if (typeof pointerOrPrimitive === 'function') {
-                                      pointerOrPrimitive()
-                                      result = selectedTarget
-                                      selectedTarget = undefined
-                                  } else {
-                                      result = pointerOrPrimitive
-                                  }
-                              }
-                          }
-                          if (
-                              safeDesc === undefined &&
-                              result === undefined &&
-                              key === SymbolToStringTag &&
-                              foreignTargetTraits1 & 16 /* TargetTraits.IsObject */
-                          ) {
-                              let toStringTag
-                              try {
-                                  toStringTag = foreignCallableGetToStringTagOfTarget(foreignTargetPointer1)
-                              } catch (error) {
-                                  var _selectedTarget23
-                                  const errorToThrow =
-                                      (_selectedTarget23 = selectedTarget) != null ? _selectedTarget23 : error
-                                  selectedTarget = undefined
-                                  throw errorToThrow
-                              }
-                              // The default language toStringTag is "Object". If we
-                              // receive "Object" we return `undefined` to let the
-                              // language resolve it naturally without projecting a
-                              // value.
-                              if (toStringTag !== 'Object') {
-                                  result = toStringTag
-                              }
-                          }
-                          return result
-                      }
-                    : noop
-                BoundaryProxyHandler.hybridGetTrapForTypedArray = IS_IN_SHADOW_REALM
-                    ? function (_shadowTarget, key, receiver) {
-                          const {
-                              foreignTargetPointer: foreignTargetPointer1,
-                              foreignTargetTypedArrayLength: foreignTargetTypedArrayLength1,
-                              proxy,
-                              shadowTarget: shadowTarget1,
-                          } = this
-                          let useFastPath = useFastForeignTargetPathForTypedArrays
-                          if (!useFastPath && typeof key === 'string') {
-                              const possibleIndex = +key
-                              useFastPath =
-                                  possibleIndex > -1 &&
-                                  possibleIndex < foreignTargetTypedArrayLength1 &&
-                                  NumberIsInteger(possibleIndex)
-                          }
-                          let result
-                          if (useFastPath) {
-                              let pointerOrPrimitive
-                              try {
-                                  pointerOrPrimitive = foreignCallableGetPropertyValue(foreignTargetPointer1, key)
-                              } catch (error) {
-                                  var _selectedTarget24
-                                  const errorToThrow =
-                                      (_selectedTarget24 = selectedTarget) != null ? _selectedTarget24 : error
-                                  selectedTarget = undefined
-                                  throw errorToThrow
-                              }
-                              if (typeof pointerOrPrimitive === 'function') {
-                                  pointerOrPrimitive()
-                                  result = selectedTarget
-                                  selectedTarget = undefined
-                              } else {
-                                  result = pointerOrPrimitive
-                              }
-                          } else {
-                              const safeDesc = lookupForeignDescriptor(foreignTargetPointer1, shadowTarget1, key)
-                              if (safeDesc) {
-                                  const { get: getter, value: localValue } = safeDesc
-                                  if (getter) {
-                                      if (safeDesc.foreign) {
-                                          const foreignGetterPointer = getTransferablePointer(getter)
-                                          const transferableReceiver =
-                                              proxy === receiver
-                                                  ? foreignTargetPointer1 // Inline getTransferableValue().
-                                                  : (typeof receiver === 'object' && receiver !== null) ||
+                                        ) ?
+                                            getTransferablePointer(receiver)
+                                        :   receiver
+                                    let pointerOrPrimitive
+                                    try {
+                                        pointerOrPrimitive = foreignCallableGet(
+                                            foreignTargetPointer1,
+                                            foreignTargetTraits1,
+                                            key,
+                                            transferableReceiver,
+                                        )
+                                    } catch (error) {
+                                        var _selectedTarget22
+                                        const errorToThrow =
+                                            (_selectedTarget22 = selectedTarget) != null ? _selectedTarget22 : error
+                                        selectedTarget = undefined
+                                        throw errorToThrow
+                                    }
+                                    if (typeof pointerOrPrimitive === 'function') {
+                                        pointerOrPrimitive()
+                                        result = selectedTarget
+                                        selectedTarget = undefined
+                                    } else {
+                                        result = pointerOrPrimitive
+                                    }
+                                }
+                            }
+                            if (
+                                safeDesc === undefined &&
+                                result === undefined &&
+                                key === SymbolToStringTag &&
+                                foreignTargetTraits1 & 16 /* TargetTraits.IsObject */
+                            ) {
+                                let toStringTag
+                                try {
+                                    toStringTag = foreignCallableGetToStringTagOfTarget(foreignTargetPointer1)
+                                } catch (error) {
+                                    var _selectedTarget23
+                                    const errorToThrow =
+                                        (_selectedTarget23 = selectedTarget) != null ? _selectedTarget23 : error
+                                    selectedTarget = undefined
+                                    throw errorToThrow
+                                }
+                                // The default language toStringTag is "Object". If we
+                                // receive "Object" we return `undefined` to let the
+                                // language resolve it naturally without projecting a
+                                // value.
+                                if (toStringTag !== 'Object') {
+                                    result = toStringTag
+                                }
+                            }
+                            return result
+                        }
+                    :   noop
+                BoundaryProxyHandler.hybridGetTrapForTypedArray =
+                    IS_IN_SHADOW_REALM ?
+                        function (_shadowTarget, key, receiver) {
+                            const {
+                                foreignTargetPointer: foreignTargetPointer1,
+                                foreignTargetTypedArrayLength: foreignTargetTypedArrayLength1,
+                                proxy,
+                                shadowTarget: shadowTarget1,
+                            } = this
+                            let useFastPath = useFastForeignTargetPathForTypedArrays
+                            if (!useFastPath && typeof key === 'string') {
+                                const possibleIndex = +key
+                                useFastPath =
+                                    possibleIndex > -1 &&
+                                    possibleIndex < foreignTargetTypedArrayLength1 &&
+                                    NumberIsInteger(possibleIndex)
+                            }
+                            let result
+                            if (useFastPath) {
+                                let pointerOrPrimitive
+                                try {
+                                    pointerOrPrimitive = foreignCallableGetPropertyValue(foreignTargetPointer1, key)
+                                } catch (error) {
+                                    var _selectedTarget24
+                                    const errorToThrow =
+                                        (_selectedTarget24 = selectedTarget) != null ? _selectedTarget24 : error
+                                    selectedTarget = undefined
+                                    throw errorToThrow
+                                }
+                                if (typeof pointerOrPrimitive === 'function') {
+                                    pointerOrPrimitive()
+                                    result = selectedTarget
+                                    selectedTarget = undefined
+                                } else {
+                                    result = pointerOrPrimitive
+                                }
+                            } else {
+                                const safeDesc = lookupForeignDescriptor(foreignTargetPointer1, shadowTarget1, key)
+                                if (safeDesc) {
+                                    const { get: getter, value: localValue } = safeDesc
+                                    if (getter) {
+                                        if (safeDesc.foreign) {
+                                            const foreignGetterPointer = getTransferablePointer(getter)
+                                            const transferableReceiver =
+                                                proxy === receiver ?
+                                                    foreignTargetPointer1 // Inline getTransferableValue().
+                                                : (
+                                                    (typeof receiver === 'object' && receiver !== null) ||
                                                     typeof receiver === 'function'
-                                                  ? getTransferablePointer(receiver)
-                                                  : receiver
-                                          let pointerOrPrimitive
-                                          try {
-                                              pointerOrPrimitive = foreignCallableApply(
-                                                  foreignGetterPointer,
-                                                  transferableReceiver,
-                                              )
-                                          } catch (error) {
-                                              var _selectedTarget25
-                                              const errorToThrow =
-                                                  (_selectedTarget25 = selectedTarget) != null
-                                                      ? _selectedTarget25
-                                                      : error
-                                              selectedTarget = undefined
-                                              throw errorToThrow
-                                          }
-                                          if (typeof pointerOrPrimitive === 'function') {
-                                              pointerOrPrimitive()
-                                              result = selectedTarget
-                                              selectedTarget = undefined
-                                          } else {
-                                              result = pointerOrPrimitive
-                                          }
-                                      } else {
-                                          // Even though the getter function exists,
-                                          // we can't use `ReflectGet()` because there
-                                          // might be a distortion for that getter function,
-                                          // in which case we must resolve the local getter
-                                          // and call it instead.
-                                          result = ReflectApply(getter, receiver, [])
-                                      }
-                                  } else {
-                                      result = localValue
-                                  }
-                              }
-                          }
-                          return result
-                      }
-                    : noop
-                BoundaryProxyHandler.hybridHasTrap = IS_IN_SHADOW_REALM
-                    ? function (_shadowTarget, key) {
-                          let trueOrProtoPointerOrNull
-                          try {
-                              trueOrProtoPointerOrNull = foreignCallableBatchGetPrototypeOfWhenHasNoOwnProperty(
-                                  this.foreignTargetPointer,
-                                  key,
-                              )
-                          } catch (error) {
-                              var _selectedTarget26
-                              const errorToThrow =
-                                  (_selectedTarget26 = selectedTarget) != null ? _selectedTarget26 : error
-                              selectedTarget = undefined
-                              throw errorToThrow
-                          }
-                          let result = false
-                          if (trueOrProtoPointerOrNull === true) {
-                              result = true
-                          } else {
-                              // Avoiding calling the has trap for any proto chain operation,
-                              // instead we implement the regular logic here in this trap.
-                              let currentObject
-                              if (typeof trueOrProtoPointerOrNull === 'function') {
-                                  trueOrProtoPointerOrNull()
-                                  currentObject = selectedTarget
-                                  selectedTarget = undefined
-                              } else {
-                                  currentObject = null
-                              }
-                              while (currentObject) {
-                                  if (ObjectHasOwn(currentObject, key)) {
-                                      result = true
-                                      break
-                                  }
-                                  currentObject = ReflectGetPrototypeOf(currentObject)
-                              }
-                          }
-                          return result
-                      }
-                    : alwaysFalse
-                BoundaryProxyHandler.passthruGetTrap = IS_NOT_IN_SHADOW_REALM
-                    ? function (_shadowTarget, key, receiver) {
-                          // Only allow accessing handshake property values if the
-                          // "has" trap has been triggered immediately BEFORE and
-                          // the property does NOT exist.
-                          handshakePropertyFlag &&
-                              (handshakePropertyFlag = lastProxyTrapCalled === 128) /* ProxyHandlerTraps.Has */
-                          lastProxyTrapCalled = 16 /* ProxyHandlerTraps.Get */
-                          const isNearMembraneSymbol = key === LOCKER_NEAR_MEMBRANE_SYMBOL
-                          const isNearMembraneSerializedValueSymbol =
-                              key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL
-                          if (handshakePropertyFlag) {
-                              // Exit without performing a [[Get]] for handshake
-                              // properties because we know that when the
-                              // `handshakePropertyFlag` is ON that there are NO
-                              // shadowed values.
-                              if (isNearMembraneSymbol) {
-                                  return true
-                              }
-                              if (isNearMembraneSerializedValueSymbol) {
-                                  return this.serialize()
-                              }
-                          }
-                          const {
-                              foreignTargetPointer: foreignTargetPointer1,
-                              foreignTargetTraits: foreignTargetTraits1,
-                              proxy,
-                          } = this
-                          if (typeof receiver === 'undefined') {
-                              receiver = proxy
-                          }
-                          const transferableReceiver =
-                              proxy === receiver
-                                  ? LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL // Inline getTransferableValue().
-                                  : (typeof receiver === 'object' && receiver !== null) ||
+                                                ) ?
+                                                    getTransferablePointer(receiver)
+                                                :   receiver
+                                            let pointerOrPrimitive
+                                            try {
+                                                pointerOrPrimitive = foreignCallableApply(
+                                                    foreignGetterPointer,
+                                                    transferableReceiver,
+                                                )
+                                            } catch (error) {
+                                                var _selectedTarget25
+                                                const errorToThrow =
+                                                    (_selectedTarget25 = selectedTarget) != null ?
+                                                        _selectedTarget25
+                                                    :   error
+                                                selectedTarget = undefined
+                                                throw errorToThrow
+                                            }
+                                            if (typeof pointerOrPrimitive === 'function') {
+                                                pointerOrPrimitive()
+                                                result = selectedTarget
+                                                selectedTarget = undefined
+                                            } else {
+                                                result = pointerOrPrimitive
+                                            }
+                                        } else {
+                                            // Even though the getter function exists,
+                                            // we can't use `ReflectGet()` because there
+                                            // might be a distortion for that getter function,
+                                            // in which case we must resolve the local getter
+                                            // and call it instead.
+                                            result = ReflectApply(getter, receiver, [])
+                                        }
+                                    } else {
+                                        result = localValue
+                                    }
+                                }
+                            }
+                            return result
+                        }
+                    :   noop
+                BoundaryProxyHandler.hybridHasTrap =
+                    IS_IN_SHADOW_REALM ?
+                        function (_shadowTarget, key) {
+                            let trueOrProtoPointerOrNull
+                            try {
+                                trueOrProtoPointerOrNull = foreignCallableBatchGetPrototypeOfWhenHasNoOwnProperty(
+                                    this.foreignTargetPointer,
+                                    key,
+                                )
+                            } catch (error) {
+                                var _selectedTarget26
+                                const errorToThrow =
+                                    (_selectedTarget26 = selectedTarget) != null ? _selectedTarget26 : error
+                                selectedTarget = undefined
+                                throw errorToThrow
+                            }
+                            let result = false
+                            if (trueOrProtoPointerOrNull === true) {
+                                result = true
+                            } else {
+                                // Avoiding calling the has trap for any proto chain operation,
+                                // instead we implement the regular logic here in this trap.
+                                let currentObject
+                                if (typeof trueOrProtoPointerOrNull === 'function') {
+                                    trueOrProtoPointerOrNull()
+                                    currentObject = selectedTarget
+                                    selectedTarget = undefined
+                                } else {
+                                    currentObject = null
+                                }
+                                while (currentObject) {
+                                    if (ObjectHasOwn(currentObject, key)) {
+                                        result = true
+                                        break
+                                    }
+                                    currentObject = ReflectGetPrototypeOf(currentObject)
+                                }
+                            }
+                            return result
+                        }
+                    :   alwaysFalse
+                BoundaryProxyHandler.passthruGetTrap =
+                    IS_NOT_IN_SHADOW_REALM ?
+                        function (_shadowTarget, key, receiver) {
+                            // Only allow accessing handshake property values if the
+                            // "has" trap has been triggered immediately BEFORE and
+                            // the property does NOT exist.
+                            handshakePropertyFlag &&
+                                (handshakePropertyFlag = lastProxyTrapCalled === 128) /* ProxyHandlerTraps.Has */
+                            lastProxyTrapCalled = 16 /* ProxyHandlerTraps.Get */
+                            const isNearMembraneSymbol = key === LOCKER_NEAR_MEMBRANE_SYMBOL
+                            const isNearMembraneSerializedValueSymbol =
+                                key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL
+                            if (handshakePropertyFlag) {
+                                // Exit without performing a [[Get]] for handshake
+                                // properties because we know that when the
+                                // `handshakePropertyFlag` is ON that there are NO
+                                // shadowed values.
+                                if (isNearMembraneSymbol) {
+                                    return true
+                                }
+                                if (isNearMembraneSerializedValueSymbol) {
+                                    return this.serialize()
+                                }
+                            }
+                            const {
+                                foreignTargetPointer: foreignTargetPointer1,
+                                foreignTargetTraits: foreignTargetTraits1,
+                                proxy,
+                            } = this
+                            if (typeof receiver === 'undefined') {
+                                receiver = proxy
+                            }
+                            const transferableReceiver =
+                                proxy === receiver ?
+                                    LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL // Inline getTransferableValue().
+                                : (
+                                    (typeof receiver === 'object' && receiver !== null) ||
                                     typeof receiver === 'function'
-                                  ? getTransferablePointer(receiver)
-                                  : receiver
-                          let pointerOrPrimitive
-                          try {
-                              pointerOrPrimitive = foreignCallableGet(
-                                  foreignTargetPointer1,
-                                  foreignTargetTraits1,
-                                  key,
-                                  transferableReceiver,
-                              )
-                          } catch (error) {
-                              var _selectedTarget27
-                              const errorToThrow =
-                                  (_selectedTarget27 = selectedTarget) != null ? _selectedTarget27 : error
-                              selectedTarget = undefined
-                              throw errorToThrow
-                          }
-                          let result
-                          if (typeof pointerOrPrimitive === 'function') {
-                              pointerOrPrimitive()
-                              result = selectedTarget
-                              selectedTarget = undefined
-                          } else {
-                              result = pointerOrPrimitive
-                          }
-                          // Getting forged values of handshake properties is not allowed.
-                          if (result !== undefined && (isNearMembraneSymbol || isNearMembraneSerializedValueSymbol)) {
-                              throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
-                          }
-                          return result
-                      }
-                    : noop
-                BoundaryProxyHandler.passthruHasTrap = IS_NOT_IN_SHADOW_REALM
-                    ? function (_shadowTarget, key) {
-                          lastProxyTrapCalled = 128 /* ProxyHandlerTraps.Has */
-                          let result
-                          try {
-                              result = foreignCallableHas(this.foreignTargetPointer, key)
-                          } catch (error) {
-                              var _selectedTarget28
-                              const errorToThrow =
-                                  (_selectedTarget28 = selectedTarget) != null ? _selectedTarget28 : error
-                              selectedTarget = undefined
-                              throw errorToThrow
-                          }
-                          const isNearMembraneSymbol = key === LOCKER_NEAR_MEMBRANE_SYMBOL
-                          const isNearMembraneSerializedValueSymbol =
-                              key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL
-                          if (result) {
-                              handshakePropertyFlag = false
-                              // Checking the existence of forged handshake properties
-                              // is not allowed.
-                              if (isNearMembraneSymbol || isNearMembraneSerializedValueSymbol) {
-                                  throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
-                              }
-                          } else {
-                              // The `handshakePropertyFlag` is ON if the handshake
-                              // property does NOT exist on the object or its [[Prototype]].
-                              handshakePropertyFlag = isNearMembraneSymbol || isNearMembraneSerializedValueSymbol
-                          }
-                          return result
-                      }
-                    : alwaysFalse
+                                ) ?
+                                    getTransferablePointer(receiver)
+                                :   receiver
+                            let pointerOrPrimitive
+                            try {
+                                pointerOrPrimitive = foreignCallableGet(
+                                    foreignTargetPointer1,
+                                    foreignTargetTraits1,
+                                    key,
+                                    transferableReceiver,
+                                )
+                            } catch (error) {
+                                var _selectedTarget27
+                                const errorToThrow =
+                                    (_selectedTarget27 = selectedTarget) != null ? _selectedTarget27 : error
+                                selectedTarget = undefined
+                                throw errorToThrow
+                            }
+                            let result
+                            if (typeof pointerOrPrimitive === 'function') {
+                                pointerOrPrimitive()
+                                result = selectedTarget
+                                selectedTarget = undefined
+                            } else {
+                                result = pointerOrPrimitive
+                            }
+                            // Getting forged values of handshake properties is not allowed.
+                            if (result !== undefined && (isNearMembraneSymbol || isNearMembraneSerializedValueSymbol)) {
+                                throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
+                            }
+                            return result
+                        }
+                    :   noop
+                BoundaryProxyHandler.passthruHasTrap =
+                    IS_NOT_IN_SHADOW_REALM ?
+                        function (_shadowTarget, key) {
+                            lastProxyTrapCalled = 128 /* ProxyHandlerTraps.Has */
+                            let result
+                            try {
+                                result = foreignCallableHas(this.foreignTargetPointer, key)
+                            } catch (error) {
+                                var _selectedTarget28
+                                const errorToThrow =
+                                    (_selectedTarget28 = selectedTarget) != null ? _selectedTarget28 : error
+                                selectedTarget = undefined
+                                throw errorToThrow
+                            }
+                            const isNearMembraneSymbol = key === LOCKER_NEAR_MEMBRANE_SYMBOL
+                            const isNearMembraneSerializedValueSymbol =
+                                key === LOCKER_NEAR_MEMBRANE_SERIALIZED_VALUE_SYMBOL
+                            if (result) {
+                                handshakePropertyFlag = false
+                                // Checking the existence of forged handshake properties
+                                // is not allowed.
+                                if (isNearMembraneSymbol || isNearMembraneSerializedValueSymbol) {
+                                    throw new TypeErrorCtor(ERR_ILLEGAL_PROPERTY_ACCESS)
+                                }
+                            } else {
+                                // The `handshakePropertyFlag` is ON if the handshake
+                                // property does NOT exist on the object or its [[Prototype]].
+                                handshakePropertyFlag = isNearMembraneSymbol || isNearMembraneSerializedValueSymbol
+                            }
+                            return result
+                        }
+                    :   alwaysFalse
                 // Pending traps:
-                BoundaryProxyHandler.pendingDefinePropertyTrap = IS_IN_SHADOW_REALM
-                    ? function (shadowTarget, key, unsafePartialDesc) {
-                          const {
-                              foreignTargetPointer: foreignTargetPointer1,
-                              foreignTargetTraits: foreignTargetTraits1,
-                          } = this
-                          // We don't wrap `foreignCallableIsTargetLive()` in a
-                          // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(foreignTargetPointer1, foreignTargetTraits1)) {
-                              this.makeProxyLive()
-                          } else {
-                              if (useFastForeignTargetPath) {
-                                  if (isForeignPointerOfObjectProto(foreignTargetPointer1)) {
-                                      disableFastForeignTargetPointers()
-                                  } else if (isForeignPointerOfTypedArrayProto(foreignTargetPointer1)) {
-                                      useFastForeignTargetPathForTypedArrays = false
-                                  }
-                              }
-                              this.makeProxyStatic()
-                          }
-                          return this.defineProperty(shadowTarget, key, unsafePartialDesc)
-                      }
-                    : alwaysFalse
-                BoundaryProxyHandler.pendingDeletePropertyTrap = IS_IN_SHADOW_REALM
-                    ? function (shadowTarget, key) {
-                          // We don't wrap `foreignCallableIsTargetLive()` in a
-                          // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
-                              this.makeProxyLive()
-                          } else {
-                              this.makeProxyStatic()
-                          }
-                          return this.deleteProperty(shadowTarget, key)
-                      }
-                    : alwaysFalse
-                BoundaryProxyHandler.pendingPreventExtensionsTrap = IS_IN_SHADOW_REALM
-                    ? function (shadowTarget) {
-                          // We don't wrap `foreignCallableIsTargetLive()` in a
-                          // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
-                              this.makeProxyLive()
-                          } else {
-                              this.makeProxyStatic()
-                          }
-                          return this.preventExtensions(shadowTarget)
-                      }
-                    : alwaysFalse
-                BoundaryProxyHandler.pendingSetPrototypeOfTrap = IS_IN_SHADOW_REALM
-                    ? function (shadowTarget, proto) {
-                          const {
-                              foreignTargetPointer: foreignTargetPointer1,
-                              foreignTargetTraits: foreignTargetTraits1,
-                          } = this
-                          // We don't wrap `foreignCallableIsTargetLive()` in a
-                          // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(foreignTargetPointer1, foreignTargetTraits1)) {
-                              this.makeProxyLive()
-                          } else {
-                              if (useFastForeignTargetPath) {
-                                  if (isForeignPointerOfObjectProto(foreignTargetPointer1)) {
-                                      disableFastForeignTargetPointers()
-                                  } else if (isForeignPointerOfTypedArrayProto(foreignTargetPointer1)) {
-                                      useFastForeignTargetPathForTypedArrays = false
-                                  }
-                              }
-                              this.makeProxyStatic()
-                          }
-                          return this.setPrototypeOf(shadowTarget, proto)
-                      }
-                    : alwaysFalse
-                BoundaryProxyHandler.pendingSetTrap = IS_IN_SHADOW_REALM
-                    ? function (shadowTarget, key, value, receiver) {
-                          const {
-                              foreignTargetPointer: foreignTargetPointer1,
-                              foreignTargetTraits: foreignTargetTraits1,
-                          } = this
-                          // We don't wrap `foreignCallableIsTargetLive()` in a
-                          // try-catch because it cannot throw.
-                          if (foreignCallableIsTargetLive(foreignTargetPointer1, foreignTargetTraits1)) {
-                              this.makeProxyLive()
-                          } else {
-                              if (useFastForeignTargetPath) {
-                                  if (isForeignPointerOfObjectProto(foreignTargetPointer1)) {
-                                      disableFastForeignTargetPointers()
-                                  } else if (isForeignPointerOfTypedArrayProto(foreignTargetPointer1)) {
-                                      useFastForeignTargetPathForTypedArrays = false
-                                  }
-                              }
-                              this.makeProxyStatic()
-                          }
-                          return this.set(shadowTarget, key, value, receiver)
-                      }
-                    : alwaysFalse
+                BoundaryProxyHandler.pendingDefinePropertyTrap =
+                    IS_IN_SHADOW_REALM ?
+                        function (shadowTarget, key, unsafePartialDesc) {
+                            const {
+                                foreignTargetPointer: foreignTargetPointer1,
+                                foreignTargetTraits: foreignTargetTraits1,
+                            } = this
+                            // We don't wrap `foreignCallableIsTargetLive()` in a
+                            // try-catch because it cannot throw.
+                            if (foreignCallableIsTargetLive(foreignTargetPointer1, foreignTargetTraits1)) {
+                                this.makeProxyLive()
+                            } else {
+                                if (useFastForeignTargetPath) {
+                                    if (isForeignPointerOfObjectProto(foreignTargetPointer1)) {
+                                        disableFastForeignTargetPointers()
+                                    } else if (isForeignPointerOfTypedArrayProto(foreignTargetPointer1)) {
+                                        useFastForeignTargetPathForTypedArrays = false
+                                    }
+                                }
+                                this.makeProxyStatic()
+                            }
+                            return this.defineProperty(shadowTarget, key, unsafePartialDesc)
+                        }
+                    :   alwaysFalse
+                BoundaryProxyHandler.pendingDeletePropertyTrap =
+                    IS_IN_SHADOW_REALM ?
+                        function (shadowTarget, key) {
+                            // We don't wrap `foreignCallableIsTargetLive()` in a
+                            // try-catch because it cannot throw.
+                            if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
+                                this.makeProxyLive()
+                            } else {
+                                this.makeProxyStatic()
+                            }
+                            return this.deleteProperty(shadowTarget, key)
+                        }
+                    :   alwaysFalse
+                BoundaryProxyHandler.pendingPreventExtensionsTrap =
+                    IS_IN_SHADOW_REALM ?
+                        function (shadowTarget) {
+                            // We don't wrap `foreignCallableIsTargetLive()` in a
+                            // try-catch because it cannot throw.
+                            if (foreignCallableIsTargetLive(this.foreignTargetPointer, this.foreignTargetTraits)) {
+                                this.makeProxyLive()
+                            } else {
+                                this.makeProxyStatic()
+                            }
+                            return this.preventExtensions(shadowTarget)
+                        }
+                    :   alwaysFalse
+                BoundaryProxyHandler.pendingSetPrototypeOfTrap =
+                    IS_IN_SHADOW_REALM ?
+                        function (shadowTarget, proto) {
+                            const {
+                                foreignTargetPointer: foreignTargetPointer1,
+                                foreignTargetTraits: foreignTargetTraits1,
+                            } = this
+                            // We don't wrap `foreignCallableIsTargetLive()` in a
+                            // try-catch because it cannot throw.
+                            if (foreignCallableIsTargetLive(foreignTargetPointer1, foreignTargetTraits1)) {
+                                this.makeProxyLive()
+                            } else {
+                                if (useFastForeignTargetPath) {
+                                    if (isForeignPointerOfObjectProto(foreignTargetPointer1)) {
+                                        disableFastForeignTargetPointers()
+                                    } else if (isForeignPointerOfTypedArrayProto(foreignTargetPointer1)) {
+                                        useFastForeignTargetPathForTypedArrays = false
+                                    }
+                                }
+                                this.makeProxyStatic()
+                            }
+                            return this.setPrototypeOf(shadowTarget, proto)
+                        }
+                    :   alwaysFalse
+                BoundaryProxyHandler.pendingSetTrap =
+                    IS_IN_SHADOW_REALM ?
+                        function (shadowTarget, key, value, receiver) {
+                            const {
+                                foreignTargetPointer: foreignTargetPointer1,
+                                foreignTargetTraits: foreignTargetTraits1,
+                            } = this
+                            // We don't wrap `foreignCallableIsTargetLive()` in a
+                            // try-catch because it cannot throw.
+                            if (foreignCallableIsTargetLive(foreignTargetPointer1, foreignTargetTraits1)) {
+                                this.makeProxyLive()
+                            } else {
+                                if (useFastForeignTargetPath) {
+                                    if (isForeignPointerOfObjectProto(foreignTargetPointer1)) {
+                                        disableFastForeignTargetPointers()
+                                    } else if (isForeignPointerOfTypedArrayProto(foreignTargetPointer1)) {
+                                        useFastForeignTargetPathForTypedArrays = false
+                                    }
+                                }
+                                this.makeProxyStatic()
+                            }
+                            return this.set(shadowTarget, key, value, receiver)
+                        }
+                    :   alwaysFalse
                 //  Static traps:
                 BoundaryProxyHandler.staticDefinePropertyTrap = IS_IN_SHADOW_REALM ? ReflectDefineProperty : alwaysFalse
                 BoundaryProxyHandler.staticDeletePropertyTrap = IS_IN_SHADOW_REALM ? ReflectDeleteProperty : alwaysFalse
-                BoundaryProxyHandler.staticGetOwnPropertyDescriptorTrap = IS_IN_SHADOW_REALM
-                    ? ReflectGetOwnPropertyDescriptor
-                    : noop
+                BoundaryProxyHandler.staticGetOwnPropertyDescriptorTrap =
+                    IS_IN_SHADOW_REALM ? ReflectGetOwnPropertyDescriptor : noop
                 BoundaryProxyHandler.staticGetPrototypeOfTrap = IS_IN_SHADOW_REALM ? ReflectGetPrototypeOf : () => null
-                BoundaryProxyHandler.staticGetTrap = IS_IN_SHADOW_REALM
-                    ? function (shadowTarget, key, receiver) {
-                          const { foreignTargetTraits: foreignTargetTraits1, staticToStringTag } = this
-                          const result = ReflectGet(shadowTarget, key, receiver)
-                          if (
-                              result === undefined &&
-                              key === SymbolToStringTag &&
-                              foreignTargetTraits1 & 16 /* TargetTraits.IsObject */ && // The default language toStringTag is "Object". If we
-                              // receive "Object" we return `undefined` to let the
-                              // language resolve it naturally without projecting a
-                              // value.
-                              staticToStringTag !== 'Object' &&
-                              !(key in shadowTarget)
-                          ) {
-                              return staticToStringTag
-                          }
-                          return result
-                      }
-                    : noop
+                BoundaryProxyHandler.staticGetTrap =
+                    IS_IN_SHADOW_REALM ?
+                        function (shadowTarget, key, receiver) {
+                            const { foreignTargetTraits: foreignTargetTraits1, staticToStringTag } = this
+                            const result = ReflectGet(shadowTarget, key, receiver)
+                            if (
+                                result === undefined &&
+                                key === SymbolToStringTag &&
+                                foreignTargetTraits1 & 16 /* TargetTraits.IsObject */ && // The default language toStringTag is "Object". If we
+                                // receive "Object" we return `undefined` to let the
+                                // language resolve it naturally without projecting a
+                                // value.
+                                staticToStringTag !== 'Object' &&
+                                !(key in shadowTarget)
+                            ) {
+                                return staticToStringTag
+                            }
+                            return result
+                        }
+                    :   noop
                 BoundaryProxyHandler.staticHasTrap = IS_IN_SHADOW_REALM ? ReflectHas : alwaysFalse
                 BoundaryProxyHandler.staticIsExtensibleTrap = IS_IN_SHADOW_REALM ? ReflectIsExtensible : alwaysFalse
                 BoundaryProxyHandler.staticOwnKeysTrap = IS_IN_SHADOW_REALM ? ReflectOwnKeys : () => []
-                BoundaryProxyHandler.staticPreventExtensionsTrap = IS_IN_SHADOW_REALM
-                    ? ReflectPreventExtensions
-                    : alwaysFalse
+                BoundaryProxyHandler.staticPreventExtensionsTrap =
+                    IS_IN_SHADOW_REALM ? ReflectPreventExtensions : alwaysFalse
                 BoundaryProxyHandler.staticSetPrototypeOfTrap = IS_IN_SHADOW_REALM ? ReflectSetPrototypeOf : alwaysFalse
                 BoundaryProxyHandler.staticSetTrap = IS_IN_SHADOW_REALM ? ReflectSet : alwaysFalse
                 // Default traps:
                 // Pending traps are needed for the shadow realm side of the membrane
                 // to avoid leaking mutation operations on the primary realm side.
-                BoundaryProxyHandler.defaultDefinePropertyTrap = IS_IN_SHADOW_REALM
-                    ? BoundaryProxyHandler.pendingDefinePropertyTrap
-                    : BoundaryProxyHandler.passthruDefinePropertyTrap
-                BoundaryProxyHandler.defaultDeletePropertyTrap = IS_IN_SHADOW_REALM
-                    ? BoundaryProxyHandler.pendingDeletePropertyTrap
-                    : BoundaryProxyHandler.passthruDeletePropertyTrap
+                BoundaryProxyHandler.defaultDefinePropertyTrap =
+                    IS_IN_SHADOW_REALM ?
+                        BoundaryProxyHandler.pendingDefinePropertyTrap
+                    :   BoundaryProxyHandler.passthruDefinePropertyTrap
+                BoundaryProxyHandler.defaultDeletePropertyTrap =
+                    IS_IN_SHADOW_REALM ?
+                        BoundaryProxyHandler.pendingDeletePropertyTrap
+                    :   BoundaryProxyHandler.passthruDeletePropertyTrap
                 BoundaryProxyHandler.defaultGetOwnPropertyDescriptorTrap =
                     BoundaryProxyHandler.passthruGetOwnPropertyDescriptorTrap
                 BoundaryProxyHandler.defaultGetPrototypeOfTrap = BoundaryProxyHandler.passthruGetPrototypeOfTrap
-                BoundaryProxyHandler.defaultGetTrap = IS_IN_SHADOW_REALM
-                    ? BoundaryProxyHandler.hybridGetTrap
-                    : BoundaryProxyHandler.passthruGetTrap
-                BoundaryProxyHandler.defaultHasTrap = IS_IN_SHADOW_REALM
-                    ? BoundaryProxyHandler.hybridHasTrap
-                    : BoundaryProxyHandler.passthruHasTrap
+                BoundaryProxyHandler.defaultGetTrap =
+                    IS_IN_SHADOW_REALM ? BoundaryProxyHandler.hybridGetTrap : BoundaryProxyHandler.passthruGetTrap
+                BoundaryProxyHandler.defaultHasTrap =
+                    IS_IN_SHADOW_REALM ? BoundaryProxyHandler.hybridHasTrap : BoundaryProxyHandler.passthruHasTrap
                 BoundaryProxyHandler.defaultIsExtensibleTrap = BoundaryProxyHandler.passthruIsExtensibleTrap
                 BoundaryProxyHandler.defaultOwnKeysTrap = BoundaryProxyHandler.passthruOwnKeysTrap
-                BoundaryProxyHandler.defaultPreventExtensionsTrap = IS_IN_SHADOW_REALM
-                    ? BoundaryProxyHandler.pendingPreventExtensionsTrap
-                    : BoundaryProxyHandler.passthruPreventExtensionsTrap
-                BoundaryProxyHandler.defaultSetTrap = IS_IN_SHADOW_REALM
-                    ? BoundaryProxyHandler.pendingSetTrap
-                    : BoundaryProxyHandler.passthruSetTrap
-                BoundaryProxyHandler.defaultSetPrototypeOfTrap = IS_IN_SHADOW_REALM
-                    ? BoundaryProxyHandler.pendingSetPrototypeOfTrap
-                    : BoundaryProxyHandler.passthruSetPrototypeOfTrap
+                BoundaryProxyHandler.defaultPreventExtensionsTrap =
+                    IS_IN_SHADOW_REALM ?
+                        BoundaryProxyHandler.pendingPreventExtensionsTrap
+                    :   BoundaryProxyHandler.passthruPreventExtensionsTrap
+                BoundaryProxyHandler.defaultSetTrap =
+                    IS_IN_SHADOW_REALM ? BoundaryProxyHandler.pendingSetTrap : BoundaryProxyHandler.passthruSetTrap
+                BoundaryProxyHandler.defaultSetPrototypeOfTrap =
+                    IS_IN_SHADOW_REALM ?
+                        BoundaryProxyHandler.pendingSetPrototypeOfTrap
+                    :   BoundaryProxyHandler.passthruSetPrototypeOfTrap
                 if (IS_IN_SHADOW_REALM) {
                     // Initialize `fastForeignTargetPointers` weak map.
                     clearFastForeignTargetPointers()
@@ -2938,13 +2981,13 @@ export default {
                     // globalThisPointer
                     // When crossing, should be mapped to the foreign globalThis
                     createPointer(globalThisRef), // getSelectedTarget
-                    IS_NOT_IN_SHADOW_REALM
-                        ? () => {
-                              const result = selectedTarget
-                              selectedTarget = undefined
-                              return result
-                          }
-                        : noop, // getTransferableValue
+                    IS_NOT_IN_SHADOW_REALM ?
+                        () => {
+                            const result = selectedTarget
+                            selectedTarget = undefined
+                            return result
+                        }
+                    :   noop, // getTransferableValue
                     (value) => {
                         if ((typeof value === 'object' && value !== null) || typeof value === 'function') {
                             return getTransferablePointer(value)
@@ -2967,20 +3010,20 @@ export default {
                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
                         return createPointer(typeof value === 'undefined' ? undefined : value)
                     }, // callableEvaluate
-                    IS_IN_SHADOW_REALM
-                        ? (sourceText) => {
-                              let result
-                              try {
-                                  result = sourceText()
-                              } catch (error) {
-                                  throw pushErrorAcrossBoundary(error)
-                              }
-                              // Inline getTransferableValue().
-                              return (typeof result === 'object' && result !== null) || typeof result === 'function'
-                                  ? getTransferablePointer(result)
-                                  : result
-                          }
-                        : noop, // callableLinkPointers: this callable function allows the foreign
+                    IS_IN_SHADOW_REALM ?
+                        (sourceText) => {
+                            let result
+                            try {
+                                result = sourceText()
+                            } catch (error) {
+                                throw pushErrorAcrossBoundary(error)
+                            }
+                            // Inline getTransferableValue().
+                            return (typeof result === 'object' && result !== null) || typeof result === 'function' ?
+                                    getTransferablePointer(result)
+                                :   result
+                        }
+                    :   noop, // callableLinkPointers: this callable function allows the foreign
                     // realm to define a linkage between two values across the membrane.
                     (targetPointer, newPointer) => {
                         targetPointer()
@@ -2990,28 +3033,28 @@ export default {
                             proxyPointerCache.set(target, newPointer)
                         }
                     }, // callablePushErrorTarget
-                    LOCKER_DEBUGGABLE_FLAG
-                        ? (
-                              foreignTargetPointer,
-                              foreignTargetTraits,
-                              foreignTargetFunctionArity,
-                              foreignTargetFunctionName,
-                              foreignTargetTypedArrayLength,
-                          ) => {
-                              const pointer = pushTarget(
-                                  foreignTargetPointer,
-                                  foreignTargetTraits,
-                                  foreignTargetFunctionArity,
-                                  foreignTargetFunctionName,
-                                  foreignTargetTypedArrayLength,
-                              )
-                              const pointerWrapper = () => {
-                                  checkDebugMode()
-                                  return pointer()
-                              }
-                              return pointerWrapper
-                          }
-                        : pushTarget, // callablePushTarget: This function can be used by a foreign realm
+                    LOCKER_DEBUGGABLE_FLAG ?
+                        (
+                            foreignTargetPointer,
+                            foreignTargetTraits,
+                            foreignTargetFunctionArity,
+                            foreignTargetFunctionName,
+                            foreignTargetTypedArrayLength,
+                        ) => {
+                            const pointer = pushTarget(
+                                foreignTargetPointer,
+                                foreignTargetTraits,
+                                foreignTargetFunctionArity,
+                                foreignTargetFunctionName,
+                                foreignTargetTypedArrayLength,
+                            )
+                            const pointerWrapper = () => {
+                                checkDebugMode()
+                                return pointer()
+                            }
+                            return pointerWrapper
+                        }
+                    :   pushTarget, // callablePushTarget: This function can be used by a foreign realm
                     // to install a proxy into this realm that correspond to an object
                     // from the foreign realm. It returns a Pointer that can be used by
                     // the foreign realm to pass back a reference to this realm when
@@ -3044,13 +3087,14 @@ export default {
                             throw pushErrorAcrossBoundary(error)
                         }
                         // Inline getTransferableValue().
-                        return (typeof result === 'object' && result !== null) || typeof result === 'function'
-                            ? getTransferablePointer(result) // Intentionally ignoring `document.all`.
-                            : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
-                            // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                            typeof result === 'undefined'
-                            ? undefined
+                        return (
+                            (typeof result === 'object' && result !== null) || typeof result === 'function' ?
+                                getTransferablePointer(result) // Intentionally ignoring `document.all`.
+                                // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
+                            : typeof result === 'undefined' ? undefined
                             : result
+                        )
                     }, // callableConstruct
                     (targetPointer, newTargetPointerOrUndefined, ...args) => {
                         targetPointer()
@@ -3077,13 +3121,14 @@ export default {
                             throw pushErrorAcrossBoundary(error)
                         }
                         // Inline getTransferableValue().
-                        return (typeof result === 'object' && result !== null) || typeof result === 'function'
-                            ? getTransferablePointer(result) // Intentionally ignoring `document.all`.
-                            : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
-                            // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                            typeof result === 'undefined'
-                            ? undefined
+                        return (
+                            (typeof result === 'object' && result !== null) || typeof result === 'function' ?
+                                getTransferablePointer(result) // Intentionally ignoring `document.all`.
+                                // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
+                            : typeof result === 'undefined' ? undefined
                             : result
+                        )
                     }, // callableDefineProperty
                     (
                         targetPointer,
@@ -3127,28 +3172,36 @@ export default {
                                     foreignCallableNonConfigurableDescriptorCallback(
                                         key,
                                         false, // configurable
-                                        'enumerable' in safeDesc
-                                            ? safeDesc.enumerable
-                                            : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                        'writable' in safeDesc
-                                            ? safeDesc.writable
-                                            : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                        'value' in safeDesc // Inline getTransferableValue().
-                                            ? (typeof value1 === 'object' && value1 !== null) ||
-                                              typeof value1 === 'function'
-                                                ? getTransferablePointer(value1)
-                                                : value1
-                                            : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                        'get' in safeDesc // Inline getTransferableValue().
-                                            ? typeof getter === 'function'
-                                                ? getTransferablePointer(getter)
-                                                : getter
-                                            : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                        'set' in safeDesc // Inline getTransferableValue().
-                                            ? typeof setter === 'function'
-                                                ? getTransferablePointer(setter)
-                                                : setter
-                                            : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                        'enumerable' in safeDesc ?
+                                            safeDesc.enumerable
+                                        :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                        'writable' in safeDesc ?
+                                            safeDesc.writable
+                                        :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                        (
+                                            'value' in safeDesc // Inline getTransferableValue().
+                                        ) ?
+                                            (
+                                                (typeof value1 === 'object' && value1 !== null) ||
+                                                typeof value1 === 'function'
+                                            ) ?
+                                                getTransferablePointer(value1)
+                                            :   value1
+                                        :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                        (
+                                            'get' in safeDesc // Inline getTransferableValue().
+                                        ) ?
+                                            typeof getter === 'function' ?
+                                                getTransferablePointer(getter)
+                                            :   getter
+                                        :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                        (
+                                            'set' in safeDesc // Inline getTransferableValue().
+                                        ) ?
+                                            typeof setter === 'function' ?
+                                                getTransferablePointer(setter)
+                                            :   setter
+                                        :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
                                     )
                                 }
                             }
@@ -3176,9 +3229,9 @@ export default {
                             selectedTarget = undefined
                         } else {
                             receiver =
-                                receiverPointerOrPrimitive === LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
-                                    ? target
-                                    : receiverPointerOrPrimitive
+                                receiverPointerOrPrimitive === LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL ? target : (
+                                    receiverPointerOrPrimitive
+                                )
                         }
                         let result
                         try {
@@ -3232,34 +3285,39 @@ export default {
                             const { get: getter, set: setter, value: value1 } = safeDesc
                             foreignCallableDescriptorCallback(
                                 key,
-                                'configurable' in safeDesc
-                                    ? safeDesc.configurable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'enumerable' in safeDesc
-                                    ? safeDesc.enumerable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'writable' in safeDesc
-                                    ? safeDesc.writable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'value' in safeDesc // Inline getTransferableValue().
-                                    ? (typeof value1 === 'object' && value1 !== null) || typeof value1 === 'function'
-                                        ? getTransferablePointer(value1) // Intentionally ignoring `document.all`.
-                                        : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                'configurable' in safeDesc ?
+                                    safeDesc.configurable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                'enumerable' in safeDesc ?
+                                    safeDesc.enumerable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                'writable' in safeDesc ?
+                                    safeDesc.writable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                (
+                                    'value' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    (typeof value1 === 'object' && value1 !== null) || typeof value1 === 'function' ?
+                                        getTransferablePointer(value1) // Intentionally ignoring `document.all`.
+                                        // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                        typeof value1 === 'undefined'
-                                        ? undefined
-                                        : value1
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'get' in safeDesc // Inline getTransferableValue().
-                                    ? typeof getter === 'function'
-                                        ? getTransferablePointer(getter)
-                                        : getter
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'set' in safeDesc // Inline getTransferableValue().
-                                    ? typeof setter === 'function'
-                                        ? getTransferablePointer(setter)
-                                        : setter
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                    : typeof value1 === 'undefined' ? undefined
+                                    : value1
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                (
+                                    'get' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    typeof getter === 'function' ?
+                                        getTransferablePointer(getter)
+                                    :   getter
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                (
+                                    'set' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    typeof setter === 'function' ?
+                                        getTransferablePointer(setter)
+                                    :   setter
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
                             )
                         }
                     }, // callableGetPrototypeOf
@@ -3365,109 +3423,109 @@ export default {
                             throw pushErrorAcrossBoundary(error)
                         }
                     }, // callableDebugInfo
-                    LOCKER_DEBUGGABLE_FLAG
-                        ? (...args) => {
-                              if (checkDebugMode()) {
-                                  for (let i = 0, { length } = args; i < length; i += 1) {
-                                      const pointerOrPrimitive = args[i]
-                                      if (typeof pointerOrPrimitive === 'function') {
-                                          pointerOrPrimitive()
-                                          args[i] = selectedTarget
-                                          selectedTarget = undefined
-                                      }
-                                  }
-                                  try {
-                                      ReflectApply(consoleInfo, consoleObject, args)
-                                      // eslint-disable-next-line no-empty
-                                  } catch (_unused29) {}
-                              }
-                          }
-                        : noop, // callableDefineProperties
-                    IS_IN_SHADOW_REALM
-                        ? (targetPointer, ...descriptorTuples) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              for (let i = 0, { length } = descriptorTuples; i < length; i += 7) {
-                                  // We don't use `ObjectDefineProperties()` here because it
-                                  // will throw an exception if it fails to define one of its
-                                  // properties.
-                                  ReflectDefineProperty(
-                                      target,
-                                      descriptorTuples[i],
-                                      createDescriptorFromMeta(
-                                          descriptorTuples[i + 1], // configurable
-                                          descriptorTuples[i + 2], // enumerable
-                                          descriptorTuples[i + 3], // writable
-                                          descriptorTuples[i + 4], // valuePointer
-                                          descriptorTuples[i + 5], // getterPointer
-                                          descriptorTuples[i + 6], // setterPointer
-                                      ),
-                                  )
-                              }
-                          }
-                        : noop, // callableGetLazyPropertyDescriptorStateByTarget
-                    IS_NOT_IN_SHADOW_REALM
-                        ? (targetPointer) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              // We don't wrap the weak map `get()` call in a try-catch
-                              // because we know `target` is an object.
-                              const state = __.proxyTargetToLazyPropertyDescriptorStateMap.get(target)
-                              return state ? getTransferablePointer(state) : state
-                          }
-                        : noop, // callableGetPropertyValue
-                    IS_NOT_IN_SHADOW_REALM
-                        ? (targetPointer, key) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              let value
-                              try {
-                                  value = target[key]
-                              } catch (error) {
-                                  throw pushErrorAcrossBoundary(error)
-                              }
-                              return (typeof value === 'object' && value !== null) || typeof value === 'function'
-                                  ? getTransferablePointer(value)
-                                  : value
-                          }
-                        : noop, // callableGetTargetIntegrityTraits
-                    IS_NOT_IN_SHADOW_REALM
-                        ? (targetPointer) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              // A target may be a proxy that is revoked or throws in its
-                              // "isExtensible" trap.
-                              try {
-                                  if (!ReflectIsExtensible(target)) {
-                                      if (ObjectIsFrozen(target)) {
-                                          return (
-                                              4 /* TargetIntegrityTraits.IsFrozen */ &
-                                              2 /* TargetIntegrityTraits.IsSealed */ &
-                                              1 /* TargetIntegrityTraits.IsNotExtensible */
-                                          )
-                                      }
-                                      if (ObjectIsSealed(target)) {
-                                          return (
-                                              2 /* TargetIntegrityTraits.IsSealed */ &
-                                              1 /* TargetIntegrityTraits.IsNotExtensible */
-                                          )
-                                      }
-                                      return 1 /* TargetIntegrityTraits.IsNotExtensible */
-                                  }
-                              } catch (_unused30) {
-                                  try {
-                                      isArrayOrThrowForRevoked(target)
-                                  } catch (_unused31) {
-                                      return 8 /* TargetIntegrityTraits.Revoked */
-                                  }
-                              }
-                              return 0 /* TargetIntegrityTraits.None */
-                          }
-                        : () => 0 /* TargetIntegrityTraits.None */, // callableGetToStringTagOfTarget
+                    LOCKER_DEBUGGABLE_FLAG ?
+                        (...args) => {
+                            if (checkDebugMode()) {
+                                for (let i = 0, { length } = args; i < length; i += 1) {
+                                    const pointerOrPrimitive = args[i]
+                                    if (typeof pointerOrPrimitive === 'function') {
+                                        pointerOrPrimitive()
+                                        args[i] = selectedTarget
+                                        selectedTarget = undefined
+                                    }
+                                }
+                                try {
+                                    ReflectApply(consoleInfo, consoleObject, args)
+                                    // eslint-disable-next-line no-empty
+                                } catch (_unused29) {}
+                            }
+                        }
+                    :   noop, // callableDefineProperties
+                    IS_IN_SHADOW_REALM ?
+                        (targetPointer, ...descriptorTuples) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            for (let i = 0, { length } = descriptorTuples; i < length; i += 7) {
+                                // We don't use `ObjectDefineProperties()` here because it
+                                // will throw an exception if it fails to define one of its
+                                // properties.
+                                ReflectDefineProperty(
+                                    target,
+                                    descriptorTuples[i],
+                                    createDescriptorFromMeta(
+                                        descriptorTuples[i + 1], // configurable
+                                        descriptorTuples[i + 2], // enumerable
+                                        descriptorTuples[i + 3], // writable
+                                        descriptorTuples[i + 4], // valuePointer
+                                        descriptorTuples[i + 5], // getterPointer
+                                        descriptorTuples[i + 6], // setterPointer
+                                    ),
+                                )
+                            }
+                        }
+                    :   noop, // callableGetLazyPropertyDescriptorStateByTarget
+                    IS_NOT_IN_SHADOW_REALM ?
+                        (targetPointer) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            // We don't wrap the weak map `get()` call in a try-catch
+                            // because we know `target` is an object.
+                            const state = __.proxyTargetToLazyPropertyDescriptorStateMap.get(target)
+                            return state ? getTransferablePointer(state) : state
+                        }
+                    :   noop, // callableGetPropertyValue
+                    IS_NOT_IN_SHADOW_REALM ?
+                        (targetPointer, key) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            let value
+                            try {
+                                value = target[key]
+                            } catch (error) {
+                                throw pushErrorAcrossBoundary(error)
+                            }
+                            return (typeof value === 'object' && value !== null) || typeof value === 'function' ?
+                                    getTransferablePointer(value)
+                                :   value
+                        }
+                    :   noop, // callableGetTargetIntegrityTraits
+                    IS_NOT_IN_SHADOW_REALM ?
+                        (targetPointer) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            // A target may be a proxy that is revoked or throws in its
+                            // "isExtensible" trap.
+                            try {
+                                if (!ReflectIsExtensible(target)) {
+                                    if (ObjectIsFrozen(target)) {
+                                        return (
+                                            4 /* TargetIntegrityTraits.IsFrozen */ &
+                                            2 /* TargetIntegrityTraits.IsSealed */ &
+                                            1 /* TargetIntegrityTraits.IsNotExtensible */
+                                        )
+                                    }
+                                    if (ObjectIsSealed(target)) {
+                                        return (
+                                            2 /* TargetIntegrityTraits.IsSealed */ &
+                                            1 /* TargetIntegrityTraits.IsNotExtensible */
+                                        )
+                                    }
+                                    return 1 /* TargetIntegrityTraits.IsNotExtensible */
+                                }
+                            } catch (_unused30) {
+                                try {
+                                    isArrayOrThrowForRevoked(target)
+                                } catch (_unused31) {
+                                    return 8 /* TargetIntegrityTraits.Revoked */
+                                }
+                            }
+                            return 0 /* TargetIntegrityTraits.None */
+                        }
+                    :   () => 0 /* TargetIntegrityTraits.None */, // callableGetToStringTagOfTarget
                     (targetPointer) => {
                         targetPointer()
                         const target = selectedTarget
@@ -3476,142 +3534,142 @@ export default {
                             // Section 19.1.3.6 Object.prototype.toString()
                             // https://tc39.github.io/ecma262/#sec-object.prototype.tostring
                             const brand = ReflectApply(ObjectProtoToString, target, [])
-                            return brand === '[object Object]'
-                                ? 'Object'
-                                : ReflectApply(StringProtoSlice, brand, [8, -1])
+                            return brand === '[object Object]' ? 'Object' : (
+                                    ReflectApply(StringProtoSlice, brand, [8, -1])
+                                )
                         } catch (error) {
                             throw pushErrorAcrossBoundary(error)
                         }
                     }, // callableInstallErrorPrepareStackTrace
                     installErrorPrepareStackTrace, // callableInstallLazyPropertyDescriptors
-                    IS_IN_SHADOW_REALM
-                        ? (targetPointer, ...ownKeysAndUnforgeableGlobalThisKeys) => {
-                              const sliceIndex = ReflectApply(ArrayProtoIndexOf, ownKeysAndUnforgeableGlobalThisKeys, [
-                                  LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                              ])
-                              let ownKeys
-                              let unforgeableGlobalThisKeys
-                              if (sliceIndex === -1) {
-                                  ownKeys = ownKeysAndUnforgeableGlobalThisKeys
-                              } else {
-                                  ownKeys = ReflectApply(ArrayProtoSlice, ownKeysAndUnforgeableGlobalThisKeys, [
-                                      0,
-                                      sliceIndex,
-                                  ])
-                                  unforgeableGlobalThisKeys = ReflectApply(
-                                      ArrayProtoSlice,
-                                      ownKeysAndUnforgeableGlobalThisKeys,
-                                      [sliceIndex + 1],
-                                  )
-                              }
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              let state = getLazyPropertyDescriptorStateByTarget(target)
-                              if (state === undefined) {
-                                  state = {
-                                      __proto__: null,
-                                  }
-                                  setLazyPropertyDescriptorStateByTarget(target, state)
-                              }
-                              for (let i = 0, { length } = ownKeys; i < length; i += 1) {
-                                  const ownKey = ownKeys[i]
-                                  state[ownKey] = true
-                                  ReflectDefineProperty(
-                                      target,
-                                      ownKey, // The role of this descriptor is to serve as a
-                                      // bouncer. When either a getter or a setter is
-                                      // invoked the descriptor will be replaced with
-                                      // the descriptor from the foreign side and the
-                                      // get/set operation will carry on from there.
-                                      {
-                                          __proto__: null,
-                                          // We DO explicitly set configurability in the
-                                          // off chance that the property doesn't exist.
-                                          configurable: true,
-                                          // We DON'T explicitly set enumerability to
-                                          // defer to the enumerability of the existing
-                                          // property. In the off chance the property
-                                          // doesn't exist the property will be defined
-                                          // as non-enumerable.
-                                          get() {
-                                              activateLazyOwnPropertyDefinition(target, ownKey, state)
-                                              return target[ownKey]
-                                          },
-                                          set(value) {
-                                              activateLazyOwnPropertyDefinition(target, ownKey, state)
-                                              ReflectSet(target, ownKey, value)
-                                          },
-                                      },
-                                  )
-                              }
-                              installPropertyDescriptorMethodWrappers(unforgeableGlobalThisKeys)
-                          }
-                        : noop, // callableIsTargetLive
-                    IS_NOT_IN_SHADOW_REALM && liveTargetCallback
-                        ? (targetPointer, targetTraits) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              if (target !== ObjectProto && target !== RegExpProto) {
-                                  try {
-                                      return liveTargetCallback(target, targetTraits)
-                                      // eslint-disable-next-line no-empty
-                                  } catch (_unused32) {}
-                              }
-                              return false
-                          }
-                        : alwaysFalse, // callableIsTargetRevoked
-                    IS_NOT_IN_SHADOW_REALM
-                        ? (targetPointer) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              try {
-                                  isArrayOrThrowForRevoked(target)
-                                  return false
-                                  //  eslint-disable-next-line no-empty
-                              } catch (_unused33) {}
-                              return true
-                          }
-                        : alwaysFalse, // callableSerializeTarget
-                    IS_IN_SHADOW_REALM
-                        ? (targetPointer) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              try {
-                                  return SymbolToStringTag in target
-                                      ? serializeTargetByTrialAndError(target) // Fast path.
-                                      : serializeTargetByBrand(target)
-                                  // eslint-disable-next-line no-empty
-                              } catch (_unused34) {}
-                              return undefined
-                          }
-                        : noop, // callableSetLazyPropertyDescriptorStateByTarget
-                    IS_NOT_IN_SHADOW_REALM
-                        ? (targetPointer, statePointer) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              statePointer()
-                              const state = selectedTarget
-                              selectedTarget = undefined
-                              // We don't wrap the weak map `set()` call in a try-catch
-                              // because we know `target` is an object.
-                              __.proxyTargetToLazyPropertyDescriptorStateMap.set(target, state)
-                          }
-                        : noop, // callableTrackAsFastTarget
-                    IS_IN_SHADOW_REALM
-                        ? (targetPointer) => {
-                              targetPointer()
-                              const target = selectedTarget
-                              selectedTarget = undefined
-                              if (useFastForeignTargetPath) {
-                                  fastForeignTargetPointers.add(getTransferablePointer(target))
-                              }
-                          }
-                        : noop, // callableBatchGetPrototypeOfAndGetOwnPropertyDescriptors
+                    IS_IN_SHADOW_REALM ?
+                        (targetPointer, ...ownKeysAndUnforgeableGlobalThisKeys) => {
+                            const sliceIndex = ReflectApply(ArrayProtoIndexOf, ownKeysAndUnforgeableGlobalThisKeys, [
+                                LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                            ])
+                            let ownKeys
+                            let unforgeableGlobalThisKeys
+                            if (sliceIndex === -1) {
+                                ownKeys = ownKeysAndUnforgeableGlobalThisKeys
+                            } else {
+                                ownKeys = ReflectApply(ArrayProtoSlice, ownKeysAndUnforgeableGlobalThisKeys, [
+                                    0,
+                                    sliceIndex,
+                                ])
+                                unforgeableGlobalThisKeys = ReflectApply(
+                                    ArrayProtoSlice,
+                                    ownKeysAndUnforgeableGlobalThisKeys,
+                                    [sliceIndex + 1],
+                                )
+                            }
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            let state = getLazyPropertyDescriptorStateByTarget(target)
+                            if (state === undefined) {
+                                state = {
+                                    __proto__: null,
+                                }
+                                setLazyPropertyDescriptorStateByTarget(target, state)
+                            }
+                            for (let i = 0, { length } = ownKeys; i < length; i += 1) {
+                                const ownKey = ownKeys[i]
+                                state[ownKey] = true
+                                ReflectDefineProperty(
+                                    target,
+                                    ownKey, // The role of this descriptor is to serve as a
+                                    // bouncer. When either a getter or a setter is
+                                    // invoked the descriptor will be replaced with
+                                    // the descriptor from the foreign side and the
+                                    // get/set operation will carry on from there.
+                                    {
+                                        __proto__: null,
+                                        // We DO explicitly set configurability in the
+                                        // off chance that the property doesn't exist.
+                                        configurable: true,
+                                        // We DON'T explicitly set enumerability to
+                                        // defer to the enumerability of the existing
+                                        // property. In the off chance the property
+                                        // doesn't exist the property will be defined
+                                        // as non-enumerable.
+                                        get() {
+                                            activateLazyOwnPropertyDefinition(target, ownKey, state)
+                                            return target[ownKey]
+                                        },
+                                        set(value) {
+                                            activateLazyOwnPropertyDefinition(target, ownKey, state)
+                                            ReflectSet(target, ownKey, value)
+                                        },
+                                    },
+                                )
+                            }
+                            installPropertyDescriptorMethodWrappers(unforgeableGlobalThisKeys)
+                        }
+                    :   noop, // callableIsTargetLive
+                    IS_NOT_IN_SHADOW_REALM && liveTargetCallback ?
+                        (targetPointer, targetTraits) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            if (target !== ObjectProto && target !== RegExpProto) {
+                                try {
+                                    return liveTargetCallback(target, targetTraits)
+                                    // eslint-disable-next-line no-empty
+                                } catch (_unused32) {}
+                            }
+                            return false
+                        }
+                    :   alwaysFalse, // callableIsTargetRevoked
+                    IS_NOT_IN_SHADOW_REALM ?
+                        (targetPointer) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            try {
+                                isArrayOrThrowForRevoked(target)
+                                return false
+                                //  eslint-disable-next-line no-empty
+                            } catch (_unused33) {}
+                            return true
+                        }
+                    :   alwaysFalse, // callableSerializeTarget
+                    IS_IN_SHADOW_REALM ?
+                        (targetPointer) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            try {
+                                return SymbolToStringTag in target ?
+                                        serializeTargetByTrialAndError(target) // Fast path.
+                                    :   serializeTargetByBrand(target)
+                                // eslint-disable-next-line no-empty
+                            } catch (_unused34) {}
+                            return undefined
+                        }
+                    :   noop, // callableSetLazyPropertyDescriptorStateByTarget
+                    IS_NOT_IN_SHADOW_REALM ?
+                        (targetPointer, statePointer) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            statePointer()
+                            const state = selectedTarget
+                            selectedTarget = undefined
+                            // We don't wrap the weak map `set()` call in a try-catch
+                            // because we know `target` is an object.
+                            __.proxyTargetToLazyPropertyDescriptorStateMap.set(target, state)
+                        }
+                    :   noop, // callableTrackAsFastTarget
+                    IS_IN_SHADOW_REALM ?
+                        (targetPointer) => {
+                            targetPointer()
+                            const target = selectedTarget
+                            selectedTarget = undefined
+                            if (useFastForeignTargetPath) {
+                                fastForeignTargetPointers.add(getTransferablePointer(target))
+                            }
+                        }
+                    :   noop, // callableBatchGetPrototypeOfAndGetOwnPropertyDescriptors
                     (targetPointer, foreignCallableDescriptorsCallback) => {
                         targetPointer()
                         const target = selectedTarget
@@ -3632,33 +3690,39 @@ export default {
                             const { get: getter, set: setter, value: value1 } = safeDesc
                             descriptorTuples[j] = ownKey
                             descriptorTuples[j + 1] =
-                                'configurable' in safeDesc
-                                    ? safeDesc.configurable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
+                                'configurable' in safeDesc ?
+                                    safeDesc.configurable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                             descriptorTuples[j + 2] =
-                                'enumerable' in safeDesc
-                                    ? safeDesc.enumerable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
+                                'enumerable' in safeDesc ?
+                                    safeDesc.enumerable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                             descriptorTuples[j + 3] =
                                 'writable' in safeDesc ? safeDesc.writable : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                             descriptorTuples[j + 4] =
-                                'value' in safeDesc // Inline getTransferableValue().
-                                    ? (typeof value1 === 'object' && value1 !== null) || typeof value1 === 'function'
-                                        ? getTransferablePointer(value1)
-                                        : value1
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
+                                (
+                                    'value' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    (typeof value1 === 'object' && value1 !== null) || typeof value1 === 'function' ?
+                                        getTransferablePointer(value1)
+                                    :   value1
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                             descriptorTuples[j + 5] =
-                                'get' in safeDesc // Inline getTransferableValue().
-                                    ? typeof getter === 'function'
-                                        ? getTransferablePointer(getter)
-                                        : getter
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
+                                (
+                                    'get' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    typeof getter === 'function' ?
+                                        getTransferablePointer(getter)
+                                    :   getter
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                             descriptorTuples[j + 6] =
-                                'set' in safeDesc // Inline getTransferableValue().
-                                    ? typeof setter === 'function'
-                                        ? getTransferablePointer(setter)
-                                        : setter
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
+                                (
+                                    'set' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    typeof setter === 'function' ?
+                                        getTransferablePointer(setter)
+                                    :   setter
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL
                         }
                         ReflectApply(foreignCallableDescriptorsCallback, undefined, descriptorTuples)
                         let proto
@@ -3711,34 +3775,39 @@ export default {
                             const { get: getter, set: setter, value: value1 } = safeDesc
                             foreignCallableDescriptorCallback(
                                 key,
-                                'configurable' in safeDesc
-                                    ? safeDesc.configurable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'enumerable' in safeDesc
-                                    ? safeDesc.enumerable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'writable' in safeDesc
-                                    ? safeDesc.writable
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'value' in safeDesc // Inline getTransferableValue().
-                                    ? (typeof value1 === 'object' && value1 !== null) || typeof value1 === 'function'
-                                        ? getTransferablePointer(value1) // Intentionally ignoring `document.all`.
-                                        : // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
+                                'configurable' in safeDesc ?
+                                    safeDesc.configurable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                'enumerable' in safeDesc ?
+                                    safeDesc.enumerable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                'writable' in safeDesc ?
+                                    safeDesc.writable
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                (
+                                    'value' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    (typeof value1 === 'object' && value1 !== null) || typeof value1 === 'function' ?
+                                        getTransferablePointer(value1) // Intentionally ignoring `document.all`.
+                                        // https://developer.mozilla.org/en-US/docs/Web/API/Document/all
                                         // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-                                        typeof value1 === 'undefined'
-                                        ? undefined
-                                        : value1
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'get' in safeDesc // Inline getTransferableValue().
-                                    ? typeof getter === 'function'
-                                        ? getTransferablePointer(getter)
-                                        : getter
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
-                                'set' in safeDesc // Inline getTransferableValue().
-                                    ? typeof setter === 'function'
-                                        ? getTransferablePointer(setter)
-                                        : setter
-                                    : LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                    : typeof value1 === 'undefined' ? undefined
+                                    : value1
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                (
+                                    'get' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    typeof getter === 'function' ?
+                                        getTransferablePointer(getter)
+                                    :   getter
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
+                                (
+                                    'set' in safeDesc // Inline getTransferableValue().
+                                ) ?
+                                    typeof setter === 'function' ?
+                                        getTransferablePointer(setter)
+                                    :   setter
+                                :   LOCKER_NEAR_MEMBRANE_UNDEFINED_VALUE_SYMBOL,
                             )
                             return undefined
                         }

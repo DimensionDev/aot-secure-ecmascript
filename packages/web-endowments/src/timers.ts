@@ -81,19 +81,21 @@ export function createTimers(
             if (!handle) return
             _clearTimeout(handle)
         },
-        requestIdleCallback: _requestIdleCallback
-            ? function requestIdleCallback(callback, options) {
-                  idle_id[idle_id.length] = _requestIdleCallback(callback, options)
-                  return idle_id.length
-              }
-            : undefined,
-        cancelIdleCallback: _cancelIdleCallback
-            ? function cancelIdleCallback(handle) {
-                  const id = idle_id[handle - 1]
-                  if (!id) return
-                  _cancelIdleCallback(id)
-              }
-            : undefined,
+        requestIdleCallback:
+            _requestIdleCallback ?
+                function requestIdleCallback(callback, options) {
+                    idle_id[idle_id.length] = _requestIdleCallback(callback, options)
+                    return idle_id.length
+                }
+            :   undefined,
+        cancelIdleCallback:
+            _cancelIdleCallback ?
+                function cancelIdleCallback(handle) {
+                    const id = idle_id[handle - 1]
+                    if (!id) return
+                    _cancelIdleCallback(id)
+                }
+            :   undefined,
         queueMicrotask(callback) {
             _queueMicrotask(() => abortSignal.aborted || callback())
         },

@@ -780,9 +780,10 @@ export class Module<T extends ModuleNamespace = any> {
         //     b. Return unused.
         // Reason: we cannot call HostLoadImportedModule and we always have a importHook.
         try {
-            const importHookResult = referrer.#Layer0_ImportHook
-                ? Reflect.apply(referrer.#Layer0_ImportHook, referrer.#Layer0_HandlerValue, [specifier])
-                : Reflect.apply(referrer.#Layer3_ParentImportHook, undefined, [specifier])
+            const importHookResult =
+                referrer.#Layer0_ImportHook ?
+                    Reflect.apply(referrer.#Layer0_ImportHook, referrer.#Layer0_HandlerValue, [specifier])
+                :   Reflect.apply(referrer.#Layer3_ParentImportHook, undefined, [specifier])
             // unwrap importHookResult here
             const importHookPromise = Promise.resolve(importHookResult)
             // unwrap PromiseResolve(%Promise%, importHookResult.[[Value]]) here

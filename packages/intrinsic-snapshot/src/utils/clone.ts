@@ -56,12 +56,10 @@ export function clone(o: any, knowledge: CloneKnowledge): any {
     //      c. an Array, let newVal be a new Array.
     //      d. an Object, let newVal be a new Object.
     const isFunction = typeof o === 'function'
-    const c = WeakMapHas(knowledge.emptyObjectOverride, o)
-        ? WeakMapGet(knowledge.emptyObjectOverride, o)
-        : isArray(o)
-        ? []
-        : isFunction
-        ? forwardingFunction(o, knowledge)
+    const c =
+        WeakMapHas(knowledge.emptyObjectOverride, o) ? WeakMapGet(knowledge.emptyObjectOverride, o)
+        : isArray(o) ? []
+        : isFunction ? forwardingFunction(o, knowledge)
         : {}
     // Attach a #original private field
     if (knowledge.debugField) new DebuggerPrivateField(c, o)

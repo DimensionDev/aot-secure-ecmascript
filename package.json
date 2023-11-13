@@ -13,15 +13,15 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
-    "@masknet/config": "^0.2.0",
-    "@swc/core": "^1.3.93",
+    "@masknet/config": "^0.2.1",
+    "@swc/core": "^1.3.96",
     "@vitest/coverage-c8": "^0.33.0",
     "c8": "^8.0.1",
-    "prettier": "^3.0.3",
-    "rollup": "^4.1.1",
-    "rollup-plugin-swc3": "^0.10.2",
+    "prettier": "^3.1.0",
+    "rollup": "^4.4.0",
+    "rollup-plugin-swc3": "^0.10.3",
     "typescript": "5.2.2",
-    "vite": "^4.4.11",
+    "vite": "^4.5.0",
     "vitest": "^0.34.6"
   },
   "pnpm": {

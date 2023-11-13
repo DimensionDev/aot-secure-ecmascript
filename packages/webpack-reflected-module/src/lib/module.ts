@@ -155,9 +155,10 @@ export class ReflectedModule extends Module {
         let data: Map<string, any> = new Map()
         const sourcesMap = new Map()
         for (const type of context.sourceTypes || context.chunkGraph.getModuleSourceTypes(this)) {
-            const source = this.error
-                ? new sources.RawSource('throw new Error(' + JSON.stringify(this.error.message) + ');')
-                : this._source
+            const source =
+                this.error ?
+                    new sources.RawSource('throw new Error(' + JSON.stringify(this.error.message) + ');')
+                :   this._source
 
             if (source) {
                 sourcesMap.set(type, new sources.CachedSource(source))
