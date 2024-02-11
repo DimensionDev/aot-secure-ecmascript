@@ -20,7 +20,7 @@
     "build": "pnpx rollup -c"
   },
   "devDependencies": {
-    "@swc/core": "^1.3.96"
+    "@swc/core": "^1.4.0"
   },
   "files": [
     "dist/bundle.js",
